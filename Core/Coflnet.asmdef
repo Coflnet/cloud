@@ -1,0 +1,10 @@
+{
+    "name": "Coflnet",
+    "references": [
+        "unity.libsodium"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

@@ -1,0 +1,13 @@
+{
+    "name": "ServerTests",
+    "references": [
+        "Coflnet.Server",
+        "Coflnet"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

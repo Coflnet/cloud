@@ -1,0 +1,12 @@
+{
+    "name": "CoreTests",
+    "references": [
+        "Coflnet"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

@@ -1,0 +1,10 @@
+{
+    "name": "Coflnet.Client",
+    "references": [
+        "Coflnet"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
