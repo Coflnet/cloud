@@ -174,6 +174,9 @@ namespace Coflnet
 		[DataMember]
 		protected Dictionary<long, UserFile> files;
 
+		[DataMember]
+		public byte[] Secret { get; set; }
+
 		/// <summary>
 		/// The auth token with wich the user authorized
 		/// </summary>
@@ -518,7 +521,13 @@ namespace Coflnet
 			return commandController;
 		}
 
-
+		public static CoflnetUser Generate(SourceReference owner)
+		{
+			var user = new CoflnetUser(owner);
+			// generate a secret
+			user.Secret = unity.libsodium.StreamEncryption.GetRandomBytes(16);
+			return user;
+		}
 
 		public class GetPublicKeys : Command
 		{
@@ -602,7 +611,7 @@ namespace Coflnet
 
 		public override ServerCommandSettings GetServerSettings()
 		{
-			return new ServerCommandSettings(new IsUserPermission());
+			return new ServerCommandSettings(IsUserPermission.Instance, IsOwnerPermission.Instance);
 		}
 
 		public override string GetSlug()
@@ -620,7 +629,7 @@ namespace Coflnet
 
 		public override ServerCommandSettings GetServerSettings()
 		{
-			return new ServerCommandSettings(new IsUserPermission());
+			return new ServerCommandSettings(IsOwnerPermission.Instance);
 		}
 	}
 
@@ -632,7 +641,7 @@ namespace Coflnet
 
 		public override ServerCommandSettings GetServerSettings()
 		{
-			return new ServerCommandSettings(true, 1, new IsUserPermission());
+			return new ServerCommandSettings(true, 1, IsOwnerPermission.Instance);
 		}
 	}
 

@@ -129,9 +129,22 @@ namespace Coflnet
 		/// Executes a command.
 		/// </summary>
 		/// <param name="data">Decoded object sent from the server</param>
-		public void ExecuteCommand(MessageData data, List<Permission> permissions = null)
+		public void ExecuteCommand(MessageData data, Referenceable target = null)
 		{
-			ExecuteCommand(GetCommand(data.t), data);
+			var command = GetCommand(data.t);
+			// test Permissions
+			if (command is ServerCommand)
+			{
+				foreach (var item in (command as ServerCommand).GetServerSettings().Permissions)
+				{
+					if (!item.CheckPermission(data, target))
+					{
+						throw new CoflnetException("permission_not_met", $"The permission {item.GetSlug()} required for executing this command wasn't met");
+					}
+				}
+			}
+
+			ExecuteCommand(command, data);
 		}
 
 		/// <summary>
@@ -322,7 +335,7 @@ namespace Coflnet
 			}
 
 			/// <summary>
-			/// Gets or sets a value indicating whether this <see cref="T:Coflnet.Command.CommandSettings"/> should be executed locally if resource is present locally.
+			/// Gets or sets a value indicating whether this <see cref="T:Coflnet.Command.CommandSettings"/> should be executed locally (and on eg other devices from the same user) if resource is present locally.
 			/// Eg username update -> should also update local username instantly.
 			/// </summary>
 			/// <value><c>true</c> if command should be executed locally before sending or not; otherwise, <c>false</c>.</value>
@@ -362,6 +375,8 @@ namespace Coflnet
 		}
 
 		public abstract ServerCommandSettings GetServerSettings();
+
+
 
 
 		public new void SendToServer(long serverId, byte[] data, string type)
@@ -468,6 +483,15 @@ namespace Coflnet
 		}
 	}
 
+
+	public abstract class AuthenticatedServerCommand : ServerCommand
+	{
+		public override ServerCommand.ServerCommandSettings GetServerSettings()
+		{
+			return new ServerCommandSettings(new OrPermission(IsUserPermission.Instance, IsAuthenticatedPermission.Instance));
+		}
+	}
+
 	/// <summary>
 	/// Can't be a ServerCommand because no user yet exists
 	/// </summary>
@@ -480,11 +504,16 @@ namespace Coflnet
 			// validate captcha Token
 			// todo :)
 
-			// get the client
+			// get the client         
+			CoflnetUser user = CoflnetUser.Generate(request.clientId);
 
-			CoflnetUser user = new CoflnetUser(data.sId);
+			var response = new RegiserUserResponse();
+			response.id = user.Id;
+			response.secret = user.Secret;
 
-			SendTo(data.sId, user.PublicId, "createdUser");
+
+			data.SendBack(MessageData.CreateMessageData<RegisteredUser, RegiserUserResponse>(response, response.id));
+			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
 
 		public override CommandSettings GetSettings()
@@ -498,10 +527,36 @@ namespace Coflnet
 		}
 	}
 
+	public class RegisteredUser : Command
+	{
+		public override void Execute(MessageData data)
+		{
+			var response = data.GetAs<RegiserUserResponse>();
+			ConfigController.UserSettings.userId = response.id;
+			ConfigController.UserSettings.userSecret = response.secret;
+		}
+
+		public override CommandSettings GetSettings()
+		{
+			return new CommandSettings();
+		}
+
+		public override string GetSlug()
+		{
+			return "registeredUser";
+		}
+	}
+
 	public class RegisterUserRequest
 	{
 		public string captchaToken;
-		public string clientId;
+		public SourceReference clientId;
+	}
+
+	public class RegiserUserResponse
+	{
+		public SourceReference id;
+		public byte[] secret;
 	}
 
 

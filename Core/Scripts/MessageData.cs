@@ -104,6 +104,22 @@ namespace Coflnet
 			return new MessageData(new SourceReference(), m_id, MessagePackSerializer.Serialize<T>(data), type);
 		}
 
+
+		/// <summary>
+		/// Creates the message data.
+		/// </summary>
+		/// <returns>The message data.</returns>
+		/// <param name="data">Data.</param>
+		/// <param name="target">Target.</param>
+		/// <param name="m_id">M identifier.</param>
+		/// <typeparam name="C">The 1st type parameter.</typeparam>
+		/// <typeparam name="T">The 2nd type parameter.</typeparam>
+		public static MessageData CreateMessageData<C, T>(T data, SourceReference target, long m_id = 0) where C : Command
+		{
+			return new MessageData(target, m_id, MessagePackSerializer.Serialize<T>(data), System.Activator.CreateInstance<C>().GetSlug());
+		}
+
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Coflnet.MessageData"/> class.
 		/// </summary>
@@ -259,8 +275,20 @@ namespace Coflnet
 
 		public override string ToString()
 		{
-			return string.Format("[MessageData: message={0}, Data={1}, DeSerialized={2}, User={3}, UserReference={4}]", message, Data, DeSerialized, User, UserReference);
+			return string.Format("[MessageData: message={0}, Data={1}, DeSerialized={2}, type={3}, UserReference={4}]", message, Data, DeSerialized, t, UserReference);
 		}
+
+		/// <summary>
+		/// Sends the command back.
+		/// </summary>
+		/// <param name="data">Data.</param>
+		public virtual void SendBack(MessageData data)
+		{
+			data.rId = this.sId;
+			CoflnetCore.Instance.SendCommand(data);
+		}
+
+
 	}
 }
 

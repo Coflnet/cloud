@@ -95,6 +95,7 @@ namespace Coflnet
 	{
 		public List<long> managingServers;
 		public SourceReference userId;
+		public byte[] userSecret;
 
 
 		public UserSettings()

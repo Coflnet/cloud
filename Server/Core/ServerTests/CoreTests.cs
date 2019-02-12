@@ -225,7 +225,9 @@ public class CoreTests
 	{
 		public override void Execute(MessageData data)
 		{
-			SendBack(data, 5);
+			//SendBack(data, 5);
+			data.SerializeAndSet<int>(4);
+			data.SendBack(data);
 		}
 
 		public override ServerCommandSettings GetServerSettings()
@@ -268,7 +270,7 @@ public class CoreTests
 
 
 		// test the expected error slug
-		Assert.AreEqual(BitConverter.ToInt32(response.message, 0), 4);
+		Assert.AreEqual(response.GetAs<int>(), 4);
 
 		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
 	}

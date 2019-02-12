@@ -12,9 +12,10 @@ namespace Coflnet
 
 		/// <summary>
 		/// Wherether or not this is the primary device
+		/// Deprecated, the first item of the users device list is his primary device
 		/// </summary>
-		[DataMember]
-		private bool primary;
+		//[DataMember]
+		//private bool primary;
 		/// <summary>
 		/// Public Key is used for authetication purposes
 		/// </summary>
@@ -73,13 +74,6 @@ namespace Coflnet
 		private List<MessageData> unsentMessages;
 
 
-		public bool Primary
-		{
-			get
-			{
-				return primary;
-			}
-		}
 
 
 		public byte[] PublicKey

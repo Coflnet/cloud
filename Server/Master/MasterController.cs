@@ -159,30 +159,6 @@ namespace Coflnet.Server
 		}
 	}
 
-	/// <summary>
-	/// Or permission used to require not all but just one of two permissions
-	/// </summary>
-	public class OrPermission : Permission
-	{
-		private Permission firstPermission;
-		private Permission secondPermission;
-
-		public override bool CheckPermission(MessageData data, Referenceable target)
-		{
-			return firstPermission.CheckPermission(data, target) || secondPermission.CheckPermission(data, target);
-		}
-
-		public override string GetSlug()
-		{
-			return $"{firstPermission.GetSlug()}Or{secondPermission.GetSlug()}";
-		}
-
-		public OrPermission(Permission firstPermission, Permission secondPermission)
-		{
-			this.firstPermission = firstPermission;
-			this.secondPermission = secondPermission;
-		}
-	}
 
 
 

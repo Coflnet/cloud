@@ -115,7 +115,7 @@ public class ServerMessageData : MessageData
 	}
 
 
-	public ServerMessageData()
+	public ServerMessageData() : base()
 	{
 	}
 
@@ -123,15 +123,19 @@ public class ServerMessageData : MessageData
 	{
 	}
 
-
+	public override void SendBack(MessageData data)
+	{
+		data.rId = this.sId;
+		Connection.SendBack(data);
+	}
 }
 
 [MessagePack.Union(1, typeof(CoflnetWebsocketServer))]
 public interface IClientConnection
 {
-	CoflnetUser GetUser();
+	CoflnetUser User { get; set; }
 
-	Device GetDevice();
+	Device Device { get; set; }
 
 	CoflnetEncoder Encoder { get; }
 
@@ -339,9 +343,6 @@ public class CoflEncoder<T>
 public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 {
 	protected CommandController commandController;
-	// an user can have multiple connections (multiple devices)
-	protected static Dictionary<string, CoflnetWebsocketServer[]> userToSession;
-	protected Dictionary<string, CoflnetWebsocketServer> serverToSession;
 	protected static Dictionary<SourceReference, CoflnetWebsocketServer> Connections;
 
 	/// <summary>
@@ -352,11 +353,11 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// <summary>
 	/// If authenticated and present the user
 	/// </summary>
-	private CoflnetUser user;
+	private CoflnetUser _user;
 	/// <summary>
 	/// If authenticated and present the connected device
 	/// </summary>
-	private Device device;
+	private Device _device;
 
 	/// <summary>
 	/// If authenticated and present the server
@@ -366,6 +367,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// Permissions this connection has received 
 	/// Controlls what commands are allowed to be executed
 	/// </summary>
+	[Obsolete]
 	private List<Permission> permissions;
 
 
@@ -465,10 +467,20 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 			}
 
 
+			// prevent id spoofing
+			if (messageData.sId != _user.Id
+				&& messageData.sId != _device.Id)
+			//&& messageData.sId != server.Id)
+			{
+				messageData.sId = new SourceReference();
+			}
+
+
+
 			var controllerForObject = ReferenceManager.Instance.GetResource(messageData.rId)
 							.GetCommandController();
+
 			controllerForObject.ExecuteCommand(messageData);
-			//this.commandController.ExecuteCommand(messageData);         
 		}
 		catch (CoflnetException ex)
 		{
@@ -532,15 +544,6 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		return true;
 	}
 
-	/// <summary>
-	/// Sends some data to a server
-	/// </summary>
-	/// <param name="data">Data.</param>
-	/// <param name="serverId">Server unique identifier.</param>
-	public void SendToServer(byte[] data, string serverId)
-	{
-		serverToSession[serverId].Send(data);
-	}
 
 	/// <summary>
 	/// Tries the send data to some receiver
@@ -587,18 +590,32 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// Gets the user if authenticated null otherwise.
 	/// </summary>
 	/// <returns>The user.</returns>
-	public CoflnetUser GetUser()
+	public CoflnetUser User
 	{
-		return user;
+		get
+		{
+			return _user;
+		}
+		set
+		{
+			_user = value;
+		}
 	}
 
 	/// <summary>
 	/// Gets the device if authenticated, null otherwise
 	/// </summary>
 	/// <returns>The device that this connection is going to.</returns>
-	public Device GetDevice()
+	public Device Device
 	{
-		return device;
+		get
+		{
+			return _device;
+		}
+		set
+		{
+			_device = value;
+		}
 	}
 
 
