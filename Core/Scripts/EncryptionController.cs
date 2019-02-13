@@ -50,8 +50,7 @@ public class EncryptionController
 	{
 		instance = new EncryptionController();
 
-
-		var cc = ServerController.Instance.commandController;
+		var cc = CoflnetCore.Instance.GetCommandController();
 		cc.RegisterCommand(new LegacyCommand("sessionSetup", instance.ReceiveSessionSetup));
 		cc.RegisterCommand(new LegacyCommand("resendSetup", instance.RequestResendSetup));
 		cc.RegisterCommand<ReceivedSetup>();

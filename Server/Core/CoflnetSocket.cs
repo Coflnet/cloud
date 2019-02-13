@@ -81,20 +81,25 @@ public class CoflnetSocket
 	/// </summary>
 	/// <returns><c>true</c>, if command was sent, <c>false</c> otherwise.</returns>
 	/// <param name="data">Data.</param>
-	public static bool TrySendCommand(MessageData data)
+	public static bool TrySendCommand(MessageData data, long serverId = 0)
 	{
-		if (Instance.server.TrySend(data))
+		if (serverId == 0)
 		{
-			return true;
+			if (Instance.server.TrySend(data))
+			{
+				return true;
+			}
+			// resource isn't connected, try to route the data forward
+			serverId = data.rId.ServerId;
 		}
-		else if (Instance.server.TrySendTo(new SourceReference(data.rId.ServerId, 0), data))
+
+		if (Instance.server.TrySendTo(new SourceReference(serverId, 0), data))
 		{
 			return true;
 		}
 		// & 0x7FFFFFFFFFFF0000 removes the local serverid wich leaves us with the location router
-		return Instance.server.TrySendTo(new SourceReference(data.rId.ServerId & 0x7FFFFFFFFFFF0000, 0), data);
+		return Instance.server.TrySendTo(new SourceReference(serverId & 0x7FFFFFFFFFFF0000, 0), data);
 	}
-
 }
 
 

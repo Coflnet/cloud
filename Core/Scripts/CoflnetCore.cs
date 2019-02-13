@@ -30,7 +30,7 @@ namespace Coflnet
 
 
 
-		public abstract void SendCommand(MessageData data);
+		public abstract void SendCommand(MessageData data, long serverId = 0);
 		public abstract void SendCommand<C, T>(SourceReference receipient, T data) where C : Command;
 		public abstract void SendCommand<C>(SourceReference receipient, byte[] data) where C : Command;
 

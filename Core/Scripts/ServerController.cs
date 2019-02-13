@@ -10,8 +10,6 @@ namespace Coflnet
 	{
 		protected ConcurrentDictionary<long, CoflnetServer> servers;
 
-		public CommandController commandController { get; protected set; }
-
 		public static ServerController Instance { get; set; }
 
 		public void SendCommandToServer(MessageData data, long serverId = 0)
@@ -81,7 +79,7 @@ namespace Coflnet
 
 		public ServerController()
 		{
-			commandController = new CommandController();
+
 		}
 
 		static ServerController()

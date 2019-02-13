@@ -62,12 +62,11 @@ namespace Coflnet.Server
 		}
 
 
-		public override void SendCommand(MessageData data)
+		public override void SendCommand(MessageData data, long serverId = 0)
 		{
-			if (CoflnetSocket.TrySendCommand(data))
+			if (CoflnetSocket.TrySendCommand(data, serverId))
 				return;
-			// Command couldn't be sent we have to persist it
-
+			// Command couldn't be sent we have to persist it         
 			MessagePersistence.Instance.Save(data);
 		}
 

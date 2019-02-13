@@ -145,6 +145,23 @@ namespace Coflnet
 		{
 			return references.TryAdd(referenceable.Id, new Reference<Referenceable>(referenceable));
 		}
+
+
+		public void ExecuteForReference(MessageData data)
+		{
+			Reference<Referenceable> value;
+			references.TryGetValue(data.rId, out value);
+			if (value == null)
+			{
+				throw new CoflnetException("resource_not_found", $"The resource {data.rId} wasn't found on this server");
+			}
+			var resource = value.GetAsIfPresent<Referenceable>();
+			if (resource != null)
+			{
+				resource.GetCommandController().ExecuteCommand(data);
+			}
+			value.ExecuteForResource(data);
+		}
 	}
 
 	/// <summary>
@@ -181,7 +198,34 @@ namespace Coflnet
 
 		}
 
+		/// <summary>
+		/// Checks if a certain resource is allowed to access this one and or execute commands
+		/// </summary>
+		/// <returns><c>true</c>, if allowed access, <c>false</c> otherwise.</returns>
+		/// <param name="requestingReference">Requesting reference.</param>
+		/// <param name="mode">Mode.</param>
+		public virtual bool IsAllowedAccess(SourceReference requestingReference, AccessMode mode = AccessMode.READ)
+		{
+			return (Access != null) && Access.IsAllowedToAccess(requestingReference, mode);
+		}
 
+
+		public virtual void ExecuteCommand(MessageData data)
+		{
+			var controller = GetCommandController();
+			var command = controller.GetCommand(data.t);
+
+			AccessMode mode = AccessMode.READ;
+			if (!command.Settings.ThreadSave)
+			{
+				mode = AccessMode.WRITE;
+			}
+
+			if (!IsAllowedAccess(data.sId, mode))
+				throw new CoflnetException("access_denied", "The executing resource doesn't have rights to execute that command on this resource");
+
+			controller.ExecuteCommand(command, data);
+		}
 
 		public abstract CommandController GetCommandController();
 	}
@@ -313,7 +357,7 @@ namespace Coflnet
 		/// <param name="data">Command data to send</param>
 		public void ExecuteForResource(MessageData data)
 		{
-			Coflnet.ServerController.Instance.SendCommandToServer(data, ReferenceId.ServerId);
+			ServerController.Instance.SendCommandToServer(data, ReferenceId.ServerId);
 		}
 
 		/// <summary>

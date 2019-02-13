@@ -15,6 +15,14 @@ public class CoflnetUserTests
 
 	}
 
+
+	[Test]
+	public void UserMessageForwarding()
+	{
+		ServerCore.Init();
+
+	}
+
 	// A UnityTest behaves like a coroutine in PlayMode
 	// and allows you to yield null to skip a frame in EditMode
 	[UnityTest]

@@ -9,7 +9,7 @@ namespace Coflnet
 	/// </summary>
 	[DataContract]
 	[System.Serializable]
-	public class CoflnetUser : Referenceable
+	public class CoflnetUser : ReceiveableResource
 	{
 		private static CommandController commandController;
 

@@ -57,7 +57,7 @@
 			return CommandController;
 		}
 
-		public override void SendCommand(MessageData data)
+		public override void SendCommand(MessageData data, long serverId = 0)
 		{
 			socket.SendCommand(data);
 		}
