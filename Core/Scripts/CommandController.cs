@@ -326,6 +326,16 @@ namespace Coflnet
 			}
 
 			/// <summary>
+			/// Gets or sets a value indicating whether the target resource will be changed by this command.
+			/// </summary>
+			/// <value><c>true</c> if command updates the resource and has to be distributed; otherwise, <c>false</c>.</value>
+			public bool IsChaning
+			{
+				get;
+				protected set;
+			}
+
+			/// <summary>
 			/// Wherether or not this command is end-to-end encrypted
 			/// </summary>
 			public bool Encrypted
@@ -345,6 +355,17 @@ namespace Coflnet
 				protected set;
 			}
 
+
+			/// <summary>
+			/// Gets the permissions needed for this command
+			/// </summary>
+			/// <value>The permissions which need to execute as true for this command to be executed.</value>
+			public Permission[] Permissions
+			{
+				get;
+				private set;
+			}
+
 			/// <summary>
 			/// Initializes a new instance of the <see cref="T:Coflnet.Command.CommandSettings"/> class.
 			/// </summary>
@@ -357,6 +378,33 @@ namespace Coflnet
 				Encrypted = encrypted;
 				LocalPropagation = localPropagation;
 			}
+
+			/// <summary>
+			/// Initializes a new instance of the <see cref="T:Coflnet.Command.CommandSettings"/> class.
+			/// </summary>
+			/// <param name="threadSave">If set to <c>true</c> thread save.</param>
+			/// <param name="encrypted">If set to <c>true</c> encrypted.</param>
+			/// <param name="localPropagation">If set to <c>true</c> local propagation.</param>
+			/// <param name="permissions">Permissions.</param>
+			public CommandSettings(bool threadSave, bool encrypted, bool localPropagation, Permission[] permissions)
+			{
+				ThreadSave = threadSave;
+				Encrypted = encrypted;
+				LocalPropagation = localPropagation;
+				Permissions = permissions;
+			}
+
+
+			public CommandSettings(bool threadSave, bool isUpdating, bool encrypted, bool localPropagation, Permission[] permissions)
+			{
+				ThreadSave = threadSave;
+				IsChaning = isUpdating;
+				Encrypted = encrypted;
+				LocalPropagation = localPropagation;
+				Permissions = permissions;
+			}
+
+
 		}
 	}
 
@@ -424,19 +472,11 @@ namespace Coflnet
 				}
 				private set
 				{
-					_cost = value < (short)1 ? (short)1 : value;
+					_cost = value < (short)0 ? (short)1 : value;
 				}
 			}
 
-			/// <summary>
-			/// Gets the permissions needed for this command
-			/// </summary>
-			/// <value>The permissions which need to execute as true for this command to be executed.</value>
-			public Permission[] Permissions
-			{
-				get;
-				private set;
-			}
+
 
 			/// <summary>
 			/// Initializes a new instance of the <see cref="T:Coflnet.ServerCommand.ServerCommandSettings"/> class.
@@ -445,10 +485,9 @@ namespace Coflnet
 			/// <param name="encrypted">If set to <c>true</c> the command is end to end encrypted.</param>
 			/// <param name="cost">How many usages are used by this command.</param>
 			/// <param name="permissions">Permissions needed to execute the command.</param>
-			public ServerCommandSettings(bool threadSave = false, bool encrypted = false, short cost = 1, params Permission[] permissions) : base(threadSave, encrypted)
+			public ServerCommandSettings(bool threadSave = false, bool encrypted = false, short cost = 1, params Permission[] permissions) : base(threadSave, encrypted, false, permissions)
 			{
 				Cost = cost;
-				Permissions = permissions;
 			}
 
 
@@ -458,10 +497,9 @@ namespace Coflnet
 			/// <param name="threadSave">If set to <c>true</c> the command is thread save.</param>
 			/// <param name="cost">Cost of the command.</param>
 			/// <param name="permissions">Permissions.</param>
-			public ServerCommandSettings(bool threadSave = false, short cost = 1, params Permission[] permissions) : base(threadSave)
+			public ServerCommandSettings(bool threadSave = false, short cost = 1, params Permission[] permissions) : base(threadSave, false, false, permissions)
 			{
 				Cost = cost;
-				Permissions = permissions;
 			}
 
 			/// <summary>
@@ -507,12 +545,12 @@ namespace Coflnet
 			// get the client         
 			CoflnetUser user = CoflnetUser.Generate(request.clientId);
 
-			var response = new RegiserUserResponse();
+			var response = new RegisterUserResponse();
 			response.id = user.Id;
 			response.secret = user.Secret;
 
 
-			data.SendBack(MessageData.CreateMessageData<RegisteredUser, RegiserUserResponse>(response, response.id));
+			data.SendBack(MessageData.CreateMessageData<RegisteredUser, RegisterUserResponse>(response, response.id));
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
 
@@ -531,7 +569,7 @@ namespace Coflnet
 	{
 		public override void Execute(MessageData data)
 		{
-			var response = data.GetAs<RegiserUserResponse>();
+			var response = data.GetAs<RegisterUserResponse>();
 			ConfigController.UserSettings.userId = response.id;
 			ConfigController.UserSettings.userSecret = response.secret;
 		}
@@ -546,16 +584,21 @@ namespace Coflnet
 			return "registeredUser";
 		}
 	}
-
+	[MessagePackObject]
 	public class RegisterUserRequest
 	{
+		[Key(0)]
 		public string captchaToken;
+		[Key(1)]
 		public SourceReference clientId;
 	}
 
-	public class RegiserUserResponse
+	[MessagePackObject]
+	public class RegisterUserResponse
 	{
+		[Key(0)]
 		public SourceReference id;
+		[Key(1)]
 		public byte[] secret;
 	}
 

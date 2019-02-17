@@ -24,7 +24,10 @@
 			}
 		}
 
-
+		public static void Init()
+		{
+			ClientInstance.socket.Reconnect();
+		}
 
 
 		static CoflnetClient()
@@ -59,7 +62,18 @@
 
 		public override void SendCommand(MessageData data, long serverId = 0)
 		{
-			socket.SendCommand(data);
+			try
+			{
+				socket.SendCommand(data);
+			}
+			catch (System.InvalidOperationException)
+			{
+				// send failed, reconnect and try again
+				socket.Reconnect();
+				UnityEngine.Debug.Log("Reconnecting");
+
+				socket.SendCommand(data);
+			}
 		}
 
 		public override void SendCommand<C, T>(SourceReference receipient, T data)

@@ -105,6 +105,12 @@ namespace Coflnet
 		{
 			onMessage?.Invoke(data);
 		}
+
+
+		public void Reconnect()
+		{
+			webSocket.Connect();
+		}
 	}
 
 	/// <summary>

@@ -4,6 +4,7 @@ using System.Collections;
 using Coflnet;
 using Coflnet.Server;
 using System;
+using System.Text.RegularExpressions;
 
 public class CoreTests
 {
@@ -110,10 +111,7 @@ public class CoreTests
 	public void StoreResourceInManager()
 	{
 		var res = new TestResource();
-
-		var id = ReferenceManager.Instance.CreateReference(res);
-
-		Assert.IsTrue(ReferenceManager.Instance.Contains(id));
+		Assert.IsTrue(ReferenceManager.Instance.Contains(res.Id));
 	}
 
 	[Test]
@@ -121,8 +119,7 @@ public class CoreTests
 	{
 		var res = new TestResource();
 		res.value = 1111;
-		var id = ReferenceManager.Instance.CreateReference(res);
-		var retrivedRes = ReferenceManager.Instance.GetResource(id);
+		var retrivedRes = ReferenceManager.Instance.GetResource(res.Id);
 		Assert.IsTrue(retrivedRes.Id == res.Id);
 	}
 
@@ -131,8 +128,7 @@ public class CoreTests
 	{
 		var res = new TestResource();
 		res.value = 1111;
-		var id = ReferenceManager.Instance.CreateReference(res);
-		var retrivedRes = ReferenceManager.Instance.GetResource<TestResource>(id);
+		var retrivedRes = ReferenceManager.Instance.GetResource<TestResource>(res.Id);
 		Assert.IsTrue(retrivedRes.value == 1111);
 	}
 
@@ -159,7 +155,7 @@ public class CoreTests
 	public void RecourceCommandTest()
 	{
 		var res = new TestResource();
-		var id = ReferenceManager.Instance.CreateReference(res);
+		var id = res.Id;
 		var retrivedRes = ReferenceManager.Instance.GetResource<TestResource>(id);
 
 		retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
@@ -176,15 +172,18 @@ public class CoreTests
 		{
 
 		});
+		// p
+		ClientSocket.Instance.Reconnect();
+		yield return new UnityEngine.WaitForSeconds(0.5f);
 
-
-		yield return new UnityEngine.WaitForSeconds(1);
-
-
+		LogAssert.Expect(UnityEngine.LogType.Error,
+						 new Regex($".*There is no server with the id 0.*"));
 		ClientSocket.Instance.SendCommand(new MessageData());
 
 		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
 
+		yield return new UnityEngine.WaitForSeconds(0.5f);
+		ServerCore.Stop();
 		//Assert.IsTrue(res.value == 5);
 	}
 
@@ -202,15 +201,18 @@ public class CoreTests
 			};
 
 
-
+		ClientSocket.Instance.Reconnect();
 		yield return new UnityEngine.WaitForSeconds(1);
+
+		var newId = new SourceReference(1, 1, 1, ThreadSaveIdGenerator.NextId);
 
 		// the error is whitelisted
 		// beause the console is also the server console this would cause the test to faild otherwise
 		LogAssert.Expect(UnityEngine.LogType.Error,
-						 new System.Text.RegularExpressions.Regex(".*The requested object doesn't exist on this server.*"));
+						 new Regex($".*{Regex.Escape(newId.ToString())}.*wasn't found on this server.*"));
 
-		ClientSocket.Instance.SendCommand(new MessageData(new SourceReference(1, 1, 1, ThreadSaveIdGenerator.NextId)));
+
+		ClientSocket.Instance.SendCommand(new MessageData(newId));
 
 		yield return new UnityEngine.WaitForSeconds(1);
 
@@ -218,6 +220,7 @@ public class CoreTests
 		// test the expected error slug
 		Assert.AreEqual(returnValue, "object_not_found");
 
+		ServerCore.Stop();
 		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
 	}
 
@@ -272,7 +275,7 @@ public class CoreTests
 		// test the expected error slug
 		Assert.AreEqual(response.GetAs<int>(), 4);
 
-		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
+		ServerCore.Stop();
 	}
 
 

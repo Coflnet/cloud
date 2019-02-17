@@ -23,11 +23,13 @@ namespace Coflnet.Server
 		static ServerCore()
 		{
 			CompositeResolver.RegisterAndSetAsDefault(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
-			CoflnetSocket.socketServer.Start();
+
 			Commands = new CommandController();
 			ServerInstance = new ServerCore();
 			Instance = ServerInstance;
 			Instance.Id = ConfigController.ApplicationSettings.id;
+
+			Commands.RegisterCommand<RegisterUser>();
 		}
 
 		/// <summary>
@@ -36,6 +38,7 @@ namespace Coflnet.Server
 		/// </summary>
 		public static void Init()
 		{
+			CoflnetSocket.socketServer.Start();
 			ServerInstance.SetCommandsLive();
 			Coflnet.ServerController.Instance = Coflnet.Server.ServerController.ServerInstance;
 		}
@@ -52,7 +55,6 @@ namespace Coflnet.Server
 
 		protected void SetCommandsLive()
 		{
-			Commands.RegisterCommand<RegisterUser>();
 			ReferenceManager.Instance.AddReference(this);
 		}
 
@@ -95,24 +97,6 @@ namespace Coflnet.Server
 		}
 
 
-		public class RegisterUser : ServerCommand
-		{
-			public override void Execute(MessageData data)
-			{
-				var sdata = data as ServerMessageData;
-				sdata.Connection.SendBack(data);
-			}
-
-			public override ServerCommandSettings GetServerSettings()
-			{
-				return new ServerCommandSettings();
-			}
-
-			public override string GetSlug()
-			{
-				return "registerUser";
-			}
-		}
 
 		public class LoginUser : ServerCommand
 		{

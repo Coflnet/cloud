@@ -8,6 +8,16 @@ namespace Coflnet
 	/// </summary>
 	public abstract class ReceiveableResource : Referenceable
 	{
+		protected static CommandController persistenceCommands;
+
+
+		static ReceiveableResource()
+		{
+			persistenceCommands = new CommandController();
+			persistenceCommands.RegisterCommand<GetMessages>();
+		}
+
+
 		public override void ExecuteCommand(MessageData data)
 		{
 			// each incoming command will be forwarded to the resource
@@ -21,6 +31,36 @@ namespace Coflnet
 			}
 
 			CoflnetCore.Instance.SendCommand(data);
+		}
+
+		public ReceiveableResource(SourceReference owner) : base(owner)
+		{
+		}
+
+		public ReceiveableResource() : base()
+		{
+		}
+
+
+		public class GetMessages : Command
+		{
+			public override void Execute(MessageData data)
+			{
+				foreach (var item in MessageDataPersistence.Instance.GetMessagesFor(data.rId))
+				{
+					data.SendBack(item);
+				}
+			}
+
+			public override CommandSettings GetSettings()
+			{
+				return new CommandSettings();
+			}
+
+			public override string GetSlug()
+			{
+				return "getMessages";
+			}
 		}
 	}
 }

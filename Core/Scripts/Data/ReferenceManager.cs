@@ -86,7 +86,8 @@ namespace Coflnet
 			references.TryGetValue(id, out reference);
 
 			if (reference == null || reference.Resource == null)
-				throw new CoflnetException("object_not_found", "The requested object doesn't exist on this server", null, 404);
+
+				throw new ObjectNotFound(id);
 
 			if (reference.Resource is T)
 			{
@@ -153,14 +154,33 @@ namespace Coflnet
 			references.TryGetValue(data.rId, out value);
 			if (value == null)
 			{
-				throw new CoflnetException("resource_not_found", $"The resource {data.rId} wasn't found on this server");
+				if (data.sId.ServerId != ConfigController.ApplicationSettings.id.ServerId)
+				{
+					// we are not the main managing server, pass it on to it
+					CoflnetCore.Instance.SendCommand(data);
+					return;
+				}
+				throw new ObjectNotFound(data.rId);
 			}
 			var resource = value.GetAsIfPresent<Referenceable>();
 			if (resource != null)
 			{
-				resource.GetCommandController().ExecuteCommand(data);
+				var controller = resource.GetCommandController();
+				var command = controller.GetCommand(data.t);
+				controller.ExecuteCommand(command, data);
+				if (!command.Settings.IsChaning)
+				{
+					return;
+				}
 			}
 			value.ExecuteForResource(data);
+		}
+
+		public class ObjectNotFound : CoflnetException
+		{
+			public ObjectNotFound(SourceReference id) : base("object_not_found", $"The resource {id} wasn't found on this server", null, 404)
+			{
+			}
 		}
 	}
 
@@ -188,7 +208,7 @@ namespace Coflnet
 		/// Initializes a new instance of the <see cref="T:Coflnet.Server.Referenceable"/> class.
 		/// </summary>
 		/// <param name="owner">Owner creating this resource.</param>
-		protected Referenceable(SourceReference owner)
+		protected Referenceable(SourceReference owner) : this()
 		{
 			this.Access = new Access(owner);
 		}
@@ -196,6 +216,7 @@ namespace Coflnet
 		protected Referenceable()
 		{
 
+			this.Id = ReferenceManager.Instance.CreateReference(this);
 		}
 
 		/// <summary>

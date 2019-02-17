@@ -268,12 +268,13 @@ namespace Coflnet
 			this.blocked = new List<Reference<CoflnetUser>>();
 			this.silent = new List<Reference<CoflnetUser>>();
 			this.friends = new List<Reference<CoflnetUser>>();
+
 		}
 
 		static CoflnetUser()
 		{
 			// register commands
-			commandController = new CommandController();
+			commandController = new CommandController(persistenceCommands);
 			commandController.RegisterCommand<GetUserKeyValue>();
 			commandController.RegisterCommand<SetUserKeyValue>();
 		}

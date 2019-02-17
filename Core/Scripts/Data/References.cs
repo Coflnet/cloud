@@ -114,7 +114,7 @@ namespace Coflnet
 
 		public override string ToString()
 		{
-			return Encoding.UTF8.GetString(AsByte);
+			return $"{Convert.ToString(ServerId, 16)}.{Convert.ToString(ResourceId, 16)}";
 		}
 
 		[IgnoreMember]

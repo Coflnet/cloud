@@ -40,15 +40,20 @@ public class CoflnetUserTests
 
 		yield return new UnityEngine.WaitForSeconds(1);
 
+		// set data
+		var request = new RegisterUserRequest();
+		request.captchaToken = "";
+		request.clientId = ConfigController.ApplicationSettings.id;
+
 		// send the command
 		ClientSocket.Instance.SendCommand(
-			new MessageData(ConfigController.ApplicationSettings.id, -1, "", "registerUser"));
+			MessageData.CreateMessageData<RegisterUser, RegisterUserRequest>(request, ConfigController.ApplicationSettings.id));
 
 		// await response
-		yield return new UnityEngine.WaitForSeconds(1);
-		Debug.Log(response.ToString());
-		Assert.AreEqual(response.GetAs<int>(), 4);
+		yield return new UnityEngine.WaitForSeconds(0.5f);
+		Debug.Log(response.GetAs<RegisterUserResponse>().id);
 
-		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
+		// user was created in the last second
+		Assert.IsTrue(response.GetAs<RegisterUserResponse>().id.ResourceId > ThreadSaveIdGenerator.NextId - 10000000);
 	}
 }

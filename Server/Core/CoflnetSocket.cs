@@ -422,9 +422,6 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 			}
 		}
 
-		var id = ReferenceManager.Instance.CreateReference(new CoflnetUser());
-		Debug.Log($"source id: {MessagePackSerializer.ToJson(id)}");
-
 
 		if (this.Encoder == null)
 		{
@@ -468,13 +465,13 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 
 			if (messageData.rId.ServerId == 0)
 			{
-				throw new CoflnetException("unknown_server", "this server is unknown");
+				throw new CoflnetException("unknown_server", "this server is unknown (There is no server with the id 0)");
 			}
 
 
 			// prevent id spoofing
-			if (messageData.sId != _user.Id
-				&& messageData.sId != _device.Id)
+			if (messageData.sId != _user?.Id
+				&& messageData.sId != _device?.Id)
 			//&& messageData.sId != server.Id)
 			{
 				messageData.sId = new SourceReference();
