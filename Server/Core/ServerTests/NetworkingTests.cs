@@ -2,27 +2,55 @@
 using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.Collections;
+using Coflnet;
 using Coflnet.Server;
+
 
 public class NetworkingTests
 {
 
 	[Test]
-	public void NetworkingTestsSimplePasses()
+	public void DistributionsTest()
 	{
-		// Use the Assert class to test conditions.
+
+
 	}
 
-	// A UnityTest behaves like a coroutine in PlayMode
-	// and allows you to yield null to skip a frame in EditMode
+	/// <summary>
+	/// Tests a distributable resource
+	/// </summary>
+	/// <returns>The test.</returns>
 	[UnityTest]
-	public IEnumerator NetworkingWithTwoServersReplication()
+	public IEnumerator DistributionTest()
 	{
 
+		ServerCore.Init();
+		string returnValue = null;
+		ClientSocket.Instance.OnError +=
+			(CoflnetException coflnetException)
+						=>
+			{
+				returnValue = coflnetException.Slug;
+			};
 
-		var secondServer = new ServerCore();
+		var secondClient = ClientSocket.NewInstance();
+		//secondClient.SendCommand(MessageData.CreateMessageData<Login>);
 
 
-		yield return null;
+		ClientSocket.Instance.Reconnect();
+		yield return new UnityEngine.WaitForSeconds(1);
+
+		var newId = new SourceReference(1, 1, 1, ThreadSaveIdGenerator.NextId);
+
+
+		ClientSocket.Instance.SendCommand(new MessageData(newId));
+
+		yield return new UnityEngine.WaitForSeconds(1);
+
+
+		// test the expected error slug
+		Assert.AreEqual(returnValue, "object_not_found");
+
+		ServerCore.Stop();
 	}
 }

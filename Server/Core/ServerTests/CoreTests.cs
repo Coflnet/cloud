@@ -149,6 +149,7 @@ public class CoreTests
 		var res = new TestResource();
 		res.Id = new SourceReference(5, 2);
 		var id = ReferenceManager.Instance.CreateReference(res, true);
+		//Assert.IsNotEqual(id, new SourceReference());
 	}
 
 	[Test]
@@ -329,5 +330,14 @@ public class CoreTests
 		// Use the Assert class to test conditions.
 		// yield to skip a frame
 		yield return new UnityEngine.WaitForSeconds(1);
+	}
+
+
+
+	[Test]
+	public void CommandExtention()
+	{
+		var loginUser = ServerCore.Commands.GetCommand("loginUser");
+		Assert.IsNotNull(loginUser);
 	}
 }

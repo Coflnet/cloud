@@ -16,7 +16,8 @@ public class SerializationTests
 	{
 		var cc = new CommandController();
 		var md = new MessageData();
-		Assert.IsTrue(true);
+		Assert.IsNotNull(cc);
+		Assert.IsNotNull(md);
 	}
 
 	public class TestCommand : Command
@@ -103,6 +104,9 @@ public class SerializationTests
 	{
 		var user1 = new CoflnetUser();
 		var user2 = new CoflnetUser(new SourceReference());
+
+		Assert.IsNotNull(user1);
+		Assert.IsNotNull(user2);
 	}
 
 

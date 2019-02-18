@@ -22,16 +22,19 @@ namespace Coflnet
 
 		static ClientSocket()
 		{
-			var url = ConfigController.GetUrl("socket", ConfigController.WebProtocol.wss);
-			UnityEngine.Debug.Log("url ist: " + url);
-
-			Instance = new ClientSocket(new WebSocket(url));
+			Instance = NewInstance();
 			Instance.webSocket.Log.Level = LogLevel.Trace;
 			Instance.webSocket.Log.Output += (arg1, arg2) =>
 			{
 				UnityEngine.Debug.Log("clientsocket: " + arg1);
 			};
 			Instance.webSocket.Connect();
+		}
+
+
+		public static ClientSocket NewInstance()
+		{
+			return new ClientSocket(new WebSocket(ConfigController.GetUrl("socket", ConfigController.WebProtocol.wss)));
 		}
 
 		/// <summary>

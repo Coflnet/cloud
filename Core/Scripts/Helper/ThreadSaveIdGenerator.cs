@@ -17,7 +17,6 @@ namespace Coflnet
 		private static long _lastTime;
 		private static object _threadLock = new object();
 
-		private static readonly short _tickGroupSize = 8192;
 
 		/// <summary>
 		/// Gets the next identifier.

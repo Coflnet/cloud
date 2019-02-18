@@ -386,7 +386,7 @@ namespace Coflnet
 			/// <param name="encrypted">If set to <c>true</c> encrypted.</param>
 			/// <param name="localPropagation">If set to <c>true</c> local propagation.</param>
 			/// <param name="permissions">Permissions.</param>
-			public CommandSettings(bool threadSave, bool encrypted, bool localPropagation, Permission[] permissions)
+			public CommandSettings(bool threadSave, bool encrypted, bool localPropagation, params Permission[] permissions)
 			{
 				ThreadSave = threadSave;
 				Encrypted = encrypted;
@@ -395,7 +395,7 @@ namespace Coflnet
 			}
 
 
-			public CommandSettings(bool threadSave, bool isUpdating, bool encrypted, bool localPropagation, Permission[] permissions)
+			public CommandSettings(bool threadSave, bool isUpdating, bool encrypted, bool localPropagation, params Permission[] permissions)
 			{
 				ThreadSave = threadSave;
 				IsChaning = isUpdating;
@@ -412,6 +412,18 @@ namespace Coflnet
 	public interface IContainsSlug
 	{
 		string GetSlug();
+	}
+
+
+	public class CommandExistsOnServer : NotImplementedException
+	{
+		public CommandExistsOnServer(string message) : base(message)
+		{
+		}
+
+		public CommandExistsOnServer() : base("The command doesn't exist on the client only on the server")
+		{
+		}
 	}
 
 

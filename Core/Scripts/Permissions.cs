@@ -134,5 +134,18 @@ namespace Coflnet
 			return "isAuthenticated";
 		}
 	}
+
+	public class SenderIsUserPermission : Permission
+	{
+		public override bool CheckPermission(MessageData data, Referenceable target)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override string GetSlug()
+		{
+			throw new NotImplementedException();
+		}
+	}
 }
 
