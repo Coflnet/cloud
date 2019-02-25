@@ -30,12 +30,16 @@ namespace Coflnet.Server
 			Instance.Id = ConfigController.ApplicationSettings.id;
 
 			Commands.RegisterCommand<RegisterUser>();
+			Commands.RegisterCommand<ReceiveConfirm>();
 
 
 			foreach (var item in ExtraModules.Commands)
 			{
 				item.RegisterCommands(Commands);
 			}
+
+			// chang messagedata persistence
+			MessageDataPersistence.Instance = MessagePersistence.ServerInstance;
 		}
 
 		/// <summary>
@@ -75,7 +79,7 @@ namespace Coflnet.Server
 			if (CoflnetSocket.TrySendCommand(data, serverId))
 				return;
 			// Command couldn't be sent we have to persist it         
-			MessagePersistence.Instance.Save(data);
+			MessagePersistence.ServerInstance.SaveMessage(data);
 		}
 
 		public override void SendCommand<C, T>(SourceReference receipient, T data)

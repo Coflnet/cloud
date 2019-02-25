@@ -3,11 +3,16 @@ using MessagePack;
 
 namespace Coflnet
 {
-	public class LoginUser : Command
+	public class RegisteredUser : Command
 	{
 		public override void Execute(MessageData data)
 		{
-			throw new CommandExistsOnServer();
+			var response = data.GetAs<RegisterUserResponse>();
+			ConfigController.UserSettings.userId = response.id;
+			ConfigController.UserSettings.userSecret = response.secret;
+
+			// Login
+
 		}
 
 		public override CommandSettings GetSettings()
@@ -17,18 +22,8 @@ namespace Coflnet
 
 		public override string GetSlug()
 		{
-			return "loginUser";
+			return "registeredUser";
 		}
-	}
-
-	[MessagePackObject]
-	public class LoginParams
-	{
-		[Key(0)]
-		public SourceReference id;
-		[Key(1)]
-		public byte[] secret;
-
 	}
 }
 

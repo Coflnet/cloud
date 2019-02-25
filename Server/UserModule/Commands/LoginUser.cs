@@ -18,12 +18,13 @@ namespace Coflnet.Server
 
 			var user = ReferenceManager.Instance.GetResource<CoflnetUser>(options.id);
 
-			if (!user.Secret.SequenceEqual(options.secret))
+			if (user.Secret == null || options.secret == null || !user.Secret.SequenceEqual(options.secret))
 			{
 				throw new CoflnetException("secret_invalid", "The users secret is incorrect");
 			}
 
 			serverMessage.Connection.User = user;
+			// tell the socket that a user connected
 		}
 	}
 

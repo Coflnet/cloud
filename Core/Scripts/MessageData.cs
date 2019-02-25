@@ -237,7 +237,7 @@ namespace Coflnet
 		/// </summary>
 		/// <value>The user.</value>
 		[IgnoreMember]
-		[System.Obsolete()]
+		[System.Obsolete("use the Reference instead")]
 		public CoflnetUser User
 		{
 			get
@@ -292,7 +292,10 @@ namespace Coflnet
 			CoflnetCore.Instance.SendCommand(data);
 		}
 
-
+		public MessageData(SourceReference sId, SourceReference rId, long mId, string t, byte[] message) : this(rId, mId, message, t)
+		{
+			this.sId = sId;
+		}
 	}
 }
 

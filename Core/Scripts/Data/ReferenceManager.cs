@@ -103,6 +103,29 @@ namespace Coflnet
 			}
 		}
 
+		/// <summary>
+		/// Tries the get resource.
+		/// </summary>
+		/// <returns><c>true</c>, if get resource was tryed, <c>false</c> otherwise.</returns>
+		/// <param name="id">Identifier.</param>
+		/// <param name="data">Data.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public bool TryGetResource<T>(SourceReference id, out T data) where T : Referenceable
+		{
+			Reference<Referenceable> reference;
+			references.TryGetValue(id, out reference);
+
+			if (reference == null || reference.Resource == null)
+			{
+				data = null;
+				return false;
+			}
+
+			data = GetResource<T>(id);
+			return true;
+
+		}
+
 
 		/// <summary>
 		/// Wherether or not a given resource exists locally
@@ -122,7 +145,7 @@ namespace Coflnet
 		public SourceReference CreateReference(Referenceable referenceable, bool force = false)
 		{
 			long nextIndex = ThreadSaveIdGenerator.NextId;
-			SourceReference newReference = new SourceReference(CurrentServer, nextIndex);
+			SourceReference newReference = new SourceReference(ConfigController.ApplicationSettings.id.ServerId, nextIndex);
 			Reference<Referenceable> referenceObject = new Reference<Referenceable>(referenceable, newReference);
 			if (referenceable.Id != new SourceReference() && !force)
 				throw new Exception("The referenceable already had an id, it may already have been registered. Call with force = true to ignore");
@@ -162,17 +185,21 @@ namespace Coflnet
 				}
 				throw new ObjectNotFound(data.rId);
 			}
+			UnityEngine.Debug.Log("found executing");
 			var resource = value.GetAsIfPresent<Referenceable>();
 			if (resource != null)
 			{
+				UnityEngine.Debug.Log("fasdfasdf executing");
+				resource.ExecuteCommand(data);
 				var controller = resource.GetCommandController();
 				var command = controller.GetCommand(data.t);
-				controller.ExecuteCommand(command, data);
+				//controller.ExecuteCommand(command, data);
 				if (!command.Settings.IsChaning)
 				{
 					return;
 				}
 			}
+
 			value.ExecuteForResource(data);
 		}
 
@@ -227,7 +254,9 @@ namespace Coflnet
 		/// <param name="mode">Mode.</param>
 		public virtual bool IsAllowedAccess(SourceReference requestingReference, AccessMode mode = AccessMode.READ)
 		{
-			return (Access != null) && Access.IsAllowedToAccess(requestingReference, mode);
+			return (Access != null) && Access.IsAllowedToAccess(requestingReference, mode)
+											 // A user might access itself
+											 || requestingReference == this.Id;
 		}
 
 
@@ -236,16 +265,17 @@ namespace Coflnet
 			var controller = GetCommandController();
 			var command = controller.GetCommand(data.t);
 
+			/*
 			AccessMode mode = AccessMode.READ;
 			if (!command.Settings.ThreadSave)
 			{
 				mode = AccessMode.WRITE;
 			}
+*/
+			//	if (!IsAllowedAccess(data.sId, mode))
+			//		throw new CoflnetException("access_denied", "The executing resource doesn't have rights to execute that command on this resource");
 
-			if (!IsAllowedAccess(data.sId, mode))
-				throw new CoflnetException("access_denied", "The executing resource doesn't have rights to execute that command on this resource");
-
-			controller.ExecuteCommand(command, data);
+			controller.ExecuteCommand(command, data, this);
 		}
 
 		public abstract CommandController GetCommandController();
@@ -308,9 +338,11 @@ namespace Coflnet
 		/// <param name="mode">AccessMode.</param>
 		public bool IsAllowedToAccess(SourceReference requestingReference, AccessMode mode = AccessMode.READ)
 		{
-			// is it the owner
+			// is it the owner or the resource itself
 			if (requestingReference == Owner)
 				return true;
+
+
 
 			//is there a special case?
 			if (resourceAccess != null && resourceAccess.ContainsKey(requestingReference))
@@ -416,6 +448,10 @@ namespace Coflnet
 		{
 			get
 			{
+				if (resource == null)
+				{
+					resource = ReferenceManager.Instance.GetResource<T>(this.referenceId);
+				}
 				return resource;
 			}
 		}
@@ -435,7 +471,7 @@ namespace Coflnet
 		/// <typeparam name="Y">The 1st type parameter.</typeparam>
 		public Y GetAsIfPresent<Y>() where Y : class
 		{
-			return resource as Y;
+			return Resource as Y;
 		}
 
 		/// <summary>

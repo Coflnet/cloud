@@ -6,6 +6,11 @@
 	/// </summary>
 	public class CoflnetClient : CoflnetCore
 	{
+		static void HandleReceiveMessageData(MessageData data)
+		{
+		}
+
+
 		private CommandController commandController;
 
 		/// <summary>
@@ -34,7 +39,15 @@
 		{
 			ClientInstance = new CoflnetClient();
 			Instance = ClientInstance;
+			ClientSocket.Instance.AddCallback(OnMessage);
 		}
+
+
+		public static void OnMessage(MessageData data)
+		{
+			ReferenceManager.Instance.ExecuteForReference(data);
+		}
+
 
 		public CoflnetClient() : this(new CommandController(), ClientSocket.Instance)
 		{

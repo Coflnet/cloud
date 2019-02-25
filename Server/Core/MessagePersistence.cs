@@ -4,30 +4,44 @@ using System.Collections.Generic;
 
 namespace Coflnet.Server
 {
-	public class MessagePersistence
+	/// <summary>
+	/// Server version of <see cref="MessageDataPersistence"/> it is faster
+	/// </summary>
+	public class MessagePersistence : MessageDataPersistence
 	{
 
 		protected string subDirectory = "";
 
-		public static MessagePersistence Instance;
+		public static MessagePersistence ServerInstance;
 
 
 		static MessagePersistence()
 		{
-			Instance = new MessagePersistence();
+			ServerInstance = new MessagePersistence();
+			Instance = ServerInstance;
 		}
 
 
 		/// <summary>
-		/// Save the specified data.
+		/// Save the specified data. Will drop the data if the receiver and sender are the same.
 		/// </summary>
-		/// <param name="data">Data to save.</param>
-		public void Save(MessageData data)
+		/// <param name="messageData">Data to save.</param>
+		public override void SaveMessage(MessageData messageData)
 		{
-			FileController.AppendLineAs<MessageData>(PathToSource(data.rId), data);
+			// messages to oneself won't be saved
+			if (messageData.sId == messageData.rId)
+			{
+				return;
+			}
+			var serverData = messageData as ServerMessageData;
+			if (serverData == null)
+			{
+				serverData = new ServerMessageData(messageData);
+			}
+			FileController.AppendLineAs<ServerMessageData>(PathToSource(messageData.rId), serverData);
 		}
 
-		public IEnumerable<MessageData> MessagesFor(SourceReference id)
+		public override IEnumerable<MessageData> GetMessagesFor(SourceReference id)
 		{
 			var path = PathToSource(id);
 			if (FileController.Exists(path))
@@ -41,7 +55,7 @@ namespace Coflnet.Server
 				}
 			}
 			else
-				yield return null;
+				yield break;
 		}
 
 		/// <summary>
@@ -51,6 +65,12 @@ namespace Coflnet.Server
 		public void DeleteMessages(SourceReference id)
 		{
 			FileController.Delete(PathToSource(id));
+		}
+
+
+		public override void Remove(SourceReference receipient, SourceReference sender, long id)
+		{
+			DataController.Instance.RemoveFromFile<MessageData>(PathToSource(receipient), m => m.mId != id && sender != m.sId);
 		}
 
 

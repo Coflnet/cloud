@@ -113,15 +113,32 @@ namespace Coflnet
 			return command.GetSlug();
 		}
 
-		/// <summary>
-		/// Executes a command.
-		/// </summary>
-		/// <param name="command">Command object to invoke.</param>
-		/// <param name="data">Data that should be sent to the command.</param>
-		public void ExecuteCommand(Command command, MessageData data)
-		{
 
-			//ThreadController.Instance.ExecuteCommand(command, data);
+
+		/// <summary>
+		/// Executes the command if permissions match
+		/// </summary>
+		/// <param name="command">Command.</param>
+		/// <param name="data">Data.</param>
+		/// <param name="target">Target.</param>
+		public void ExecuteCommand(Command command, MessageData data, Referenceable target = null)
+		{
+			// test Permissions
+			var settings = command.GetSettings();
+			if (settings.Permissions != null)
+			{
+				foreach (var item in command.GetSettings().Permissions)
+				{
+					if (!item.CheckPermission(data, target))
+					{
+						UnityEngine.Debug.Log(MessagePackSerializer.ToJson(data));
+						UnityEngine.Debug.Log(MessagePackSerializer.ToJson<CoflnetUser>(target as CoflnetUser));
+						UnityEngine.Debug.Log("concludes to : " + item.CheckPermission(data, target));
+						throw new CoflnetException("permission_not_met", $"The permission {item.GetSlug()} required for executing this command wasn't met");
+					}
+				}
+			}
+
 			command.Execute(data);
 		}
 
@@ -132,19 +149,7 @@ namespace Coflnet
 		public void ExecuteCommand(MessageData data, Referenceable target = null)
 		{
 			var command = GetCommand(data.t);
-			// test Permissions
-			if (command is ServerCommand)
-			{
-				foreach (var item in (command as ServerCommand).GetServerSettings().Permissions)
-				{
-					if (!item.CheckPermission(data, target))
-					{
-						throw new CoflnetException("permission_not_met", $"The permission {item.GetSlug()} required for executing this command wasn't met");
-					}
-				}
-			}
-
-			ExecuteCommand(command, data);
+			ExecuteCommand(command, data, target);
 		}
 
 		/// <summary>
@@ -405,6 +410,11 @@ namespace Coflnet
 			}
 
 
+			public CommandSettings(params Permission[] permissions)
+			{
+				Permissions = permissions;
+			}
+
 		}
 	}
 
@@ -542,77 +552,7 @@ namespace Coflnet
 		}
 	}
 
-	/// <summary>
-	/// Can't be a ServerCommand because no user yet exists
-	/// </summary>
-	public class RegisterUser : Command
-	{
-		public override void Execute(MessageData data)
-		{
-			RegisterUserRequest request = data.GetAs<RegisterUserRequest>();
 
-			// validate captcha Token
-			// todo :)
-
-			// get the client         
-			CoflnetUser user = CoflnetUser.Generate(request.clientId);
-
-			var response = new RegisterUserResponse();
-			response.id = user.Id;
-			response.secret = user.Secret;
-
-
-			data.SendBack(MessageData.CreateMessageData<RegisteredUser, RegisterUserResponse>(response, response.id));
-			//SendTo(data.sId, user.PublicId, "createdUser");
-		}
-
-		public override CommandSettings GetSettings()
-		{
-			return new CommandSettings();
-		}
-
-		public override string GetSlug()
-		{
-			return "registerUser";
-		}
-	}
-
-	public class RegisteredUser : Command
-	{
-		public override void Execute(MessageData data)
-		{
-			var response = data.GetAs<RegisterUserResponse>();
-			ConfigController.UserSettings.userId = response.id;
-			ConfigController.UserSettings.userSecret = response.secret;
-		}
-
-		public override CommandSettings GetSettings()
-		{
-			return new CommandSettings();
-		}
-
-		public override string GetSlug()
-		{
-			return "registeredUser";
-		}
-	}
-	[MessagePackObject]
-	public class RegisterUserRequest
-	{
-		[Key(0)]
-		public string captchaToken;
-		[Key(1)]
-		public SourceReference clientId;
-	}
-
-	[MessagePackObject]
-	public class RegisterUserResponse
-	{
-		[Key(0)]
-		public SourceReference id;
-		[Key(1)]
-		public byte[] secret;
-	}
 
 
 	public class RegisterDevice : ServerCommand

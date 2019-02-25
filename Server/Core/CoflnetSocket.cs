@@ -65,6 +65,7 @@ public class CoflnetSocket
 		socketServer.AddWebSocketService<CoflnetWebsocketServer>("/socket", (s) =>
 		{
 			s.Protocol = "dev";
+			CoflnetSocket.Instance.server = s;
 		});
 
 		if (socketServer.IsSecure)
@@ -106,8 +107,26 @@ public class CoflnetSocket
 [MessagePackObject]
 public class ServerMessageData : MessageData
 {
-	[Key("c")]
+	[IgnoreMember]
 	public IClientConnection Connection;
+
+	/// <summary>
+	/// Gets or sets the delivery attemts. Represents how often this message has been attempted to deliver.
+	/// Will be 10000 if delivery was successful
+	/// </summary>
+	/// <value>The delivery attemts count.</value>
+	[Key("da")]
+	public short DeliveryAttemts { get; set; }
+
+	[IgnoreMember]
+	public bool IsDelivered
+	{
+		get
+		{
+			return DeliveryAttemts >= 10000;
+		}
+	}
+
 
 	public static MessageData SerializeServerMessageData<T>(T target, string type, CoflnetEncoder encoder)
 	{
@@ -147,37 +166,6 @@ public interface IClientConnection
 	void SendBack(MessageData data);
 }
 
-
-public class ServerCommand : CoflnetCommand
-{
-	private Permission requriedPermission;
-	private int cost = 1;
-
-
-	public ServerCommand(string slug, Command command, bool threadAble, bool encrypted, Permission requriedPermission = null, int cost = 1) : base(slug, command, threadAble, encrypted)
-	{
-		this.requriedPermission = requriedPermission;
-		this.cost = cost;
-	}
-
-	#region Getter
-	public Permission RequriedPermission
-	{
-		get
-		{
-			return requriedPermission;
-		}
-	}
-
-	public int Cost
-	{
-		get
-		{
-			return cost;
-		}
-	}
-	#endregion
-}
 
 
 public class CoflnetEncoder
@@ -386,6 +374,11 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		this.commandController = new CommandController();
 	}
 
+	static CoflnetWebsocketServer()
+	{
+		Connections = new Dictionary<SourceReference, CoflnetWebsocketServer>();
+	}
+
 
 	public CommandController CommandController
 	{
@@ -478,11 +471,11 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 			}
 
 
+			ReferenceManager.Instance.ExecuteForReference(messageData);
+			//	var controllerForObject = ReferenceManager.Instance.GetResource(messageData.rId)
+			//					.GetCommandController();
 
-			var controllerForObject = ReferenceManager.Instance.GetResource(messageData.rId)
-							.GetCommandController();
-
-			controllerForObject.ExecuteCommand(messageData);
+			//	controllerForObject.ExecuteCommand(messageData);
 		}
 		catch (CoflnetException ex)
 		{
@@ -507,7 +500,8 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	}
 	protected override void OnClose(CloseEventArgs e)
 	{
-		Debug.Log("cosed: " + e.Reason);
+		Connections.Remove(User.Id);
+		Connections.Remove(Device.Id);
 		base.OnClose(e);
 	}
 
@@ -557,7 +551,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	{
 		CoflnetWebsocketServer target;
 		Connections.TryGetValue(receiver, out target);
-		if (target == null)
+		if (target != null)
 		{
 			target.Send(data);
 			return true;
@@ -600,6 +594,8 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		}
 		set
 		{
+			if (User != null)
+				Connections.Add(User.Id, this);
 			_user = value;
 		}
 	}
@@ -616,6 +612,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		}
 		set
 		{
+			Connections.Add(User.Id, this);
 			_device = value;
 		}
 	}

@@ -209,5 +209,15 @@ namespace Coflnet
 		{
 			File.Delete(Path.Combine(dataPaht, relativePath));
 		}
+
+		/// <summary>
+		/// Move the specified relavtiveOrigin to relativeDestination.
+		/// </summary>
+		/// <param name="relavtiveOrigin">Relavtive origin.</param>
+		/// <param name="relativeDestination">Relative destination.</param>
+		public static void Move(string relavtiveOrigin, string relativeDestination)
+		{
+			File.Move(Path.Combine(dataPaht, relavtiveOrigin), Path.Combine(dataPaht, relativeDestination));
+		}
 	}
 }

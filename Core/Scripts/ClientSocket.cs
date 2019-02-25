@@ -20,6 +20,8 @@ namespace Coflnet
 
 		public static ClientSocket Instance;
 
+		private SourceReference ConnectedServerId = ConfigController.ApplicationSettings.id;
+
 		static ClientSocket()
 		{
 			Instance = NewInstance();
@@ -53,17 +55,33 @@ namespace Coflnet
 			};
 			socket.OnMessage += (object sender, MessageEventArgs e) =>
 			{
-				var data = MessagePackSerializer.Deserialize<MessageData>(e.RawData);
-				if (data.t == "error")
+				try
 				{
-					// errors contain aditional attributes 
-					var error = MessagePackSerializer.Deserialize<CoflnetExceptionTransmit>(e.RawData);
-					OnError.Invoke(new CoflnetException(error));
-					return;
+					var data = MessagePackSerializer.Deserialize<MessageData>(e.RawData);
+					if (data.t == "error")
+					{
+						// errors contain aditional attributes 
+						var error = MessagePackSerializer.Deserialize<CoflnetExceptionTransmit>(e.RawData);
+						OnError.Invoke(new CoflnetException(error));
+						return;
+					}
+
+					onMessage?.Invoke(data);
+
+					// confirm receival
+					SendCommand(
+						MessageData.CreateMessageData<ReceiveConfirm, ReceiveConfirmParams>(
+							new ReceiveConfirmParams(data.sId, data.mId),
+							ConnectedServerId));
+				}
+				catch (System.Exception ex)
+				{
+					UnityEngine.Debug.Log("error " + ex.Message + " " + MessagePackSerializer.ToJson(e.RawData));
 				}
 
-				onMessage?.Invoke(data);
+
 				UnityEngine.Debug.Log("socket response: " + MessagePackSerializer.ToJson(e.RawData));
+
 			};
 		}
 
@@ -79,6 +97,9 @@ namespace Coflnet
 		/// <param name="data">Data.</param>
 		public void SendCommand(MessageData data)
 		{
+			// add the userId if present as sender
+			data.sId = ConfigController.UserSettings.userId;
+
 			webSocket.Send(MessagePackSerializer.Serialize(data));
 		}
 

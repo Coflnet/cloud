@@ -20,6 +20,7 @@ namespace Coflnet
 
 		public override void ExecuteCommand(MessageData data)
 		{
+			UnityEngine.Debug.Log("running receivable");
 			// each incoming command will be forwarded to the resource
 			try
 			{
@@ -54,7 +55,7 @@ namespace Coflnet
 
 			public override CommandSettings GetSettings()
 			{
-				return new CommandSettings();
+				return new CommandSettings(IsSelfPermission.Instance);
 			}
 
 			public override string GetSlug()

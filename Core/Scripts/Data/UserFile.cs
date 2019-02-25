@@ -7,10 +7,6 @@ namespace Coflnet
 
 	public class UserFile : Referenceable
 	{
-		/// <summary>
-		/// The user this file belongs to called user_id in the db
-		/// </summary>
-		protected Reference<CoflnetUser> owner;
 		protected Application application;
 		/// <summary>
 		/// Access is a number that grants other app users and the public access to a file
@@ -58,13 +54,6 @@ namespace Coflnet
 		protected long size;
 
 
-		Reference<CoflnetUser> Owner
-		{
-			get
-			{
-				return owner;
-			}
-		}
 
 		Application Application
 		{

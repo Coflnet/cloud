@@ -161,6 +161,35 @@ namespace Coflnet
 			SetEncryptionKey(CoflnetEncryption.Hash(System.Text.Encoding.UTF8.GetBytes(phrase)));
 		}
 
+		/// <summary>
+		/// Removes objects of T that match func from file at path;
+		/// </summary>
+		/// <param name="path">File that should be searched.</param>
+		/// <param name="func">Function to use for determing if object should be removed.</param>
+		/// <typeparam name="T">What type of object are stored in this file (has to be the same for each object).</typeparam>
+		public void RemoveFromFile<T>(string path, Func<T, bool> func)
+		{
+			if (FileController.Exists(path))
+			{
+				var tempName = path + ".tmp";
+
+				lock (tempName)
+				{
+					bool any = false;
+					foreach (var item in FileController.ReadLinesAs<T>(path))
+					{
+						if (func.Invoke(item))
+						{
+							FileController.AppendLineAs<T>(tempName, item);
+							any = true;
+						}
+					}
+					FileController.Delete(path);
+					if (any)
+						FileController.Move(tempName, path);
+				}
+			}
+		}
 	}
 }
 

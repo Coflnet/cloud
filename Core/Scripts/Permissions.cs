@@ -48,6 +48,49 @@ namespace Coflnet
 		}
 	}
 
+
+	public class ReadPermission : Permission
+	{
+		public static ReadPermission Instance;
+
+		static ReadPermission()
+		{
+			Instance = new ReadPermission();
+		}
+
+		public override bool CheckPermission(MessageData data, Referenceable target)
+		{
+			return target.IsAllowedAccess(data.sId, AccessMode.READ);
+		}
+
+		public override string GetSlug()
+		{
+			return "readPermission";
+		}
+	}
+
+
+	public class WritePermission : Permission
+	{
+		public static WritePermission Instance;
+
+		static WritePermission()
+		{
+			Instance = new WritePermission();
+		}
+
+		public override bool CheckPermission(MessageData data, Referenceable target)
+		{
+			return target.IsAllowedAccess(data.sId, AccessMode.WRITE);
+		}
+
+		public override string GetSlug()
+		{
+			return "readPermission";
+		}
+	}
+
+
 	public class IsDevicePermission : Permission
 	{
 		public static IsDevicePermission Instance;

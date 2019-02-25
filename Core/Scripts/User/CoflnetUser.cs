@@ -41,6 +41,10 @@ namespace Coflnet
 			/// </summary>
 			MULTIDEVICE
 		}
+
+		[DataMember(Name = "ofm")]
+		public bool OnlyFriendsMessage;
+
 		/// <summary>
 		/// The name of the user.
 		/// </summary>
@@ -125,11 +129,6 @@ namespace Coflnet
 		/// </summary>
 		[DataMember(Name = "b")]
 		protected List<Reference<CoflnetUser>> blocked;
-		/// <summary>
-		/// The users permissions
-		/// </summary>
-		[DataMember(Name = "p")]
-		protected List<Permission> permissions;
 
 		/// <summary>
 		/// The users privacy settings
@@ -293,6 +292,9 @@ namespace Coflnet
 
 		public CoflnetUser(SourceReference owner) : base(owner)
 		{
+			this.blocked = new List<Reference<CoflnetUser>>();
+			this.silent = new List<Reference<CoflnetUser>>();
+			this.friends = new List<Reference<CoflnetUser>>();
 		}
 
 		#region getter
@@ -573,7 +575,7 @@ namespace Coflnet
 	/// <summary>
 	/// Gets a custom user key value.
 	/// </summary>
-	public class GetUserKeyValue : ServerCommand
+	public class GetUserKeyValue : ValueSetter
 	{
 		public override void Execute(MessageData data)
 		{
@@ -585,11 +587,6 @@ namespace Coflnet
 			SendBack(data, data.Serialize(result));
 		}
 
-		public override ServerCommandSettings GetServerSettings()
-		{
-			return new ServerCommandSettings(true, 1, new IsUserPermission());
-		}
-
 		public override string GetSlug()
 		{
 			return "getValue";
@@ -599,7 +596,7 @@ namespace Coflnet
 	/// <summary>
 	/// Sets an user key value.
 	/// </summary>
-	public class SetUserKeyValue : ServerCommand
+	public class SetUserKeyValue : ValueSetter
 	{
 		public override void Execute(MessageData data)
 		{
@@ -608,11 +605,6 @@ namespace Coflnet
 			ReferenceManager.Instance
 							.GetResource<CoflnetUser>(data.rId)
 							.KeyValues[okay.Key] = okay.Value;
-		}
-
-		public override ServerCommandSettings GetServerSettings()
-		{
-			return new ServerCommandSettings(IsUserPermission.Instance, IsOwnerPermission.Instance);
 		}
 
 		public override string GetSlug()
@@ -630,7 +622,7 @@ namespace Coflnet
 
 		public override ServerCommandSettings GetServerSettings()
 		{
-			return new ServerCommandSettings(IsOwnerPermission.Instance);
+			return new ServerCommandSettings(WritePermission.Instance);
 		}
 	}
 
@@ -642,7 +634,7 @@ namespace Coflnet
 
 		public override ServerCommandSettings GetServerSettings()
 		{
-			return new ServerCommandSettings(true, 1, IsOwnerPermission.Instance);
+			return new ServerCommandSettings(ReadPermission.Instance);
 		}
 	}
 
@@ -662,12 +654,12 @@ namespace Coflnet
 	/// <summary>
 	/// Get basic info about the user in one object
 	/// </summary>
-	public class GetBasicInfo : ValueGetter
+	public class GetBasicInfo : Command
 	{
 		public override void Execute(MessageData data)
 		{
 			var result = new InfoResult();
-			var user = data.User;
+			var user = ReferenceManager.Instance.GetResource<CoflnetUser>(data.rId);
 
 			result.userName = user.userName;
 			result.id = user.Id;
@@ -677,7 +669,12 @@ namespace Coflnet
 			}
 
 
-			SendBack(data, data.Serialize<InfoResult>(result));
+			data.SendBack(MessageData.CreateMessageData<BasicInfoResponse, InfoResult>(result, data.sId));
+		}
+
+		public override CommandSettings GetSettings()
+		{
+			return new CommandSettings(IsAuthenticatedPermission.Instance, IsNotBockedPermission.Instance);
 		}
 
 		public override string GetSlug()
@@ -690,6 +687,24 @@ namespace Coflnet
 			public SourceReference id;
 			public SourceReference profilePicture;
 			public string userName;
+		}
+	}
+
+	public class BasicInfoResponse : Command
+	{
+		public override void Execute(MessageData data)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override CommandSettings GetSettings()
+		{
+			throw new NotImplementedException();
+		}
+
+		public override string GetSlug()
+		{
+			throw new NotImplementedException();
 		}
 	}
 

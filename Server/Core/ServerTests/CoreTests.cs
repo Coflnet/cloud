@@ -289,11 +289,11 @@ public class CoreTests
 								   System.Text.Encoding.UTF8.GetBytes("hi, I am a long text to get over 64 bytes and trigger the lz4 compresseion :)"),
 								   "testCommand");
 
-		MessagePersistence.Instance.DeleteMessages(data.rId);
-		MessagePersistence.Instance.Save(data);
+		MessagePersistence.ServerInstance.DeleteMessages(data.rId);
+		MessagePersistence.ServerInstance.SaveMessage(data);
 
 
-		foreach (var item in MessagePersistence.Instance.MessagesFor(data.rId))
+		foreach (var item in MessagePersistence.ServerInstance.GetMessagesFor(data.rId))
 		{
 			Assert.AreEqual(data, item);
 		}
@@ -308,14 +308,14 @@ public class CoreTests
 								   System.Text.Encoding.UTF8.GetBytes("hi, I am a string that will be a byte array when it grows up"),
 								   "testCommand");
 
-		MessagePersistence.Instance.DeleteMessages(data.rId);
-		MessagePersistence.Instance.Save(data);
-		MessagePersistence.Instance.Save(data);
-		MessagePersistence.Instance.Save(data);
-		MessagePersistence.Instance.Save(data);
+		MessagePersistence.ServerInstance.DeleteMessages(data.rId);
+		MessagePersistence.ServerInstance.SaveMessage(data);
+		MessagePersistence.ServerInstance.SaveMessage(data);
+		MessagePersistence.ServerInstance.SaveMessage(data);
+		MessagePersistence.ServerInstance.SaveMessage(data);
 
 
-		foreach (var item in MessagePersistence.Instance.MessagesFor(data.rId))
+		foreach (var item in MessagePersistence.ServerInstance.GetMessagesFor(data.rId))
 		{
 			Assert.AreEqual(data, item);
 		}
