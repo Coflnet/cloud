@@ -17,7 +17,6 @@ namespace Coflnet
 			var user = target as CoflnetUser;
 			if (user == null)
 			{
-				UnityEngine.Debug.Log("target isn't a user");
 				return false;
 			}
 			return !user.IsBlocked(new Reference<CoflnetUser>(data.sId));

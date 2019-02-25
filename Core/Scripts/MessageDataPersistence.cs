@@ -23,7 +23,7 @@ namespace Coflnet
 		/// <param name="id">Identifier.</param>
 		public virtual IEnumerable<MessageData> GetMessagesFor(SourceReference id)
 		{
-			foreach (var item in DataController.Instance.LoadObject<MessageData[]>("datas" + id.ToString()))
+			foreach (var item in DataController.Instance.LoadObject<MessageData[]>(Path(id)))
 			{
 				yield return item;
 			}
@@ -37,7 +37,7 @@ namespace Coflnet
 		{
 			var loaded = GetMessagesFor(messageData.rId).ToArray();
 
-			DataController.Instance.SaveObject("datas" + messageData.rId.ToString(), loaded);
+			DataController.Instance.SaveObject(Path(messageData.rId), loaded);
 		}
 
 		/// <summary>
@@ -52,7 +52,7 @@ namespace Coflnet
 
 		private string Path(SourceReference rId)
 		{
-			return "datas" + rId.ToString();
+			return "datas/" + rId.ToString();
 		}
 	}
 }

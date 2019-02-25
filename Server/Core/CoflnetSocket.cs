@@ -160,6 +160,12 @@ public interface IClientConnection
 	CoflnetUser User { get; set; }
 
 	Device Device { get; set; }
+	/// <summary>
+	/// Gets or sets the identifiers that this Connection authenticated as.
+	/// This connection is allowed to set all these ids as sender.
+	/// </summary>
+	/// <value>The authenticated identifiers.</value>
+	List<SourceReference> AuthenticatedIds { get; set; }
 
 	CoflnetEncoder Encoder { get; }
 
@@ -356,13 +362,8 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// If authenticated and present the server
 	/// </summary>
 	private CoflnetServer server;
-	/// <summary>
-	/// Permissions this connection has received 
-	/// Controlls what commands are allowed to be executed
-	/// </summary>
-	[Obsolete]
-	private List<Permission> permissions;
 
+	private List<SourceReference> _authenticatedIds;
 
 	public CoflnetWebsocketServer(CommandController commandController)
 	{
@@ -463,11 +464,9 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 
 
 			// prevent id spoofing
-			if (messageData.sId != _user?.Id
-				&& messageData.sId != _device?.Id)
-			//&& messageData.sId != server.Id)
+			if (messageData.sId != new SourceReference() && !AuthenticatedIds.Contains(messageData.sId))
 			{
-				messageData.sId = new SourceReference();
+				throw new NotAuthenticatedAsException(messageData.sId);
 			}
 
 
@@ -502,6 +501,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	{
 		Connections.Remove(User.Id);
 		Connections.Remove(Device.Id);
+		AuthenticatedIds.Clear();
 		base.OnClose(e);
 	}
 
@@ -613,14 +613,38 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		set
 		{
 			Connections.Add(User.Id, this);
+			AuthenticatedIds.Add(value.Id);
 			_device = value;
 		}
 	}
 
+	public List<SourceReference> AuthenticatedIds
+	{
+		get
+		{
+			return _authenticatedIds;
+		}
+
+		set
+		{
+			_authenticatedIds = value;
+		}
+	}
 
 	public void SendBack(MessageData data)
 	{
 		SendBack(Encoder.Serialize(data));
+	}
+}
+
+
+
+
+
+public class NotAuthenticatedAsException : CoflnetException
+{
+	public NotAuthenticatedAsException(SourceReference inquestion, string userMessage = null, int responseCode = 403, string info = null, long msgId = -1) : base("not_authenticated_as", $"You didn't authenticated as {inquestion.ToString()} over this connection", userMessage, responseCode, info)
+	{
 	}
 }
 
