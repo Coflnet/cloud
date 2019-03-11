@@ -17,6 +17,10 @@ namespace Coflnet
 		public readonly long ResourceId;
 
 
+		public static readonly SourceReference Default = new SourceReference(0, 0);
+
+
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Coflnet.Server.SourceReference"/> struct.
 		/// Recomended constructor since arguments can't be switched

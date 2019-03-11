@@ -8,7 +8,6 @@ using RestSharp;
 using System.Net;
 using System.Text;
 using Coflnet;
-using Coflnet.Server;
 
 /// <summary>
 /// Controlls different (worker) threads, 
@@ -18,11 +17,17 @@ public class ThreadController : MonoBehaviour
 {
 	private static readonly int minWorkerCount = 1;
 
-	private List<Thread> threads = new List<Thread>();
 	private List<CoflnetThreadWorker> workers = new List<CoflnetThreadWorker>();
+
 	static RestClient client = new RestClient("https://beta.coflnet.com/api/v1/captcha");
 	private uint internalCommandIndex;
 	public int sum = 0;
+	/// <summary>
+	/// The main thread queue.
+	/// Things added to this queue will be executed in the main thread (either gui or unity3d world changing)
+	/// </summary>
+	private ConcurrentQueue<Action> mainThreadQueue = new ConcurrentQueue<Action>();
+
 	private static ThreadController _instance;
 
 	public static ThreadController Instance
@@ -34,6 +39,32 @@ public class ThreadController : MonoBehaviour
 			return _instance;
 		}
 	}
+
+
+	/// <summary>
+	/// Processes the mainthread queue.
+	/// Eg. the wpf gui or unity main thread (fixedupdate)
+	/// </summary>
+	public void ProcessQueue()
+	{
+		// may add checking that we are actually in the main thread ...
+
+		Action todo = null;
+		while (mainThreadQueue.TryDequeue(out todo))
+		{
+			todo.Invoke();
+		}
+	}
+
+	/// <summary>
+	/// Shedules the action to be executed on the main thread
+	/// </summary>
+	/// <param name="action">Action.</param>
+	public void OnMainThread(Action action)
+	{
+		mainThreadQueue.Enqueue(action);
+	}
+
 
 	public void ExecuteCommand(Command command, MessageData data)
 	{
@@ -58,7 +89,7 @@ public class ThreadController : MonoBehaviour
 	/// </summary>
 	/// <param name="data">Data passed from a connected device.</param>
 	/// <param name="controller">Controller to search for the command.</param>
-	public void ExecuteCommand(ServerMessageData data, CommandController controller)
+	public void ExecuteCommand(MessageData data, CommandController controller)
 	{
 		ExecuteCommand(controller.GetCommand(data.t), data);
 	}
@@ -156,17 +187,16 @@ public class ThreadController : MonoBehaviour
 	{
 		// remove them from the pool
 		workers.Remove(worker);
-		threads.Remove(worker.CurrentThread);
 
 		worker.Stop();
 	}
 
 	public void CreateWorkerThread()
 	{
-		Debug.Log("Current thread count: " + threads.Count + " on " + SystemInfo.processorCount + " cores");
+		Debug.Log("Current thread count: " + workers.Count + " on " + SystemInfo.processorCount + " cores");
 		// More threads than processors causes to much context switching
 		// one core is reserved for the main thread
-		if (SystemInfo.processorCount - 1 <= threads.Count)
+		if (SystemInfo.processorCount - 1 <= workers.Count)
 			return;
 
 
@@ -177,31 +207,21 @@ public class ThreadController : MonoBehaviour
 
 
 		Thread thread = new Thread(threadStart, 1000000);
+		// tell the worker its thread
 		worker.CurrentThread = thread;
-		// also adds it to the pool
-		StartThread(thread);
+		thread.Start();
 		// add the worker to the pool
 		workers.Add(worker);
-
 	}
 
 
 
-	/// <summary>
-	/// Starts a thread and adds it to the pool.
-	/// </summary>
-	/// <param name="thread">The thread to add.</param>
-	private void StartThread(Thread thread)
-	{
-		threads.Add(thread);
-		thread.Start();
-	}
 
 	public void OnApplicationQuit()
 	{
-		foreach (var item in threads)
+		foreach (var item in workers)
 		{
-			item.Abort();
+			item.CurrentThread.Abort();
 		}
 	}
 
@@ -302,6 +322,12 @@ public class CoflnetThreadWorker
 				Debug.Log("done in : " + time);
 			}
 			sleeping = true;
+			ManualResetEvent resetEvent = new ManualResetEvent(false);
+			resetEvent.WaitOne();
+
+
+			resetEvent.Set();
+			resetEvent.Reset();
 			Thread.Sleep(100);
 		}
 		ExecuteNextCommand();

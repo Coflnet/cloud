@@ -173,12 +173,15 @@ namespace Coflnet
 
 		public void ExecuteForReference(MessageData data)
 		{
+			UnityEngine.Debug.Log("searching");
 			Reference<Referenceable> value;
 			references.TryGetValue(data.rId, out value);
 			if (value == null)
 			{
-				if (data.sId.ServerId != ConfigController.ApplicationSettings.id.ServerId)
+				UnityEngine.Debug.Log("not found");
+				if (data.rId.ServerId != ConfigController.ApplicationSettings.id.ServerId)
 				{
+					UnityEngine.Debug.Log("passing on to " + data.rId);
 					// we are not the main managing server, pass it on to it
 					CoflnetCore.Instance.SendCommand(data);
 					return;
@@ -199,7 +202,7 @@ namespace Coflnet
 					return;
 				}
 			}
-
+			UnityEngine.Debug.Log("distributing");
 			value.ExecuteForResource(data);
 		}
 
@@ -243,6 +246,14 @@ namespace Coflnet
 		protected Referenceable()
 		{
 
+			//this.Id = ReferenceManager.Instance.CreateReference(this);
+		}
+
+		/// <summary>
+		/// Assigns an identifier and registers the object in the <see cref="ReferenceManager"/>
+		/// </summary>
+		public void AssignId()
+		{
 			this.Id = ReferenceManager.Instance.CreateReference(this);
 		}
 
@@ -259,8 +270,13 @@ namespace Coflnet
 											 || requestingReference == this.Id;
 		}
 
-
-		public virtual void ExecuteCommand(MessageData data)
+		/// <summary>
+		/// Executes the command found in the <see cref="MessageData.t"/>
+		/// Returns the <see cref="Command"/> when done
+		/// </summary>
+		/// <returns>The command.</returns>
+		/// <param name="data">Data.</param>
+		public virtual Command ExecuteCommand(MessageData data)
 		{
 			var controller = GetCommandController();
 			var command = controller.GetCommand(data.t);
@@ -276,6 +292,8 @@ namespace Coflnet
 			//		throw new CoflnetException("access_denied", "The executing resource doesn't have rights to execute that command on this resource");
 
 			controller.ExecuteCommand(command, data, this);
+
+			return command;
 		}
 
 		public abstract CommandController GetCommandController();
@@ -410,7 +428,7 @@ namespace Coflnet
 		/// <param name="data">Command data to send</param>
 		public void ExecuteForResource(MessageData data)
 		{
-			ServerController.Instance.SendCommandToServer(data, ReferenceId.ServerId);
+			CoflnetCore.Instance.SendCommand(data, ReferenceId.ServerId);
 		}
 
 		/// <summary>
@@ -490,7 +508,7 @@ namespace Coflnet
 	/// </summary>
 	public class RedundantReference<T> : Reference<T> where T : Referenceable
 	{
-		protected List<CoflnetServer> failoverServers = new List<CoflnetServer>();
+		protected List<long> failoverServers = new List<long>();
 
 		/// <summary>
 		/// Adds a new server for extra redundancy.
@@ -498,13 +516,30 @@ namespace Coflnet
 		/// <param name="server">Server to add.</param>
 		public void AddServer(CoflnetServer server)
 		{
-			failoverServers.Add(server);
+			AddServer(server.Id.ServerId);
+		}
+
+		/// <summary>
+		/// Adds a new server for extra redundancy.
+		/// </summary>
+		/// <param name="serverId">Server to add.</param>
+		public void AddServer(long serverId)
+		{
+			failoverServers.Add(serverId);
 		}
 
 
 		public void RemoveServer(CoflnetServer server)
 		{
-			failoverServers.Remove(server);
+			RemoveServer(server.Id.ServerId);
+		}
+		/// <summary>
+		/// Removes the server from the failover list.
+		/// </summary>
+		/// <param name="serverId">Server identifier.</param>
+		public void RemoveServer(long serverId)
+		{
+			failoverServers.Remove(serverId);
 		}
 
 		/// <summary>
@@ -513,11 +548,11 @@ namespace Coflnet
 		/// <param name="data">Command data to send</param>
 		public new void ExecuteForResource(MessageData data)
 		{
-			ServerController.Instance.SendCommandToServer(data, referenceId.ServerId);
+			CoflnetCore.Instance.SendCommand(data, ReferenceId.ServerId);
 			// also send it to the failover servers
 			foreach (var item in failoverServers)
 			{
-				ServerController.Instance.SendCommandToServer(data, item);
+				CoflnetCore.Instance.SendCommand(data, item);
 			}
 		}
 
@@ -545,9 +580,10 @@ namespace Coflnet
 				CoflnetServer closest = ServerController.Instance.GetOrCreate(referenceId.ServerId);
 				foreach (var item in failoverServers)
 				{
+					var server = ServerController.Instance.GetOrCreate(item);
 					// if another server that is closer or as fast as the managing server use it instead
-					if (item.PingTimeMS <= closest.PingTimeMS)
-						closest = item;
+					if (server.PingTimeMS <= closest.PingTimeMS)
+						closest = server;
 				}
 				return closest;
 			}

@@ -68,7 +68,7 @@ namespace Coflnet
 
 			string serverName = BitConverter.ToString(
 				BitConverter.GetBytes(serverId));
-			// add it together and remove leading slashes in the path
+
 			return $"{serverName}.coflnet.com:{port}";
 		}
 
@@ -90,12 +90,17 @@ namespace Coflnet
 
 
 
-
+	[MessagePackObject]
 	public class UserSettings
 	{
+		[Key(0)]
 		public List<long> managingServers;
+		[Key(1)]
 		public SourceReference userId;
+		[Key(2)]
 		public byte[] userSecret;
+		[Key(3)]
+		public string Locale;
 
 
 		public UserSettings()
@@ -108,6 +113,5 @@ namespace Coflnet
 	public class ApplicationSettings
 	{
 		public SourceReference id;
-
 	}
 }

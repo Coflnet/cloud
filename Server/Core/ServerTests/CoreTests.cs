@@ -111,6 +111,7 @@ public class CoreTests
 	public void StoreResourceInManager()
 	{
 		var res = new TestResource();
+		res.AssignId();
 		Assert.IsTrue(ReferenceManager.Instance.Contains(res.Id));
 	}
 
@@ -118,6 +119,7 @@ public class CoreTests
 	public void GetResourceInManager()
 	{
 		var res = new TestResource();
+		res.AssignId();
 		res.value = 1111;
 		var retrivedRes = ReferenceManager.Instance.GetResource(res.Id);
 		Assert.IsTrue(retrivedRes.Id == res.Id);
@@ -127,6 +129,7 @@ public class CoreTests
 	public void GetResourceInManagerGeneric()
 	{
 		var res = new TestResource();
+		res.AssignId();
 		res.value = 1111;
 		var retrivedRes = ReferenceManager.Instance.GetResource<TestResource>(res.Id);
 		Assert.IsTrue(retrivedRes.value == 1111);
@@ -149,19 +152,29 @@ public class CoreTests
 		var res = new TestResource();
 		res.Id = new SourceReference(5, 2);
 		var id = ReferenceManager.Instance.CreateReference(res, true);
-		//Assert.IsNotEqual(id, new SourceReference());
+		Assert.AreNotEqual(id, new SourceReference());
 	}
 
 	[Test]
 	public void RecourceCommandTest()
 	{
 		var res = new TestResource();
+		res.AssignId();
 		var id = res.Id;
 		var retrivedRes = ReferenceManager.Instance.GetResource<TestResource>(id);
 
 		retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
 
 		Assert.IsTrue(res.value == 5);
+	}
+
+	/// <summary>
+	/// Tests the Server core initialization process.
+	/// </summary>
+	[Test]
+	public void ServerCoreInit()
+	{
+		ServerCore.Init();
 	}
 
 
@@ -192,6 +205,8 @@ public class CoreTests
 	[UnityTest]
 	public IEnumerator ErrorResponseTest()
 	{
+		// Tell the server its id (so he doesn't try to pass the message on)
+		ConfigController.ApplicationSettings.id = new SourceReference(1, 1, 1, 0);
 		ServerCore.Init();
 		string returnValue = null;
 		ClientSocket.Instance.OnError +=
@@ -213,7 +228,10 @@ public class CoreTests
 						 new Regex($".*{Regex.Escape(newId.ToString())}.*wasn't found on this server.*"));
 
 
-		ClientSocket.Instance.SendCommand(new MessageData(newId));
+
+
+
+		ClientSocket.Instance.SendCommand(new MessageData(newId), false);
 
 		yield return new UnityEngine.WaitForSeconds(1);
 
@@ -254,11 +272,13 @@ public class CoreTests
 		ConfigController.ApplicationSettings.id = new SourceReference(1, 1, 1, 0);
 		ServerCore.Init();
 		MessageData response = null;
+		ClientSocket.Instance.Reconnect();
 		ClientSocket.Instance.AddCallback(data =>
 		{
+			UnityEngine.Debug.Log("received command : " + data.t);
 			response = data;
 		});
-
+		ConfigController.UserSettings.userId = SourceReference.Default;
 
 		// register server command
 		ServerCore.Commands.RegisterCommand<ServerTestCommandGet>();
@@ -288,6 +308,9 @@ public class CoreTests
 		var data = new MessageData(new SourceReference(0, 1, 2, 3),
 								   System.Text.Encoding.UTF8.GetBytes("hi, I am a long text to get over 64 bytes and trigger the lz4 compresseion :)"),
 								   "testCommand");
+		// manually assing an id, is usaly done in the sending process
+		data.mId = ThreadSaveIdGenerator.NextId;
+
 
 		MessagePersistence.ServerInstance.DeleteMessages(data.rId);
 		MessagePersistence.ServerInstance.SaveMessage(data);
@@ -308,7 +331,12 @@ public class CoreTests
 								   System.Text.Encoding.UTF8.GetBytes("hi, I am a string that will be a byte array when it grows up"),
 								   "testCommand");
 
+		// manually assing an id, is usaly done in the sending process
+		data.mId = ThreadSaveIdGenerator.NextId;
+
+		// reset
 		MessagePersistence.ServerInstance.DeleteMessages(data.rId);
+		// save
 		MessagePersistence.ServerInstance.SaveMessage(data);
 		MessagePersistence.ServerInstance.SaveMessage(data);
 		MessagePersistence.ServerInstance.SaveMessage(data);
@@ -337,7 +365,12 @@ public class CoreTests
 	[Test]
 	public void CommandExtention()
 	{
+		// loads the extention
+		ServerCore.Init();
+
 		var loginUser = ServerCore.Commands.GetCommand("loginUser");
 		Assert.IsNotNull(loginUser);
+
+		ServerCore.Stop();
 	}
 }

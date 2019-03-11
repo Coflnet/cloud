@@ -18,20 +18,24 @@ namespace Coflnet
 		}
 
 
-		public override void ExecuteCommand(MessageData data)
+		public override Command ExecuteCommand(MessageData data)
 		{
 			UnityEngine.Debug.Log("running receivable");
 			// each incoming command will be forwarded to the resource
 			try
 			{
-				base.ExecuteCommand(data);
+				var command = base.ExecuteCommand(data);
+				if (command.Settings.IsChaning)
+				{
+					CoflnetCore.Instance.SendCommand(data);
+				}
+				return command;
 			}
-			catch (CommandUnknownException)
+			catch (CommandUnknownException e)
 			{
-
+				UnityEngine.Debug.Log($"didn't find Command {e.Slug} ");
 			}
-
-			CoflnetCore.Instance.SendCommand(data);
+			return null;
 		}
 
 		public ReceiveableResource(SourceReference owner) : base(owner)

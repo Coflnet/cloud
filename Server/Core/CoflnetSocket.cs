@@ -466,6 +466,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 			// prevent id spoofing
 			if (messageData.sId != new SourceReference() && !AuthenticatedIds.Contains(messageData.sId))
 			{
+				Debug.Log("ids: " + MessagePackSerializer.ToJson(AuthenticatedIds));
 				throw new NotAuthenticatedAsException(messageData.sId);
 			}
 
@@ -511,6 +512,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// <param name="data">Data.</param>
 	public void SendBack(byte[] data)
 	{
+		Debug.Log("Sending data back");
 		Send(data);
 	}
 
@@ -594,8 +596,12 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		}
 		set
 		{
-			if (User != null)
-				Connections.Add(User.Id, this);
+			if (value != null)
+			{
+				Connections.Add(value.Id, this);
+				AuthenticatedIds.Add(value.Id);
+				Debug.Log($"Authenticated as {value.Id}");
+			}
 			_user = value;
 		}
 	}
@@ -622,6 +628,10 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	{
 		get
 		{
+			if (_authenticatedIds == null)
+			{
+				_authenticatedIds = new List<SourceReference>();
+			}
 			return _authenticatedIds;
 		}
 

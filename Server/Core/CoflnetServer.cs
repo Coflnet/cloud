@@ -29,25 +29,39 @@ namespace Coflnet.Server
 			Instance = ServerInstance;
 			Instance.Id = ConfigController.ApplicationSettings.id;
 
-			Commands.RegisterCommand<RegisterUser>();
-			Commands.RegisterCommand<ReceiveConfirm>();
 
 
-			foreach (var item in ExtraModules.Commands)
-			{
-				item.RegisterCommands(Commands);
-			}
 
 			// chang messagedata persistence
 			MessageDataPersistence.Instance = MessagePersistence.ServerInstance;
 		}
 
+		public ServerCore()
+		{
+
+		}
+
+
+
+
 		/// <summary>
 		/// Initializes this instance.
-		/// Should be called on startup of the application
+		/// Should be called on startup of the application will reset the server if called twice
 		/// </summary>
 		public static void Init()
 		{
+			Init(ConfigController.ApplicationSettings.id);
+		}
+
+
+		/// <summary>
+		/// Initializes this instance.
+		/// Should be called on startup of the application will reset the server if called twice
+		/// </summary>
+		/// <param name="serverId">Server identifier.</param>
+		public static void Init(SourceReference serverId)
+		{
+			Instance.Id = serverId;
 			CoflnetSocket.socketServer.Start();
 			ServerInstance.SetCommandsLive();
 			Coflnet.ServerController.Instance = Coflnet.Server.ServerController.ServerInstance;
@@ -62,9 +76,21 @@ namespace Coflnet.Server
 			CoflnetSocket.socketServer.Stop();
 		}
 
-
+		/// <summary>
+		/// Loads and Sets the commands live.
+		/// </summary>
 		protected void SetCommandsLive()
 		{
+			Commands.RemoveAllCommands();
+			Commands.RegisterCommand<RegisterUser>();
+			Commands.RegisterCommand<ReceiveConfirm>();
+
+			foreach (var item in ExtraModules.Commands)
+			{
+				item.RegisterCommands(Commands);
+			}
+			// we are the application
+			this.Id = ConfigController.ApplicationSettings.id;
 			ReferenceManager.Instance.AddReference(this);
 		}
 

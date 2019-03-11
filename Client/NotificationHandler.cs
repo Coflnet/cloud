@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Coflnet.Client;
 using System.Collections.Concurrent;
 
@@ -9,15 +8,15 @@ namespace Coflnet.Client
 
 	public class NotificationHandler
 	{
-
 		ConcurrentQueue<AlertItem> alerts = new ConcurrentQueue<AlertItem>();
 
-		public delegate void NewNotification(AlertItem item, NotificationHandler handler);
-		public event NewNotification OnNewNotification;
+		/// <summary>
+		/// Gets or sets the notification display used for displaying alerts
+		/// </summary>
+		/// <value>The notification display.</value>
+		public INotificationDisplay NotificationDisplay { get; set; }
 
 		public static NotificationHandler Instance { get; }
-
-		private bool showing = false;
 
 		static NotificationHandler()
 		{
@@ -46,26 +45,38 @@ namespace Coflnet.Client
 			alerts.Enqueue(new AlertItem(text));
 		}
 
+		public AlertItem GetNextAlert()
+		{
+			AlertItem result;
+			alerts.TryPeek(out result);
+
+			return result;
+		}
+
 		/// <summary>
 		/// Tries to show the next alert.
+		/// Adds alerts to a queue if showing failed.
 		/// </summary>
 		public void TryShowNextAlert()
 		{
-			if (showing)
+			AlertItem result = GetNextAlert();
+
+			if (result == null)
+			{
 				return;
-			showing = true;
-			AlertItem result;
-			alerts.TryDequeue(out result);
-			if (result != null)
-				OnNewNotification.Invoke(result, this);
+			}
+			if (NotificationDisplay.TryShowNextAlert(result))
+			{
+				// Showing was successful, remove it from the queue
+				alerts.TryDequeue(out result);
+			}
 		}
 
 
 		public void AddActionAlert(string text, System.Action action, string actionText = "OK")
 		{
 			alerts.Enqueue(new AlertItem(text, action, actionText));
-			if (!showing)
-				TryShowNextAlert();
+			TryShowNextAlert();
 		}
 
 
@@ -88,6 +99,22 @@ namespace Coflnet.Client
 			this.action = action;
 			this.buttonText = buttonText;
 		}
+	}
+
+	/// <summary>
+	/// Any Object capable of displaying an Notification.
+	/// </summary>
+	public interface INotificationDisplay
+	{
+		/// <summary>
+		/// Tries the show next alert.
+		/// Should return <see langword="false"/> if another Alert is already showing.
+		/// When showing is done the next alert can be retreived with <see cref="NotificationHandler.GetNextAlert"/> 
+		/// or <see cref="NotificationHandler.TryShowNextAlert"/>
+		/// </summary>
+		/// <returns><c>true</c>, if alert was shown, <c>false</c> otherwise.</returns>
+		/// <param name="alertItem">Alert item.</param>
+		bool TryShowNextAlert(AlertItem alertItem);
 	}
 }
 

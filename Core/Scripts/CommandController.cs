@@ -38,7 +38,11 @@ namespace Coflnet
 			this.backfall = backfall;
 		}
 
-
+		public void RemoveAllCommands()
+		{
+			commands?.Clear();
+			commandIdentifiers?.Clear();
+		}
 
 		/// <summary>
 		/// Registers a command
@@ -80,6 +84,18 @@ namespace Coflnet
 			}
 			commands.Add(command.GetSlug(), command);
 		}
+
+		/// <summary>
+		/// Overwrites the command.
+		/// </summary>
+		/// <param name="slug">Slug.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public void OverwriteCommand<T>() where T : Command
+		{
+			var command = (T)Activator.CreateInstance(typeof(T));
+			OverwriteCommand(command.GetSlug(), command);
+		}
+
 
 		/// <summary>
 		/// Overwrites the command.
@@ -400,10 +416,10 @@ namespace Coflnet
 			}
 
 
-			public CommandSettings(bool threadSave, bool isUpdating, bool encrypted, bool localPropagation, params Permission[] permissions)
+			public CommandSettings(bool threadSave, bool isChanging, bool encrypted, bool localPropagation, params Permission[] permissions)
 			{
 				ThreadSave = threadSave;
-				IsChaning = isUpdating;
+				IsChaning = isChanging;
 				Encrypted = encrypted;
 				LocalPropagation = localPropagation;
 				Permissions = permissions;

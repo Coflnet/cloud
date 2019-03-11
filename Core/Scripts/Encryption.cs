@@ -386,6 +386,23 @@ namespace Coflnet
 			return signed;
 		}
 
+
+
+		/// <summary>
+		/// Signs some bytes.
+		/// </summary>
+		/// <returns>The singed byte array.</returns>
+		/// <param name="toSign">The bytes to sign</param>
+		/// <param name="signKeyPair">KeyPair to sign the bytes with.</param>
+		public static byte[] SignByteDetached(byte[] toSign, KeyPair signKeyPair)
+		{
+			byte[] signature = new byte[CRYPTO_SIGN_BYTES];
+			long signatureLength = signature.Length;
+			long toSingLength = toSign.Length;
+			NativeLibsodium.crypto_sign_detached(signature, ref signatureLength, toSign, toSingLength, signKeyPair.secretKey);
+			return signature;
+		}
+
 		/// <summary>
 		/// Validates a signature with the public part of a KeyPair
 		/// </summary>
@@ -402,6 +419,20 @@ namespace Coflnet
 				throw new Exception("Signature is invalid");
 			}
 			return opened;
+		}
+
+		/// <summary>
+		/// Validates a signature for given data
+		/// </summary>
+		/// <returns><c>true</c>, if vertify was successful, <c>false</c> otherwise.</returns>
+		/// <param name="signature">Signature.</param>
+		/// <param name="data">Data.</param>
+		/// <param name="publicKey">Public key.</param>
+		public static bool SignVertifyDetached(byte[] signature, byte[] data, byte[] publicKey)
+		{
+			long length = data.Length;
+			int success = NativeLibsodium.crypto_sign_verify_detached(signature, data, length, publicKey);
+			return success == 0;
 		}
 	}
 

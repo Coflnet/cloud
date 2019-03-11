@@ -529,6 +529,7 @@ namespace Coflnet
 			var user = new CoflnetUser(owner);
 			// generate a secret
 			user.Secret = unity.libsodium.StreamEncryption.GetRandomBytes(16);
+			user.AssignId();
 			return user;
 		}
 

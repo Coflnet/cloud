@@ -10,7 +10,7 @@ namespace Coflnet.Client
 			ConfigController.UserSettings.userSecret = response.secret;
 
 			// Login
-			CoflnetClient.Instance.SendCommand<LoginUser, LoginParams>(new SourceReference(response.id.ServerId, 0),
+			ClientCore.Instance.SendCommand<LoginUser, LoginParams>(new SourceReference(response.id.ServerId, 0),
 																	  new LoginParams(response.id, response.secret));
 		}
 

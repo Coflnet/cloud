@@ -107,11 +107,11 @@ namespace Coflnet.Server
 
 		public CoflnetServer FindServer(long identifier)
 		{
-			if (!servers.ContainsKey(identifier))
+			if (!Servers.ContainsKey(identifier))
 			{
-				servers.TryAdd(identifier, new CoflnetServer(identifier));
+				Servers.TryAdd(identifier, new CoflnetServer(identifier));
 			}
-			return servers[identifier];
+			return Servers[identifier];
 		}
 	}
 

@@ -6,7 +6,7 @@ namespace Coflnet
 {
 
 	[MessagePackObject]
-	public class CoflnetServer //: Referenceable
+	public class CoflnetServer : Referenceable
 	{
 		[Key(0)]
 		private long pId;
@@ -208,5 +208,9 @@ namespace Coflnet
 			throw new System.NotImplementedException();
 		}
 
+		public override CommandController GetCommandController()
+		{
+			return new CommandController();
+		}
 	}
 }

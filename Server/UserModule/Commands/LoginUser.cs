@@ -22,7 +22,7 @@ namespace Coflnet.Server
 			{
 				throw new CoflnetException("secret_invalid", "The users secret is incorrect");
 			}
-
+			UnityEngine.Debug.Log("authentiated");
 			serverMessage.Connection.User = user;
 			// tell the socket that a user connected
 		}

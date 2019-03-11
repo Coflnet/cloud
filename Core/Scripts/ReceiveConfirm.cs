@@ -11,7 +11,7 @@ namespace Coflnet
 		public override void Execute(MessageData data)
 		{
 			var dataParams = data.GetAs<ReceiveConfirmParams>();
-			UnityEngine.Debug.Log("deleting message :)for " + MessagePackSerializer.ToJson(dataParams.sender));
+			UnityEngine.Debug.Log($"deleting message {MessagePackSerializer.ToJson(dataParams.messageId)} from {dataParams.sender} for " + MessagePackSerializer.ToJson(data.sId));
 
 			MessageDataPersistence.Instance.Remove(data.sId, dataParams.sender, dataParams.messageId);
 		}
@@ -32,16 +32,14 @@ namespace Coflnet
 	public class ReceiveConfirmParams
 	{
 		[Key(0)]
-		public long messageId;
-		[Key(1)]
 		public SourceReference sender;
-		private SourceReference sId;
-		private long mId;
+		[Key(1)]
+		public long messageId;
 
-		public ReceiveConfirmParams(SourceReference sId, long mId)
+		public ReceiveConfirmParams(SourceReference sender, long messageId)
 		{
-			this.sId = sId;
-			this.mId = mId;
+			this.sender = sender;
+			this.messageId = messageId;
 		}
 
 		public ReceiveConfirmParams() { }

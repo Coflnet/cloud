@@ -10,7 +10,7 @@ namespace Coflnet
 	{
 		public delegate void LocalizationLoaded();
 		private event LocalizationLoaded localLoadedCallBack;
-		private bool loadDone;
+		public bool loadDone { get; private set; }
 
 		/// <summary>
 		/// Gets or sets the translations.
@@ -60,6 +60,10 @@ namespace Coflnet
 			}
 		}
 
+		/// <summary>
+		/// Has to be invoked from the outside to allow for additional translations to be inserted before.
+		/// Is invoked on either ServerCore or CoflnetClient.Init()
+		/// </summary>
 		public void LoadCompleted()
 		{
 			loadDone = true;
@@ -87,6 +91,18 @@ namespace Coflnet
 			 };
 
 			localLoadedCallBack += callback;
+		}
+
+
+
+
+		protected void LoadTranslations()
+		{
+			string key = $"translation_{ConfigController.UserSettings.Locale}";
+			DataController.Instance.LoadObjectAsync<Dictionary<string, string>>(key, result =>
+			{
+				AddTranslations(result);
+			});
 		}
 	}
 

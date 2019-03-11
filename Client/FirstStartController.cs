@@ -36,7 +36,7 @@ namespace Coflnet.Client
 		/// Only executes once on startup 
 		/// unless setup is aborded or an error occurs
 		/// </summary>
-		private void Setup()
+		public void Setup()
 		{
 			if (ValuesController.HasKey("setupCompleted"))
 				return;

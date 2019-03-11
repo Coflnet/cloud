@@ -4,7 +4,7 @@
 	/// Coflnet client.
 	/// Main class to work with from the outside.
 	/// </summary>
-	public class CoflnetClient : CoflnetCore
+	public class ClientCore : CoflnetCore
 	{
 		static void HandleReceiveMessageData(MessageData data)
 		{
@@ -18,7 +18,7 @@
 		/// </summary>
 		private ClientSocket socket;
 
-		public static CoflnetClient ClientInstance;
+		public static ClientCore ClientInstance;
 
 
 		public CommandController CommandController
@@ -32,12 +32,43 @@
 		public static void Init()
 		{
 			ClientInstance.socket.Reconnect();
+			LocalizationManager.Instance.LoadCompleted();
+			ClientInstance.CheckInstallation();
 		}
 
 
-		static CoflnetClient()
+		public void CheckInstallation()
 		{
-			ClientInstance = new CoflnetClient();
+			if (ConfigController.UserSettings.userId != SourceReference.Default)
+			{
+				// we are registered
+				return;
+			}
+			// This is a fresh install, register at the managing server after showing privacy statement
+			SetupStartController.Instance.Setup();
+
+		}
+
+
+
+		/// <summary>
+		/// Stop this instance, saves data and closes connections 
+		/// </summary>
+		public static void Stop()
+		{
+			Save();
+			ClientInstance.socket.Disconnect();
+		}
+
+		public static void Save()
+		{
+			ConfigController.Save();
+		}
+
+
+		static ClientCore()
+		{
+			ClientInstance = new ClientCore();
 			Instance = ClientInstance;
 			ClientSocket.Instance.AddCallback(OnMessage);
 		}
@@ -49,11 +80,11 @@
 		}
 
 
-		public CoflnetClient() : this(new CommandController(), ClientSocket.Instance)
+		public ClientCore() : this(new CommandController(), ClientSocket.Instance)
 		{
 		}
 
-		public CoflnetClient(CommandController commandController, ClientSocket socket)
+		public ClientCore(CommandController commandController, ClientSocket socket)
 		{
 			this.commandController = commandController;
 			this.socket = socket;
@@ -97,6 +128,21 @@
 		public override void SendCommand<C>(SourceReference receipient, byte[] data)
 		{
 			ServerController.Instance.SendCommand<C>(receipient, data);
+		}
+
+		/// <summary>
+		/// Sets the application identifier.
+		/// </summary>
+		/// <param name="idString">Identifier.</param>
+		public void SetApplicationId(string idString)
+		{
+			var id = new SourceReference(idString);
+			if (ConfigController.UserSettings.managingServers.Count == 0)
+			{
+				ConfigController.UserSettings.managingServers.Add(id.ServerId);
+			}
+			this.Access.Owner = id;
+			ConfigController.ApplicationSettings.id = id;
 		}
 	}
 }

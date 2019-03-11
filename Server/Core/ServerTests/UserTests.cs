@@ -56,6 +56,8 @@ public class CoflnetUserTests
 
 		// user was created in the last second
 		Assert.IsTrue(response.GetAs<RegisterUserResponse>().id.ResourceId > ThreadSaveIdGenerator.NextId - 10000000);
+
+		ServerCore.Stop();
 	}
 
 
@@ -120,6 +122,9 @@ public class CoflnetUserTests
 				secret = login.secret
 			}, ConfigController.ApplicationSettings.id));
 
+		// tell the client that we are logged in
+		ConfigController.UserSettings.userId = login.id;
+
 		yield return new WaitForSeconds(0.5f);
 
 		Debug.Log(response.GetAs<RegisterUserResponse>().id);
@@ -127,7 +132,7 @@ public class CoflnetUserTests
 
 
 		// register test command on user
-		(new CoflnetUser()).GetCommandController().RegisterCommand<TestCommandWithPermission>();
+		(new CoflnetUser()).GetCommandController().OverwriteCommand<TestCommandWithPermission>();
 
 		ClientSocket.Instance.SendCommand(
 			MessageData.CreateMessageData<TestCommandWithPermission, int>(1, login.id));
@@ -152,11 +157,13 @@ public class CoflnetUserTests
 		ConfigController.ApplicationSettings.id = new SourceReference(1, 1, 1, 0);
 		ServerCore.Init();
 		MessageData response = null;
+		ClientSocket.Instance.Reconnect();
 		ClientSocket.Instance.AddCallback(data =>
 		{
 			response = data;
 		});
 
+		ConfigController.UserSettings.userId = SourceReference.Default;
 
 
 		yield return new UnityEngine.WaitForSeconds(0.5f);
@@ -189,11 +196,12 @@ public class CoflnetUserTests
 
 		// register second user
 		var receiverUser = CoflnetUser.Generate(ConfigController.ApplicationSettings.id);
-		receiverUser.GetCommandController().RegisterCommand<ChatMessage>();
+		receiverUser.GetCommandController().OverwriteCommand<ChatMessage>();
 
 
-		(new CoflnetUser()).GetCommandController().RegisterCommand<TestCommandWithPermission>();
-
+		(new CoflnetUser()).GetCommandController().OverwriteCommand<TestCommandWithPermission>();
+		//tell the client what user we are
+		ConfigController.UserSettings.userId = login.id;
 		ClientSocket.Instance.SendCommand(
 			MessageData.CreateMessageData<ChatMessage, string>("hi", receiverUser.Id));
 
@@ -225,7 +233,7 @@ public class CoflnetUserTests
 
 
 		yield return new WaitForSeconds(0.5f);
-
+		Debug.Log(response.t);
 		// message is delivered
 		Assert.AreEqual(response.GetAs<string>(), "hi");
 
@@ -248,7 +256,7 @@ public class CoflnetUserTests
 
 		public override CommandSettings GetSettings()
 		{
-			return new CommandSettings(IsNotBockedPermission.Instance);
+			return new CommandSettings(false, true, true, true, IsNotBockedPermission.Instance);
 		}
 
 		public override string GetSlug()
@@ -271,12 +279,13 @@ public class CoflnetUserTests
 		// tell the server his id
 		ConfigController.ApplicationSettings.id = new SourceReference(1, 1, 1, 0);
 		ServerCore.Init();
+		ClientSocket.Instance.Reconnect();
 		MessageData response = null;
 		ClientSocket.Instance.AddCallback(data =>
 		{
 			response = data;
 		});
-
+		ConfigController.UserSettings.userId = SourceReference.Default;
 
 
 		yield return new UnityEngine.WaitForSeconds(0.5f);
@@ -311,11 +320,11 @@ public class CoflnetUserTests
 		// register second user on virtual other server
 		var receiverUser = CoflnetUser.Generate(new SourceReference(1, 1, 2, 0));
 		receiverUser.Id = new SourceReference(3, 1, 2, ThreadSaveIdGenerator.NextId);
-		receiverUser.GetCommandController().RegisterCommand<ChatMessage>();
+		receiverUser.GetCommandController().OverwriteCommand<ChatMessage>();
 		Debug.Log(receiverUser.Id);
 
 
-		(new CoflnetUser()).GetCommandController().RegisterCommand<TestCommandWithPermission>();
+		(new CoflnetUser()).GetCommandController().OverwriteCommand<TestCommandWithPermission>();
 
 		ClientSocket.Instance.SendCommand(
 			MessageData.CreateMessageData<ChatMessage, string>("hi", receiverUser.Id));

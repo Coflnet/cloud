@@ -23,7 +23,7 @@ public class NetworkingTests
 	[UnityTest]
 	public IEnumerator DistributionTest()
 	{
-
+		ConfigController.ApplicationSettings.id = new SourceReference(1, 1, 1, 0);
 		ServerCore.Init();
 		string returnValue = null;
 		ClientSocket.Instance.OnError +=
@@ -42,8 +42,11 @@ public class NetworkingTests
 
 		var newId = new SourceReference(1, 1, 1, ThreadSaveIdGenerator.NextId);
 
+		// Ignore log message
+		LogAssert.ignoreFailingMessages = true;
 
-		ClientSocket.Instance.SendCommand(new MessageData(newId));
+
+		ClientSocket.Instance.SendCommand(new MessageData(newId), false);
 
 		yield return new UnityEngine.WaitForSeconds(1);
 
@@ -51,6 +54,8 @@ public class NetworkingTests
 		// test the expected error slug
 		Assert.AreEqual(returnValue, "object_not_found");
 
+		// Reset
 		ServerCore.Stop();
+		LogAssert.ignoreFailingMessages = false;
 	}
 }

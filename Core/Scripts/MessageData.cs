@@ -88,7 +88,6 @@ namespace Coflnet
 		/// </summary>
 		public MessageData()
 		{
-
 		}
 
 		/// <summary>
@@ -279,7 +278,7 @@ namespace Coflnet
 
 		public override string ToString()
 		{
-			return string.Format("[MessageData: message={0}, Data={1}, DeSerialized={2}, type={3}, UserReference={4}]", message, Data, DeSerialized, t, UserReference);
+			return string.Format("[MessageData: sId={0}, rId={1}, mId={2}, t={3}, Data={4}]", sId, rId, mId, t, Data);
 		}
 
 		/// <summary>

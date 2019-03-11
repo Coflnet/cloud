@@ -84,6 +84,30 @@ namespace Coflnet
 			FileController.Delete(SaveKeyWithPrefix(key));
 		}
 
+		/// <summary>
+		/// Sets the value.
+		/// Objects save this way have to have DataContract or <see cref="MessagePack.MessagePackObjectAttribute"/> attribute
+		/// </summary>
+		/// <param name="key">Key.</param>
+		/// <param name="value">Value.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public static void SetValue<T>(string key, T value)
+		{
+			FileController.SaveAs(SaveKeyWithPrefix(key), value);
+		}
+
+
+		/// <summary>
+		/// Gets the value.
+		/// </summary>
+		/// <returns>The value.</returns>
+		/// <param name="key">Key.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public static T GetValue<T>(string key)
+		{
+			return FileController.LoadAs<T>(SaveKeyWithPrefix(key));
+		}
+
 
 		private static string SaveKeyWithPrefix(string key)
 		{

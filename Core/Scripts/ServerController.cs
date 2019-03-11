@@ -8,20 +8,41 @@ namespace Coflnet
 {
 	public class ServerController
 	{
-		protected ConcurrentDictionary<long, CoflnetServer> servers;
+		private ConcurrentDictionary<long, CoflnetServer> _servers;
+
+
+		protected ConcurrentDictionary<long, CoflnetServer> Servers
+		{
+			get
+			{
+				if (_servers == null)
+				{
+					_servers = new ConcurrentDictionary<long, CoflnetServer>();
+				}
+				return _servers;
+			}
+			private set
+			{
+				_servers = value;
+			}
+		}
+
 
 		public static ServerController Instance { get; set; }
 
+
+
+
 		public void SendCommandToServer(MessageData data, long serverId = 0)
 		{
-			if (serverId == 0 && !servers.ContainsKey(serverId))
+			if (serverId == 0 || !Servers.ContainsKey(serverId))
 			{
-				throw new System.Exception("There is no server with the id " + serverId);
+				throw new System.Exception("There is no server with the id " + serverId.ToString("X"));
 			}
 			if (serverId == 0)
 				serverId = ConfigController.PrimaryServer;
 
-			SendCommandToServer(data, servers[serverId]);
+			SendCommandToServer(data, Servers[serverId]);
 		}
 
 		/// <summary>
@@ -96,11 +117,11 @@ namespace Coflnet
 		public CoflnetServer GetOrCreate(long serverId)
 		{
 			CoflnetServer result;
-			servers.TryGetValue(serverId, out result);
+			Servers.TryGetValue(serverId, out result);
 			if (result == null)
 			{
 				result = new CoflnetServer(serverId);
-				servers.TryAdd(serverId, result);
+				Servers.TryAdd(serverId, result);
 			}
 
 			return result;

@@ -1,16 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿
 
-public class CloudModule : MonoBehaviour {
-
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+namespace Coflnet.Server
+{
+	/// <summary>
+	/// Cloud module.
+	/// Registers Commands for interacting with other servers
+	/// </summary>
+	public class CloudModule : IRegisterCommands
+	{
+		public void RegisterCommands(CommandController controller)
+		{
+			controller.RegisterCommand<LoginServer>();
+		}
 	}
 }

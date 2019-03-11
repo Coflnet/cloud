@@ -207,7 +207,9 @@ namespace Coflnet
 		/// <param name="relativePath">Relative path.</param>
 		public static void Delete(string relativePath)
 		{
-			File.Delete(Path.Combine(dataPaht, relativePath));
+			var path = Path.Combine(dataPaht, relativePath);
+			if (Directory.Exists(Path.GetDirectoryName(path)))
+				File.Delete(path);
 		}
 
 		/// <summary>
