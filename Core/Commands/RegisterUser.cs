@@ -1,4 +1,6 @@
-﻿using Coflnet;
+﻿using System.Collections;
+using System.Collections.Generic;
+using Coflnet;
 using MessagePack;
 
 namespace Coflnet
@@ -17,6 +19,7 @@ namespace Coflnet
 
 			// get the client         
 			CoflnetUser user = CoflnetUser.Generate(request.clientId);
+			user.PrivacySettings = request.privacySettings;
 
 			var response = new RegisterUserResponse();
 			response.id = user.Id;
@@ -46,6 +49,8 @@ namespace Coflnet
 		public string captchaToken;
 		[Key(1)]
 		public SourceReference clientId;
+		[Key(2)]
+		public Dictionary<string, bool> privacySettings;
 	}
 
 	[MessagePackObject]
@@ -55,6 +60,8 @@ namespace Coflnet
 		public SourceReference id;
 		[Key(1)]
 		public byte[] secret;
+		[Key(2)]
+		public List<long> managingServers;
 	}
 }
 

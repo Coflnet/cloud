@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Beebyte.Obfuscator;
 
 public class SoundController : MonoBehaviour
 {

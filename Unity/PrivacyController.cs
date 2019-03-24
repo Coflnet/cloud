@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Coflnet;
-using Beebyte.Obfuscator;
 using UnityEngine.UI;
 using Coflnet.Unity;
+using Coflnet.Client;
 
-public class PrivacyController : MonoBehaviour
+public class PrivacyController : MonoBehaviour, IPrivacyScreen
 {
 
 
@@ -14,7 +14,7 @@ public class PrivacyController : MonoBehaviour
 	private static int tmpPrivacyLevel = 5;
 	public static PrivacyController instance;
 
-	public Action decissionCallback;
+	public Action<int> decissionCallback;
 
 	public GameObject privacyScreen;
 	public GameObject optionPrefab;
@@ -90,6 +90,8 @@ public class PrivacyController : MonoBehaviour
 		tmpPrivacyLevel = levelInt;
 	}
 
+
+
 	public void Accept()
 	{
 		PlayerPrefs.SetInt("privacyLevel", tmpPrivacyLevel);
@@ -97,10 +99,12 @@ public class PrivacyController : MonoBehaviour
 
 		NotificationHandler.instance.AddLocalAlert("privacy_updated");
 
-		if (decissionCallback != null)
-			decissionCallback();
-
 		MenuController mc = MenuController.instance;
+		mc.SetInActiveWithoutReverse(privacyScreen);
+
+		decissionCallback?.Invoke(tmpPrivacyLevel);
+
+
 
 
 		//mc.SetActiveWithoutReverse(mc.main);
@@ -109,7 +113,6 @@ public class PrivacyController : MonoBehaviour
 		if (privacyLevel <= 1)
 			ShowPrivacyOptions();
 
-		mc.SetInActiveWithoutReverse(privacyScreen);
 	}
 
 	private void SetSettingsByLevel(string data)
@@ -265,6 +268,8 @@ public class PrivacyController : MonoBehaviour
 
 	public bool AmIAllowedToDo(string identifier)
 	{
+		//CoflnetUser user;
+		//if(!ReferenceManager.Instance.TryGetResource())
 		return settings.IsSettingEnabled(identifier);
 	}
 
@@ -285,6 +290,11 @@ public class PrivacyController : MonoBehaviour
 			menuController.SetChildText(textContainer, i,
 										localizationManager.GetTranslation(translationKey + "_" + i));
 		}
+	}
+
+	public void ShowScreen(Action<int> whenDone)
+	{
+		decissionCallback = whenDone;
 	}
 }
 

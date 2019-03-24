@@ -8,7 +8,19 @@ namespace Coflnet
 	{
 		private static ApplicationSettings applicationSettings;
 
-		public static UserSettings UserSettings { get; private set; }
+		public static SourceReference ActiveUserId = SourceReference.Default;
+
+		public static UserSettings UserSettings
+		{
+			get
+			{
+				return Users.Find(u => u.userId == ActiveUserId);
+			}
+		}
+
+		public static List<UserSettings> Users { get; private set; }
+
+
 		/// <summary>
 		/// Settings for the current application
 		/// </summary>
@@ -36,9 +48,15 @@ namespace Coflnet
 		static ConfigController()
 		{
 			if (FileController.Exists("userSettings"))
-				UserSettings = MessagePackSerializer.Deserialize<UserSettings>(FileController.ReadAllBytes("userSettings"));
+				Users = MessagePackSerializer.Deserialize<List<UserSettings>>(FileController.ReadAllBytes("userSettings"));
 			else
-				UserSettings = new UserSettings();
+				Users = new List<UserSettings>();
+
+			if (ValuesController.HasKey("currentUserIdentifier"))
+			{
+				ActiveUserId = ValuesController.GetValue<SourceReference>("currentUserIdentifier");
+			}
+
 			AppDomain.CurrentDomain.ProcessExit += (object sender, EventArgs e) => Save();
 		}
 
@@ -75,6 +93,7 @@ namespace Coflnet
 		public static void Save()
 		{
 			FileController.WriteAllBytes("userSettings", MessagePackSerializer.Serialize(UserSettings));
+			ValuesController.SetValue<SourceReference>("currentUserIdentifier", ActiveUserId);
 		}
 
 		public static long PrimaryServer
@@ -107,6 +126,14 @@ namespace Coflnet
 		{
 			managingServers = new List<long>();
 			managingServers.Add(0);
+		}
+
+		public UserSettings(List<long> managingServers, SourceReference userId, byte[] userSecret, string locale = null)
+		{
+			this.managingServers = managingServers;
+			this.userId = userId;
+			this.userSecret = userSecret;
+			Locale = locale;
 		}
 	}
 

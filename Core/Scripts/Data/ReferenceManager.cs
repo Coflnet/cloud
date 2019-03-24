@@ -206,6 +206,7 @@ namespace Coflnet
 			value.ExecuteForResource(data);
 		}
 
+
 		public class ObjectNotFound : CoflnetException
 		{
 			public ObjectNotFound(SourceReference id) : base("object_not_found", $"The resource {id} wasn't found on this server", null, 404)

@@ -36,9 +36,9 @@ public class CoflnetSocket
 	//static readonly RestClient client = new RestClient();
 
 
-	public void SetAge(MessageData data)
+	public void SetBirthDay(MessageData data)
 	{
-		UserController.instance.GetUser(data.sId).Age = Int16.Parse(data.Data);
+		UserController.instance.GetUser(data.sId).Birthday = data.GetAs<DateTime>();
 
 	}
 

@@ -62,7 +62,7 @@ public class Track
 			return;
 		lastRequest = url;
 #if !UNITY_EDITOR
-		StartCoroutine(SendRealRequest(url));
+	//	StartCoroutine(SendRealRequest(url));
 #endif
 	}
 

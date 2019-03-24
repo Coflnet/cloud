@@ -24,7 +24,9 @@ namespace Coflnet.Server
 			}
 			UnityEngine.Debug.Log("authentiated");
 			serverMessage.Connection.User = user;
-			// tell the socket that a user connected
+
+
+			data.SendBack(MessageData.CreateMessageData<LoginUserResponse, SourceReference>(user.Id, user.Id));
 		}
 	}
 

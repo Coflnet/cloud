@@ -1,8 +1,4 @@
 ﻿
-using UnityEngine;
-using UnityEngine.UI;
-
-
 
 namespace Coflnet.Client
 {
@@ -13,8 +9,10 @@ namespace Coflnet.Client
 	{
 
 		public static SetupStartController Instance;
-		public GameObject tutorialScreen;
-		public GameObject startScreen;
+
+
+		//public GameObject tutorialScreen;
+		//public GameObject startScreen;
 
 
 
@@ -41,10 +39,19 @@ namespace Coflnet.Client
 			if (ValuesController.HasKey("setupCompleted"))
 				return;
 
+			PrivacyService.Instance.ShowScreen(Done);
+		}
+
+		public void Done()
+		{
+			//ReferenceManager.Instance.GetResource<CoflnetUser>(new SourceReference()).
+			UserService.Instance.CreateUser(PrivacyService.Instance.Settings);
 
 
 			ValuesController.SetInt("setupCompleted", 1);
 		}
 	}
+
+
 }
 

@@ -34,5 +34,6 @@ namespace Coflnet
 		public abstract void SendCommand<C, T>(SourceReference receipient, T data) where C : Command;
 		public abstract void SendCommand<C>(SourceReference receipient, byte[] data) where C : Command;
 
+		//public abstract void SendCommand<C, T>(SourceReference receipient, T data, Command.CommandMethod callback) where C : Command;
 	}
 }

@@ -98,10 +98,10 @@ namespace Coflnet
 		/// </summary>
 		protected List<byte[]> signedPublicOneTimeKeys;
 		/// <summary>
-		/// The users age.
+		/// The users birthDay.
 		/// </summary>
 		[IgnoreDataMember]
-		protected Int16 age;
+		protected DateTime birthDay;
 
 		/// <summary>
 		/// The users public identifier.
@@ -281,7 +281,7 @@ namespace Coflnet
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:CoflnetUser"/> class.
 		/// </summary>
-		/// <param name="client">OauthClient creating this user.</param>
+		/// <param name="creater">OauthClient creating this user.</param>
 		public CoflnetUser(Application creater) : base(creater.Id)
 		{
 			this.publicId = ReferenceManager.Instance.CreateReference(this);
@@ -375,16 +375,16 @@ namespace Coflnet
 		}
 
 
-		[DataMember]
-		public short Age
+		[DataMember(Name = "bd")]
+		public DateTime Birthday
 		{
 			get
 			{
-				return age;
+				return birthDay;
 			}
 			set
 			{
-				age = value;
+				birthDay = value;
 			}
 		}
 
@@ -584,7 +584,7 @@ namespace Coflnet
 			ReferenceManager.Instance
 							.GetResource<CoflnetUser>(data.rId).KeyValues
 							.TryGetValue(data.GetAs<string>(), out result);
-
+			//data.SendBack(MessageData.CreateMessageData<>)
 			SendBack(data, data.Serialize(result));
 		}
 
@@ -618,12 +618,12 @@ namespace Coflnet
 	/// <summary>
 	/// Sets a value on an user object.
 	/// </summary>
-	public abstract class ValueSetter : ServerCommand
+	public abstract class ValueSetter : Command
 	{
 
-		public override ServerCommandSettings GetServerSettings()
+		public override CommandSettings GetSettings()
 		{
-			return new ServerCommandSettings(WritePermission.Instance);
+			return new CommandSettings(false, true, true, true, WritePermission.Instance);
 		}
 	}
 

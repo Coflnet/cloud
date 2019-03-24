@@ -76,6 +76,11 @@
 
 		public static void OnMessage(MessageData data)
 		{
+			// special case before we are logged in 
+			if (data.rId == SourceReference.Default)
+			{
+				ClientCore.ClientInstance.ExecuteCommand(data);
+			}
 			ReferenceManager.Instance.ExecuteForReference(data);
 		}
 
@@ -117,6 +122,8 @@
 				UnityEngine.Debug.Log("Reconnecting");
 
 				socket.SendCommand(data);
+				// persist data
+				MessageDataPersistence.Instance.SaveMessage(data);
 			}
 		}
 

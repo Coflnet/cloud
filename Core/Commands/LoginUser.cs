@@ -21,6 +21,24 @@ namespace Coflnet
 		}
 	}
 
+	public class LoginUserResponse : Command
+	{
+		public override void Execute(MessageData data)
+		{
+			ConfigController.ActiveUserId = data.GetAs<SourceReference>();
+		}
+
+		public override CommandSettings GetSettings()
+		{
+			return new CommandSettings(IsManagingServerPermission.Instance);
+		}
+
+		public override string GetSlug()
+		{
+			return "loginUserResponse";
+		}
+	}
+
 	[MessagePackObject]
 	public class LoginParams
 	{

@@ -234,6 +234,8 @@ namespace Coflnet
 
 	public abstract class Command
 	{
+		public delegate void CommandMethod(MessageData messageData);
+
 		private CommandSettings _settings;
 
 		/// <summary>
@@ -415,7 +417,14 @@ namespace Coflnet
 				Permissions = permissions;
 			}
 
-
+			/// <summary>
+			/// Initializes a new instance of the <see cref="T:Coflnet.Command.CommandSettings"/> class.
+			/// </summary>
+			/// <param name="threadSave">If set to <c>true</c> command is thread save.</param>
+			/// <param name="isChanging">If set to <c>true</c> is changing (will be distributed).</param>
+			/// <param name="encrypted">If set to <c>true</c> encrypted.</param>
+			/// <param name="localPropagation">If set to <c>true</c> local propagation.</param>
+			/// <param name="permissions">Permissions.</param>
 			public CommandSettings(bool threadSave, bool isChanging, bool encrypted, bool localPropagation, params Permission[] permissions)
 			{
 				ThreadSave = threadSave;
@@ -440,7 +449,9 @@ namespace Coflnet
 		string GetSlug();
 	}
 
-
+	/// <summary>
+	/// Is thrown when a command that is only present on the serverside is attempted to be invoked on the client side
+	/// </summary>
 	public class CommandExistsOnServer : NotImplementedException
 	{
 		public CommandExistsOnServer(string message) : base(message)

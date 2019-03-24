@@ -295,6 +295,16 @@ namespace Coflnet
 		{
 			this.sId = sId;
 		}
+
+		/// <summary>
+		/// Gets the target resource as.
+		/// </summary>
+		/// <returns>The target as.</returns>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public T GetTargetAs<T>() where T : Referenceable
+		{
+			return ReferenceManager.Instance.GetResource<T>(rId);
+		}
 	}
 }
 

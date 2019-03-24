@@ -1,6 +1,7 @@
 ﻿using System;
 using MessagePack.Resolvers;
 using System.Linq;
+using Coflnet;
 
 namespace Coflnet.Server
 {
@@ -118,6 +119,7 @@ namespace Coflnet.Server
 
 			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation)
 			{
+
 				ThreadController.Instance.ExecuteCommand(commandInstance, messageData);
 			}
 
