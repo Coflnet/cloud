@@ -1,4 +1,4 @@
-﻿#region License
+#region License
 /*
  * WebSocket.cs
  *
@@ -2837,7 +2837,7 @@ namespace WebSocketSharp
 		/// </exception>
 		/// <exception cref="ArgumentException">
 		///   <para>
-		///   <paramref name="code"/> is 1011 (CoflnetServererror).
+		///   <paramref name="code"/> is 1011 (server error).
 		///   It cannot be used by clients.
 		///   </para>
 		///   <para>
@@ -2957,7 +2957,7 @@ namespace WebSocketSharp
 		/// </exception>
 		/// <exception cref="ArgumentException">
 		///   <para>
-		///   <paramref name="code"/> is 1011 (CoflnetServererror).
+		///   <paramref name="code"/> is 1011 (server error).
 		///   It cannot be used by clients.
 		///   </para>
 		///   <para>
@@ -3169,7 +3169,7 @@ namespace WebSocketSharp
 		/// </exception>
 		/// <exception cref="ArgumentException">
 		///   <para>
-		///   <paramref name="code"/> is 1011 (CoflnetServererror).
+		///   <paramref name="code"/> is 1011 (server error).
 		///   It cannot be used by clients.
 		///   </para>
 		///   <para>
@@ -3299,7 +3299,7 @@ namespace WebSocketSharp
 		/// </exception>
 		/// <exception cref="ArgumentException">
 		///   <para>
-		///   <paramref name="code"/> is 1011 (CoflnetServererror).
+		///   <paramref name="code"/> is 1011 (server error).
 		///   It cannot be used by clients.
 		///   </para>
 		///   <para>

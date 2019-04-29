@@ -68,18 +68,24 @@ namespace Coflnet
 		/// <param name="path">Path.</param>
 		public static string GetUrl(string path, WebProtocol protocol = WebProtocol.https)
 		{
-			if (UserSettings == null)
-				return null;
 			var protocolName = protocol.ToString();// Enum.GetName(typeof(WebProtocol), protocol);
 			return $"{protocolName}://{GetUrl((ushort)protocol)}/{path.TrimStart('/')}";
 		}
 
 		public static string GetUrl(UInt16 port)
 		{
-			long serverId = UserSettings.managingServers[0];
+			long serverId;
+			if (UserSettings == null)
+			{
+				serverId = ApplicationSettings.id.ServerId;
+			}
+			else
+			{
+				serverId = UserSettings.managingServers[0];
+			}
 
-			// serverId 0 is reserved for development 
-			if (serverId == 0)
+			// serverId 1,1,* is reserved for development 
+			if (serverId == (new SourceReference(1, 1, 1, 0)).ServerId)
 			{
 				return $"localhost:{port}";
 			}

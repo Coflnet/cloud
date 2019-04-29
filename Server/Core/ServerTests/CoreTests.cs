@@ -112,7 +112,7 @@ public class CoreTests
 	{
 		var res = new TestResource();
 		res.AssignId();
-		Assert.IsTrue(ReferenceManager.Instance.Contains(res.Id));
+		Assert.IsTrue(ReferenceManager.Instance.Exists(res.Id));
 	}
 
 	[Test]
@@ -278,7 +278,7 @@ public class CoreTests
 			UnityEngine.Debug.Log("received command : " + data.t);
 			response = data;
 		});
-		ConfigController.UserSettings.userId = SourceReference.Default;
+		ConfigController.ActiveUserId = SourceReference.Default;
 
 		// register server command
 		ServerCore.Commands.RegisterCommand<ServerTestCommandGet>();

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Coflnet;
-using MessagePack;
+using Coflnet;
 using System;
 
 namespace Coflnet
@@ -29,15 +29,6 @@ namespace Coflnet
 
 		public abstract MessageData ExecuteWithReturn(MessageData data);
 
-
-		[MessagePackObject]
-		public class ResponseWraper
-		{
-			[Key(0)]
-			long originId;
-			[Key(1)]
-			byte[] payload;
-		}
 	}
 
 	/// <summary>
@@ -53,6 +44,13 @@ namespace Coflnet
 		public override void Execute(MessageData data)
 		{
 			// The command may not be present anymore
+			long id = BitConverter.ToInt64(data.message, 0);
+			byte[] dataWithoutId = new byte[data.message.Length - 8];
+			data.message.CopyTo(dataWithoutId, 8);
+			data.message = dataWithoutId;
+
+
+			ReturnCommandService.Instance.ReceiveMessage(id, data);
 		}
 
 		/// <summary>

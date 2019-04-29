@@ -15,7 +15,6 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 	public GameObject notificationObject;
 
 
-
 	MenuController mc;
 
 	bool showing;

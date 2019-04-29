@@ -36,6 +36,7 @@ namespace Coflnet
 
 		public static ClientSocket NewInstance()
 		{
+			UnityEngine.Debug.Log("staring instance on " + ConfigController.GetUrl("socket", ConfigController.WebProtocol.wss));
 			return new ClientSocket(new WebSocket(ConfigController.GetUrl("socket", ConfigController.WebProtocol.wss)));
 		}
 
@@ -104,7 +105,7 @@ namespace Coflnet
 		{
 			if (changeSender)
 				// add the userId if present as sender
-				data.sId = ConfigController.UserSettings.userId;
+				data.sId = ConfigController.ActiveUserId;
 
 			webSocket.Send(MessagePackSerializer.Serialize(data));
 		}

@@ -7,9 +7,9 @@ namespace Coflnet
 {
 	public class ReferenceManager
 	{
-		protected ConcurrentDictionary<SourceReference, Reference<Referenceable>> references = new ConcurrentDictionary<SourceReference, Reference<Referenceable>>();
+		protected ConcurrentDictionary<SourceReference, InnerReference<Referenceable>> references = new ConcurrentDictionary<SourceReference, InnerReference<Referenceable>>();
 		protected static ReferenceManager instance;
-		protected CoflnetServer CurrentServer = new CoflnetServer(011111);
+		//protected CoflnetServer CurrentServer = new CoflnetServer(011111);
 
 		public static ReferenceManager Instance
 		{
@@ -23,7 +23,7 @@ namespace Coflnet
 			}
 		}
 
-		public ConcurrentDictionary<SourceReference, Reference<Referenceable>> References
+		public ConcurrentDictionary<SourceReference, InnerReference<Referenceable>> References
 		{
 			get
 			{
@@ -37,15 +37,15 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The for server.</returns>
 		/// <param name="id">Identifier.</param>
-		public List<Reference<Referenceable>> GetForServer(long id)
+		public List<InnerReference<Referenceable>> GetForServer(long id)
 		{
 
-			List<Reference<Referenceable>> storedReferences = new List<Reference<Referenceable>>();
+			List<InnerReference<Referenceable>> storedReferences = new List<InnerReference<Referenceable>>();
 
 			foreach (var item in this.references)
 			{
 				//  if (item.Value.)
-				if (item.Value.ReferenceId.ServerId == id)
+				if (item.Value.Resource.Id.ServerId == id)
 				{
 					storedReferences.Add(item.Value);
 				}
@@ -73,6 +73,100 @@ namespace Coflnet
 			return GetResource<Referenceable>(id);
 		}
 
+		/// <summary>
+		/// Serializes the <see cref="Referenceable"/> without the access attribute.
+		/// </summary>
+		/// <returns>The without access.</returns>
+		/// <param name="id">Identifier.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public byte[] SerializeWithoutAccess<T>(SourceReference id) where T : Referenceable
+		{
+			return SerializeWithoutAccess<T>(id, CoflnetEncoder.Instance);
+		}
+
+
+
+		/// <summary>
+		/// Serializes the <see cref="Referenceable"/> without the access attribute.
+		/// </summary>
+		/// <returns>The without access.</returns>
+		/// <param name="id">Identifier.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public byte[] SerializeWithoutAccess(SourceReference id)
+		{
+			var data = GetResource(id);
+			byte[] result;
+			// NOTE: this could still cause trouble if Access would be accessed in a different Thread
+			lock (data)
+			{
+				Access access = data.Access;
+				data.Access = null;
+				result = MessagePack.MessagePackSerializer.Typeless.Serialize(data);
+				data.Access = access;
+			}
+			return result;
+		}
+
+
+		/// <summary>
+		/// Save the specified <see cref="Referenceable"/> and remove it from Ram.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="removeFromRam">If set to <c>true</c> remove from ram.</param>
+		public void Save(SourceReference id, bool removeFromRam = false)
+		{
+
+			//ValuesController.SetValue
+			var data = references[id];
+			//MessagePack.MessagePackSerializer.ser
+			var bytes = MessagePack.MessagePackSerializer.Typeless.Serialize(data);
+
+			var h = new PersistHelper()
+			{
+				reference = data,
+				data = data.Resource
+			};
+
+			//var rr = new RedundantReference<CoflnetUser>((CoflnetUser)data, ((CoflnetUser)data).Id, new CoflnetServer(11111, "", 12, new byte[16]));
+
+			FileController.WriteAllBytes($"res/{id.ToString()}-a", MessagePack.MessagePackSerializer.Typeless.Serialize(h));
+			DataController.Instance.SaveData($"res/{id.ToString()}", bytes);
+
+			if (!removeFromRam) return;
+
+			InnerReference<Referenceable> reference;
+			references.TryRemove(id, out reference);
+		}
+
+		class PersistHelper
+		{
+			public object data;
+			public InnerReference<Referenceable> reference;
+		}
+
+
+		/// <summary>
+		/// Serializes the <see cref="Referenceable"/> without the access attribute.
+		/// </summary>
+		/// <returns>The without access.</returns>
+		/// <param name="id">Identifier.</param>
+		/// <param name="encoder">Encoder.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public byte[] SerializeWithoutAccess<T>(SourceReference id, CoflnetEncoder encoder) where T : Referenceable
+		{
+			T data = GetResource<T>(id);
+			byte[] result;
+			// NOTE: this could still cause trouble if Access would be accessed in a different Thread
+			lock (data)
+			{
+				Access access = data.Access;
+				data.Access = null;
+				result = encoder.Serialize<T>(data);
+				data.Access = access;
+			}
+			return result;
+		}
+
 
 		/// <summary>
 		/// Gets the resource.
@@ -82,12 +176,20 @@ namespace Coflnet
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public T GetResource<T>(SourceReference id) where T : Referenceable
 		{
-			Reference<Referenceable> reference;
+			InnerReference<Referenceable> reference;
 			references.TryGetValue(id, out reference);
 
 			if (reference == null || reference.Resource == null)
+			{
+				// attempt to find it on disc
+				if (!TryLoadReference(id, out reference, true))
+				{
+					throw new ObjectNotFound(id);
+				}
+				// found it
 
-				throw new ObjectNotFound(id);
+			}
+
 
 			if (reference.Resource is T)
 			{
@@ -103,6 +205,34 @@ namespace Coflnet
 			}
 		}
 
+
+		/// <summary>
+		/// Tries to load the  reference from disc.
+		/// </summary>
+		/// <returns><c>true</c>, if load resource was tryed, <c>false</c> otherwise.</returns>
+		/// <param name="id">Identifier.</param>
+		/// <param name="data">Data.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public bool TryLoadReference(SourceReference id, out InnerReference<Referenceable> data, bool cache = true)
+		{
+			var path = $"res/{id.ToString()}";
+			if (!FileController.Exists(path))
+			{
+				data = null;
+				return false;
+			}
+			var bytes = DataController.Instance.LoadData(path);
+			var result = MessagePack.MessagePackSerializer.Typeless.Deserialize(bytes)
+									as InnerReference<Referenceable>;
+			if (cache)
+			{
+				references[id] = result;
+			}
+			data = result;
+			return true;
+		}
+
+
 		/// <summary>
 		/// Tries the get resource.
 		/// </summary>
@@ -112,7 +242,7 @@ namespace Coflnet
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public bool TryGetResource<T>(SourceReference id, out T data) where T : Referenceable
 		{
-			Reference<Referenceable> reference;
+			InnerReference<Referenceable> reference;
 			references.TryGetValue(id, out reference);
 
 			if (reference == null || reference.Resource == null)
@@ -123,7 +253,60 @@ namespace Coflnet
 
 			data = GetResource<T>(id);
 			return true;
+		}
 
+		/// <summary>
+		/// Attempts to find the resource, will create it default if not found and set correct id
+		/// </summary>
+		/// <param name="id">Id to search for</param>
+		/// <typeparam name="T">What type the resource is</typeparam>
+		/// <returns>The found/create resource</returns>
+		public T GetOrDefault<T>(SourceReference id) where T:Referenceable
+		{
+			T value;
+			if(!TryGetResource<T>(id,out value)){
+				// create default
+				value = (T)Activator.CreateInstance(typeof(T));
+			}
+			return value;
+		}
+
+		/// <summary>
+		/// Returns resource if found, otherwise uses creator to create the new resource.
+		/// Also sets correct id for it.
+		/// </summary>
+		/// <param name="id">To search or set</param>
+		/// <param name="creator">Function wich will return a new instance</param>
+		/// <typeparam name="T">What type the resource is</typeparam>
+		/// <returns>The found/create resource</returns>
+		public T GetOrCreate<T>(SourceReference id,Func<T> creator) where T:Referenceable
+		{
+			T value;
+			if(!TryGetResource<T>(id,out value)){
+				// create default
+				value = creator.Invoke();
+				value.Id = id;
+			}
+			return value;
+		}
+
+		/// <summary>
+		/// Returns value if found, otherwise uses alterer to alter the created resource and returns it.
+		/// </summary>
+		/// <param name="id">Of resource to search for</param>
+		/// <param name="alterer">Method that receives and returns the resource after creation</param>
+		/// <typeparam name="T">What type the resource is</typeparam>
+		/// <returns>The found/create and altered resource</returns>
+		public T GetOrCreate<T>(SourceReference id,Func<T,T> alterer) where T:Referenceable
+		{
+			T value;
+			if(!TryGetResource<T>(id,out value)){
+				// create default
+				value = (T)Activator.CreateInstance(typeof(T));
+				value.Id = id;
+				value = alterer.Invoke(value);
+			}
+			return value;
 		}
 
 
@@ -132,7 +315,7 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The contains.</returns>
 		/// <param name="id">Identifier to search for.</param>
-		public bool Contains(SourceReference id)
+		public bool Exists(SourceReference id)
 		{
 			return references.ContainsKey(id);
 		}
@@ -146,10 +329,12 @@ namespace Coflnet
 		{
 			long nextIndex = ThreadSaveIdGenerator.NextId;
 			SourceReference newReference = new SourceReference(ConfigController.ApplicationSettings.id.ServerId, nextIndex);
-			Reference<Referenceable> referenceObject = new Reference<Referenceable>(referenceable, newReference);
 			if (referenceable.Id != new SourceReference() && !force)
 				throw new Exception("The referenceable already had an id, it may already have been registered. Call with force = true to ignore");
 			referenceable.Id = newReference;
+
+			InnerReference<Referenceable> referenceObject = new InnerReference<Referenceable>(referenceable);
+
 			if (!AddReference(referenceObject))
 				throw new Exception("adding failed");
 			return newReference;
@@ -160,25 +345,34 @@ namespace Coflnet
 		/// </summary>
 		/// <returns><c>true</c>, if reference was added, <c>false</c> otherwise.</returns>
 		/// <param name="reference">Reference.</param>
-		public bool AddReference(Reference<Referenceable> reference)
+		public bool AddReference(InnerReference<Referenceable> reference)
 		{
-			return references.TryAdd(reference.ReferenceId, reference);
+			return references.TryAdd(reference.Resource.Id, reference);
 		}
 
 		public bool AddReference(Referenceable referenceable)
 		{
-			return references.TryAdd(referenceable.Id, new Reference<Referenceable>(referenceable));
+			return AddReference(new InnerReference<Referenceable>(referenceable));
 		}
 
 
-		public void ExecuteForReference(MessageData data)
+		/// <summary>
+		/// Executes a command for a <see cref="SourceReference"/>.
+		/// Will forward the command to the right server if the current one is not the main managing node of the resource.
+		/// </summary>
+		/// <param name="data">Command data to execute.</param>
+		/// <param name="sender">The vertified sender of the message (for distribution purposes)</param>
+		public void ExecuteForReference(MessageData data, SourceReference sender = default(SourceReference))
 		{
 			UnityEngine.Debug.Log("searching");
-			Reference<Referenceable> value;
-			references.TryGetValue(data.rId, out value);
-			if (value == null)
+			InnerReference<Referenceable> reference;
+			references.TryGetValue(data.rId, out reference);
+
+			if (reference == null)
 			{
 				UnityEngine.Debug.Log("not found");
+
+				// is the current server the managing server?
 				if (data.rId.ServerId != ConfigController.ApplicationSettings.id.ServerId)
 				{
 					UnityEngine.Debug.Log("passing on to " + data.rId);
@@ -186,25 +380,110 @@ namespace Coflnet
 					CoflnetCore.Instance.SendCommand(data);
 					return;
 				}
+				// we are the main managing server but this resource doesn't exist
 				throw new ObjectNotFound(data.rId);
 			}
+
 			UnityEngine.Debug.Log("found executing");
-			var resource = value.GetAsIfPresent<Referenceable>();
+
+			var resource = reference.Resource;
+
 			if (resource != null)
 			{
-				UnityEngine.Debug.Log("fasdfasdf executing");
-				resource.ExecuteCommand(data);
-				var controller = resource.GetCommandController();
-				var command = controller.GetCommand(data.t);
-				//controller.ExecuteCommand(command, data);
-				if (!command.Settings.IsChaning)
+				UnityEngine.Debug.Log($"executing {data.t}");
+				var command = resource.GetCommandController().GetCommand(data.t);
+
+				// only execute changing commands command if we are the managing server 
+				// or the managing server instructed us to do so
+				if (command.Settings.IsChaning
+				&&
+				(sender.ServerId == resource.Id.ServerId && sender.IsServer)
+				   || resource.Id.ServerId == ConfigController.ApplicationSettings.id.ServerId)
 				{
+					resource.ExecuteCommand(data, command);
+				}
+				else if (!command.Settings.IsChaning)
+				{
+					// if the command isn't updating we are done here
+					resource.ExecuteCommand(data, command);
 					return;
 				}
+				//resource.ExecuteCommand()
+				//controller.ExecuteCommand(command, data);
+
 			}
+			/// IMPORTANT
+			/// this could cause a loop if we are one of the sibblings managing nodes and are 
+			/// distributing this to the managing nodes and it will distribute it back
 			UnityEngine.Debug.Log("distributing");
-			value.ExecuteForResource(data);
+
+			// block distributing command received from the managing node
+			if (sender.ServerId != data.sId.ServerId || sender.ResourceId != 0)
+				reference.ExecuteForResource(data);
 		}
+
+
+		/// <summary>
+		/// The Id of the managing node for a given reference
+		/// </summary>
+		/// <returns>The node for.</returns>
+		/// <param name="reference">Reference.</param>
+		protected SourceReference ManagingNodeFor(Reference<Referenceable> reference)
+		{
+			CoflnetServer server;
+			TryGetResource<CoflnetServer>(new SourceReference(reference.ReferenceId.ServerId,0),out server);
+		
+			
+			if(server != null && server.State != CoflnetServer.ServerState.UP){
+				// search general failover servers
+				foreach (var siblingServer in server.SibblingServers)
+				{
+					var id = new SourceReference(siblingServer,0);
+					if(IsUp(id)){
+						return id;
+					}
+				}
+
+				/// try to find another server if main managing node is down
+				if(reference is RedundantInnerReference<Referenceable>){
+					foreach(var sibbling in (reference.InnerReference as RedundantInnerReference<Referenceable>)
+					.SiblingNodes
+					.ConvertAll<SourceReference>((id)=> new SourceReference(id,0))){
+						TryGetResource<CoflnetServer>(sibbling,out server);
+						if(server.State == CoflnetServer.ServerState.UP){
+							return sibbling;
+						}
+					}
+				}
+			} 
+			return new SourceReference(reference.ReferenceId.ServerId, 0);
+		}
+
+
+		protected bool IsManagingNodeFor(SourceReference node,SourceReference resource)
+		{
+			if(node.ServerId == resource.ServerId)
+				return true;
+
+			CoflnetServer server;
+			TryGetResource<CoflnetServer>(new SourceReference(node.ServerId,0),out server);
+			
+
+
+			return false;
+		}
+
+		/// <summary>
+		/// Wherether or not the server 
+		/// </summary>
+		/// <param name="serverId"></param>
+		/// <returns></returns>
+		protected bool IsUp(SourceReference serverId){
+			CoflnetServer server;
+			TryGetResource<CoflnetServer>(serverId,out server);
+			return server != null && server.State == CoflnetServer.ServerState.UP;
+		}
+
 
 
 		public class ObjectNotFound : CoflnetException
@@ -212,6 +491,11 @@ namespace Coflnet
 			public ObjectNotFound(SourceReference id) : base("object_not_found", $"The resource {id} wasn't found on this server", null, 404)
 			{
 			}
+		}
+
+		public InnerReference<T> GetReference<T>(SourceReference referenceId) where T : Referenceable
+		{
+			return references[referenceId] as InnerReference<T>;
 		}
 	}
 
@@ -227,6 +511,12 @@ namespace Coflnet
 
 		[DataMember]
 		public Access Access;
+
+		/// <summary>
+		/// Global commands useable for every <see cref="Referenceable"/> in the system.
+		/// Contains commands for syncing resources between servers.
+		/// </summary>
+		public static CommandController globalCommands;
 
 
 		protected Referenceable(Access access, SourceReference id)
@@ -244,10 +534,19 @@ namespace Coflnet
 			this.Access = new Access(owner);
 		}
 
-		protected Referenceable()
+		public Referenceable()
 		{
 
 			//this.Id = ReferenceManager.Instance.CreateReference(this);
+		}
+
+		/// <summary>
+		/// Initializes the <see cref="T:Coflnet.Referenceable"/> class.
+		/// </summary>
+		static Referenceable()
+		{
+			globalCommands = new CommandController();
+			//globalCommands.RegisterCommand<>()
 		}
 
 		/// <summary>
@@ -282,22 +581,149 @@ namespace Coflnet
 			var controller = GetCommandController();
 			var command = controller.GetCommand(data.t);
 
-			/*
-			AccessMode mode = AccessMode.READ;
-			if (!command.Settings.ThreadSave)
-			{
-				mode = AccessMode.WRITE;
-			}
-*/
-			//	if (!IsAllowedAccess(data.sId, mode))
-			//		throw new CoflnetException("access_denied", "The executing resource doesn't have rights to execute that command on this resource");
-
 			controller.ExecuteCommand(command, data, this);
 
 			return command;
 		}
 
+		/// <summary>
+		/// Executes the command with given data
+		/// </summary>
+		/// <param name="data">Data to pass on to the <see cref="Command"/>.</param>
+		/// <param name="command">Command to execute.</param>
+		public virtual void ExecuteCommand(MessageData data, Command command)
+		{
+			GetCommandController().ExecuteCommand(command, data, this);
+		}
+
 		public abstract CommandController GetCommandController();
+
+
+		public class GetResource : ReturnCommand
+		{
+			/// <summary>
+			/// Execute the command logic with specified data.
+			/// </summary>
+			/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+			public override MessageData ExecuteWithReturn(MessageData data)
+			{
+				data.message = ReferenceManager.Instance.SerializeWithoutAccess(data.rId);
+				return data;
+				//MessagePack.MessagePackSerializer.Typeless.Serialize()                
+			}
+
+			/// <summary>
+			/// Special settings and Permissions for this <see cref="Command"/>
+			/// </summary>
+			/// <returns>The settings.</returns>
+			public override CommandSettings GetSettings()
+			{
+				return new CommandSettings(ReadPermission.Instance);
+			}
+			/// <summary>
+			/// Gets the globally unique slug (short human readable id).
+			/// </summary>
+			/// <returns>The slug .</returns>
+			public override string GetSlug()
+			{
+				return "GetResource";
+			}
+		}
+
+		public class GrantAccess : Command
+		{
+			/// <summary>
+			/// Execute the command logic with specified data.
+			/// </summary>
+			/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+			public override void Execute(MessageData data)
+			{
+				var param = data.GetAs<KeyValuePair<SourceReference, AccessMode>>();
+				data.GetTargetAs<Referenceable>().Access.Authorize(param.Key, param.Value);
+			}
+
+			/// <summary>
+			/// Special settings and Permissions for this <see cref="Command"/>
+			/// </summary>
+			/// <returns>The settings.</returns>
+			public override CommandSettings GetSettings()
+			{
+				return new CommandSettings(CanChangePermissionPermission.Instance);
+			}
+			/// <summary>
+			/// Gets the globally unique slug (short human readable id).
+			/// </summary>
+			/// <returns>The slug .</returns>
+			public override string GetSlug()
+			{
+				return "GrantAccess";
+			}
+		}
+
+
+		public class RemoveAccess : Command
+		{
+			/// <summary>
+			/// Execute the command logic with specified data.
+			/// </summary>
+			/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+			public override void Execute(MessageData data)
+			{
+				data.GetTargetAs<Referenceable>().Access.Authorize(data.GetAs<SourceReference>(), AccessMode.NONE);
+			}
+
+			/// <summary>
+			/// Special settings and Permissions for this <see cref="Command"/>
+			/// </summary>
+			/// <returns>The settings.</returns>
+			public override CommandSettings GetSettings()
+			{
+				return new CommandSettings(CanChangePermissionPermission.Instance);
+			}
+			/// <summary>
+			/// Gets the globally unique slug (short human readable id).
+			/// </summary>
+			/// <returns>The slug .</returns>
+			public override string GetSlug()
+			{
+				return "RemoveAccess";
+			}
+		}
+
+
+
+		/// <summary>
+		/// Get the <see cref="Access"/> Property of an object which isn't part of the object itself by default.
+		/// </summary>
+		public class GetAccess : ReturnCommand
+		{
+			/// <summary>
+			/// Execute the command logic with specified data.
+			/// </summary>
+			/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+			public override MessageData ExecuteWithReturn(MessageData data)
+			{
+				data.SerializeAndSet<Access>(data.GetTargetAs<Referenceable>().Access);
+				return data;
+			}
+
+			/// <summary>
+			/// Special settings and Permissions for this <see cref="Command"/>
+			/// </summary>
+			/// <returns>The settings.</returns>
+			public override CommandSettings GetSettings()
+			{
+				return new CommandSettings(WritePermission.Instance);
+			}
+			/// <summary>
+			/// Gets the globally unique slug (short human readable id).
+			/// </summary>
+			/// <returns>The slug .</returns>
+			public override string GetSlug()
+			{
+				return "GetAccess";
+			}
+		}
 	}
 
 
@@ -391,17 +817,24 @@ namespace Coflnet
 		}
 	}
 
-
+	[Flags]
 	public enum AccessMode
 	{
+		/// <summary>
+		/// Essentially blocks
+		/// </summary>
 		NONE = 0,
 		READ = 1,
 		WRITE = 2,
-		READ_AND_WRITE = 3,
+		READ_AND_WRITE = READ | WRITE,
 		/// <summary>
 		/// Permission to change others permission, includes read and write
 		/// </summary>
-		CHANGE_PERMISSIONS = 4
+		CHANGE_PERMISSIONS = 4,
+		/// <summary>
+		/// This level will be ignored
+		/// </summary>
+		ASNORMAL = 0xFF
 	}
 
 	/// <summary>
@@ -414,14 +847,16 @@ namespace Coflnet
 	}
 
 
-
 	[DataContract(Name = "ref", Namespace = "")]
 	public class Reference<T> where T : Referenceable
 	{
-		[DataMember(Name = "id")]
-		protected SourceReference referenceId;
+		/// <summary>
+		/// Internal reference used for storing referenced object 
+		/// if present in memory on the current server
+		/// </summary>
+		/// <value></value>
 		[IgnoreDataMember]
-		protected T resource;
+		public InnerReference<T> InnerReference{get;set;}
 
 		/// <summary>
 		/// Executes a command on the server containing the resource referenced by this object
@@ -429,23 +864,23 @@ namespace Coflnet
 		/// <param name="data">Command data to send</param>
 		public void ExecuteForResource(MessageData data)
 		{
-			CoflnetCore.Instance.SendCommand(data, ReferenceId.ServerId);
+			ReferenceManager.Instance.ExecuteForReference(data);
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Coflnet.Server.Reference`1"/> class and ads it to the ReferenceManager.
+		/// Initializes a new instance of the <see cref="T:Coflnet.Server.Reference`1"/>
 		/// </summary>
 		/// <param name="resource">Resource.</param>
-		public Reference(T resource, SourceReference referenceId)
+		/*public Reference(T resource, SourceReference referenceId)
 		{
 			this.resource = resource;
 			this.referenceId = referenceId;
 			//referenceId = ReferenceManager.Instance.AddReference(resource);
-		}
+		}*/
 
 		public Reference(T resource)
 		{
-			this.resource = resource;
+			this.InnerReference = new InnerReference<T>() { Resource = resource };
 		}
 
 		/// <summary>
@@ -454,7 +889,7 @@ namespace Coflnet
 		/// <param name="referenceId">Reference identifier.</param>
 		public Reference(SourceReference referenceId)
 		{
-			this.referenceId = referenceId;
+			this.ReferenceId = referenceId;
 		}
 
 		public Reference()
@@ -467,20 +902,21 @@ namespace Coflnet
 		{
 			get
 			{
-				if (resource == null)
+				if (InnerReference == null)
 				{
-					resource = ReferenceManager.Instance.GetResource<T>(this.referenceId);
+					InnerReference = ReferenceManager.Instance.GetReference<T>(this.ReferenceId);
 				}
-				return resource;
+				return InnerReference.Resource;
+			}
+			set
+			{
+				InnerReference.Resource = value;
 			}
 		}
-		[IgnoreDataMember]
+		[DataMember(Name = "id")]
 		public SourceReference ReferenceId
 		{
-			get
-			{
-				return referenceId;
-			}
+			get; set;
 		}
 
 		/// <summary>
@@ -500,15 +936,17 @@ namespace Coflnet
 		/// <typeparam name="Y">The type parameter to test against.</typeparam>
 		public bool Is<Y>()
 		{
-			return resource is Y;
+			return Resource is Y;
 		}
 	}
 
 	/// <summary>
 	/// Redundant reference Data exists on one or more servers (recomended)
 	/// </summary>
+	[DataContract]
 	public class RedundantReference<T> : Reference<T> where T : Referenceable
 	{
+		[DataMember]
 		protected List<long> failoverServers = new List<long>();
 
 		/// <summary>
@@ -561,12 +999,13 @@ namespace Coflnet
 		/// Gets a value indicating whether this <see cref="T:Coflnet.Server.RedundantReference`1"/> s Resource is lokally available.
 		/// </summary>
 		/// <value><c>true</c> if is lokal; otherwise, <c>false</c>.</value>
+		[IgnoreDataMember]
 		public bool IsLokal
 		{
 			get
 			{
 
-				return ReferenceManager.Instance.Contains(this.referenceId);
+				return ReferenceManager.Instance.Exists(this.ReferenceId);
 			}
 		}
 
@@ -574,11 +1013,12 @@ namespace Coflnet
 		/// Gets the nearest server which has a copy of this resource.
 		/// </summary>
 		/// <value>The nearest server.</value>
+		[IgnoreDataMember]
 		public CoflnetServer NearestServer
 		{
 			get
 			{
-				CoflnetServer closest = ServerController.Instance.GetOrCreate(referenceId.ServerId);
+				CoflnetServer closest = ServerController.Instance.GetOrCreate(ReferenceId.ServerId);
 				foreach (var item in failoverServers)
 				{
 					var server = ServerController.Instance.GetOrCreate(item);
@@ -590,11 +1030,16 @@ namespace Coflnet
 			}
 		}
 
-		public RedundantReference(T resource, SourceReference resourceId, params CoflnetServer[] failoverServer) : base(resource, resourceId)
+		public RedundantReference() { }
+
+		public RedundantReference(T resource, params CoflnetServer[] failoverServer) : base(resource)
 		{
 			if (failoverServer == null)
 				return;
-			this.failoverServers.AddRange(failoverServers);
+			foreach (var item in failoverServer)
+			{
+				this.failoverServers.Add(item.Id.ServerId);
+			}
 		}
 	}
 

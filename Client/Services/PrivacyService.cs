@@ -55,7 +55,7 @@ namespace Coflnet.Client
 		public bool AmIAllowedToDo(string slug)
 		{
 			bool value;
-			if (UserService.Instance.GetUser().PrivacySettings.TryGetValue(slug, out value))
+			if (UserService.Instance.CurrentUser.PrivacySettings.TryGetValue(slug, out value))
 			{
 				return value;
 			}
@@ -69,8 +69,15 @@ namespace Coflnet.Client
 		/// <param name="decission">If set to <c>true</c> decission.</param>
 		public void SetPermission(string slug, bool decission)
 		{
-			UserService.Instance.GetUser().PrivacySettings[slug] = decission;
-			CoflnetCore.Instance.SendCommand<UpdatePrivacySetting>
+			UserService.Instance.CurrentUser.PrivacySettings[slug] = decission;
+			// update it on the server/all instances
+
+			Debug.Log("disabled this");
+			/*CoflnetCore.Instance.SendCommand<
+					   UserCommands.UpdatePrivacySetting,
+						KeyValuePair<string, bool>>(
+				UserService.Instance.CurrentUserId,
+				new KeyValuePair<string, bool>(slug, decission));*/
 		}
 	}
 

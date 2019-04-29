@@ -60,6 +60,7 @@ public class ApiController
 
 	private void LoadRequests()
 	{
+		
 		/*
 		if (!SecurePlayerPrefs.HasKey(playerPrefsKey))
 			return;

@@ -31,9 +31,32 @@ namespace Coflnet
 
 
 		public abstract void SendCommand(MessageData data, long serverId = 0);
-		public abstract void SendCommand<C, T>(SourceReference receipient, T data) where C : Command;
+		/// <summary>
+		/// Sends a command.
+		/// </summary>
+		/// <param name="receipient">Receipient to send to.</param>
+		/// <param name="data">Data to send.</param>
+		/// <param name="id">Unique Identifier of the message.</param>
+		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
+		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
+		public abstract void SendCommand<C, T>(SourceReference receipient, T data, long id = 0) where C : Command;
 		public abstract void SendCommand<C>(SourceReference receipient, byte[] data) where C : Command;
 
-		//public abstract void SendCommand<C, T>(SourceReference receipient, T data, Command.CommandMethod callback) where C : Command;
+
+		/// <summary>
+		/// Sends a command that returns a value, allows a callback to be passed.
+		/// </summary>
+		/// <param name="receipient">Receipient to send to.</param>
+		/// <param name="data">Data to send.</param>
+		/// <param name="callback">Callback to be executed when the response is received.</param>
+		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
+		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
+		public void SendCommand<C, T>(SourceReference receipient, T data, Command.CommandMethod callback) where C : ReturnResponseCommand
+		{
+			long id = ThreadSaveIdGenerator.NextId;
+			ReturnCommandService.Instance.AddCallback(id, callback);
+			SendCommand<C, T>(receipient, data, id);
+
+		}
 	}
 }

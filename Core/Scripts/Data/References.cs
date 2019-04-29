@@ -1,6 +1,7 @@
 ﻿using MessagePack;
 using System;
 using System.Text;
+using MessagePack.Formatters;
 
 namespace Coflnet
 {
@@ -8,6 +9,7 @@ namespace Coflnet
 	/// <summary>
 	/// Identifier of some resource on some server
 	/// </summary>
+	//[MessagePackFormatter(typeof(CustomObjectFormatter))]
 	[MessagePackObject]
 	public struct SourceReference
 	{
@@ -177,6 +179,16 @@ namespace Coflnet
 		}
 
 		[IgnoreMember]
+		public bool IsServer
+		{
+			get
+			{
+				return ResourceId == 0;
+			}
+		}
+
+
+		[IgnoreMember]
 		public int Region
 		{
 			get
@@ -206,5 +218,25 @@ namespace Coflnet
 				return (ushort)((ServerId) % (1 << 16));
 			}
 		}
+
+		    // serialize/deserialize internal field.
+    class CustomObjectFormatter : IMessagePackFormatter<SourceReference>
+    {
+            public int Serialize(ref byte[] bytes, int offset, SourceReference value, IFormatterResolver formatterResolver)
+            {
+				return MessagePackBinary.WriteInt64(ref bytes,offset,value.ServerId) + 
+				MessagePackBinary.WriteInt64(ref bytes,offset+8,value.ServerId);
+				
+            }
+
+            public SourceReference Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            {
+				var serverId = MessagePackBinary.ReadInt64(bytes,offset,out readSize);
+				offset+=readSize;
+				var resourceId = MessagePackBinary.ReadInt64(bytes,offset,out readSize);
+				readSize *=2; // 2 int64
+                return new SourceReference(serverId,resourceId);
+            }
+        }
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace Coflnet
 {
@@ -215,6 +216,13 @@ namespace Coflnet
 			return friends.Contains(userReference);
 		}
 
+
+		public byte[] Serialize()
+		{
+			return MessagePack.MessagePackSerializer.Serialize<CoflnetUser>(this);
+		}
+
+
 		/// <summary>
 		/// Is this user set silent.
 		/// </summary>
@@ -323,6 +331,8 @@ namespace Coflnet
 				firstName = value;
 			}
 		}
+
+
 		[DataMember]
 		public string LastName
 		{
@@ -330,7 +340,7 @@ namespace Coflnet
 			{
 				return lastName;
 			}
-			protected set
+			set
 			{
 				lastName = value;
 			}
@@ -576,16 +586,25 @@ namespace Coflnet
 	/// <summary>
 	/// Gets a custom user key value.
 	/// </summary>
-	public class GetUserKeyValue : ValueSetter
+	public class GetUserKeyValue : ReturnCommand
 	{
-		public override void Execute(MessageData data)
+
+		public override MessageData ExecuteWithReturn(MessageData data)
 		{
 			String result;
-			ReferenceManager.Instance
-							.GetResource<CoflnetUser>(data.rId).KeyValues
+			data.GetTargetAs<CoflnetUser>()
+							.KeyValues
 							.TryGetValue(data.GetAs<string>(), out result);
-			//data.SendBack(MessageData.CreateMessageData<>)
-			SendBack(data, data.Serialize(result));
+
+
+			var returnData = new MessageData();
+			returnData.SerializeAndSet<String>(result);
+			return returnData;
+		}
+
+		public override CommandSettings GetSettings()
+		{
+			return new CommandSettings();
 		}
 
 		public override string GetSlug()
@@ -659,18 +678,18 @@ namespace Coflnet
 	{
 		public override void Execute(MessageData data)
 		{
-			var result = new InfoResult();
+			var result = new PublicUserInfo();
 			var user = ReferenceManager.Instance.GetResource<CoflnetUser>(data.rId);
 
 			result.userName = user.userName;
-			result.id = user.Id;
+			result.userId = user.Id;
 			if (user.PrivacySettings["share-profile-picture"])
 			{
 				result.profilePicture = user.ProfileImage;
 			}
 
 
-			data.SendBack(MessageData.CreateMessageData<BasicInfoResponse, InfoResult>(result, data.sId));
+			data.SendBack(MessageData.CreateMessageData<BasicInfoResponse, PublicUserInfo>(result, data.sId));
 		}
 
 		public override CommandSettings GetSettings()
@@ -683,12 +702,7 @@ namespace Coflnet
 			return "getBasicInfo";
 		}
 
-		public class InfoResult
-		{
-			public SourceReference id;
-			public SourceReference profilePicture;
-			public string userName;
-		}
+
 	}
 
 	public class BasicInfoResponse : Command

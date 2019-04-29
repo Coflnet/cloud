@@ -4,7 +4,9 @@ using MessagePack;
 
 namespace Coflnet
 {
-
+	/// <summary>
+	/// Single instance of a computer running the software
+	/// </summary>
 	[MessagePackObject]
 	public class CoflnetServer : Referenceable
 	{
@@ -19,6 +21,9 @@ namespace Coflnet
 		/// </summary>
 		[IgnoreMember]
 		private long pingTimeMS;
+		/// <summary>
+		/// The servers public key
+		/// </summary>
 		[IgnoreMember]
 		private byte[] publicKey;
 		/// <summary>
@@ -26,6 +31,10 @@ namespace Coflnet
 		/// </summary>
 		[IgnoreMember]
 		protected ICommandTransmit connection;
+
+
+
+
 		public enum ServerRole
 		{
 			master,
@@ -74,6 +83,20 @@ namespace Coflnet
 			/// </summary>
 			DEAD
 		}
+
+		/// <summary>
+		/// Sibling servers to this one hosting the same data
+		/// </summary>
+		/// <value>Sibling servers</value>
+		[IgnoreMember]
+		public List<long> SibblingServers
+		{
+			get; set;
+		}
+
+
+
+
 		/// <summary>
 		/// Last recorded state
 		/// </summary>

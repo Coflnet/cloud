@@ -16,15 +16,22 @@ namespace Coflnet.Client
 			Instance = new UserService();
 		}
 
-		public CoflnetUser GetUser()
+		/// <summary>
+		/// Gets the current user.
+		/// </summary>
+		/// <value>The current user if present.</value>
+		public CoflnetUser CurrentUser
 		{
-			var userId = ConfigController.UserSettings.userId;
-			if (userId == SourceReference.Default)
+			get
 			{
-				throw new System.Exception("No user registered yet");
-			}
+				var userId = ConfigController.UserSettings.userId;
+				if (userId == SourceReference.Default)
+				{
+					throw new System.Exception("No user registered yet");
+				}
 
-			return ReferenceManager.Instance.GetResource<CoflnetUser>(userId);
+				return ReferenceManager.Instance.GetResource<CoflnetUser>(userId);
+			}
 		}
 
 		/// <summary>

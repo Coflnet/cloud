@@ -109,11 +109,11 @@ namespace Coflnet.Server
 			MessagePersistence.ServerInstance.SaveMessage(data);
 		}
 
-		public override void SendCommand<C, T>(SourceReference receipient, T data)
+		public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0)
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
-			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.GetSlug());
+			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.GetSlug(), id);
 
 
 

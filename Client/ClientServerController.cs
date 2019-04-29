@@ -9,7 +9,7 @@ namespace Coflnet.Client
 	{
 		protected long managingServerId;
 
-		public static ServerController Instance { get; }
+		public static new ServerController Instance { get; }
 
 		public void SendToServer(MessageData data)
 		{

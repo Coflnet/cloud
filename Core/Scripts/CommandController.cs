@@ -148,7 +148,7 @@ namespace Coflnet
 					if (!item.CheckPermission(data, target))
 					{
 						UnityEngine.Debug.Log(MessagePackSerializer.ToJson(data));
-						UnityEngine.Debug.Log(MessagePackSerializer.ToJson<CoflnetUser>(target as CoflnetUser));
+						UnityEngine.Debug.Log(System.BitConverter.ToString(MessagePackSerializer.Typeless.Serialize(target as CoflnetUser)));
 						UnityEngine.Debug.Log("concludes to : " + item.CheckPermission(data, target));
 						throw new CoflnetException("permission_not_met", $"The permission {item.GetSlug()} required for executing this command wasn't met");
 					}
@@ -370,6 +370,8 @@ namespace Coflnet
 			/// <summary>
 			/// Gets or sets a value indicating whether this <see cref="T:Coflnet.Command.CommandSettings"/> should be executed locally (and on eg other devices from the same user) if resource is present locally.
 			/// Eg username update -> should also update local username instantly.
+			/// This may result in command executed twice!
+			/// So don't use this for in/decrementing counters or similar
 			/// </summary>
 			/// <value><c>true</c> if command should be executed locally before sending or not; otherwise, <c>false</c>.</value>
 			public bool LocalPropagation

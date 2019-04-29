@@ -32,6 +32,7 @@ public class CoflnetUserTests
 		// tell the server his id
 		ConfigController.ApplicationSettings.id = new SourceReference(1, 1, 1, 0);
 		ServerCore.Init();
+		ClientSocket.Instance.Reconnect();
 		MessageData response = null;
 		ClientSocket.Instance.AddCallback(data =>
 		{
@@ -112,7 +113,7 @@ public class CoflnetUserTests
 		// await response
 		yield return new UnityEngine.WaitForSeconds(0.5f);
 
-
+		UnityEngine.Debug.Log(response.Data);
 		var login = response.GetAs<RegisterUserResponse>();
 
 		ClientSocket.Instance.SendCommand(
@@ -123,11 +124,11 @@ public class CoflnetUserTests
 			}, ConfigController.ApplicationSettings.id));
 
 		// tell the client that we are logged in
-		ConfigController.UserSettings.userId = login.id;
+		ConfigController.ActiveUserId = login.id;
+
 
 		yield return new WaitForSeconds(0.5f);
 
-		Debug.Log(response.GetAs<RegisterUserResponse>().id);
 
 
 
@@ -135,7 +136,7 @@ public class CoflnetUserTests
 		(new CoflnetUser()).GetCommandController().OverwriteCommand<TestCommandWithPermission>();
 
 		ClientSocket.Instance.SendCommand(
-			MessageData.CreateMessageData<TestCommandWithPermission, int>(1, login.id));
+			MessageData.CreateMessageData<TestCommandWithPermission, int>(1, login.id), true);
 
 
 		yield return new WaitForSeconds(0.5f);
@@ -163,8 +164,7 @@ public class CoflnetUserTests
 			response = data;
 		});
 
-		ConfigController.UserSettings.userId = SourceReference.Default;
-
+		ConfigController.ActiveUserId = SourceReference.Default;
 
 		yield return new UnityEngine.WaitForSeconds(0.5f);
 
@@ -201,7 +201,7 @@ public class CoflnetUserTests
 
 		(new CoflnetUser()).GetCommandController().OverwriteCommand<TestCommandWithPermission>();
 		//tell the client what user we are
-		ConfigController.UserSettings.userId = login.id;
+		ConfigController.ActiveUserId = login.id;
 		ClientSocket.Instance.SendCommand(
 			MessageData.CreateMessageData<ChatMessage, string>("hi", receiverUser.Id));
 
@@ -224,7 +224,7 @@ public class CoflnetUserTests
 
 		yield return new WaitForSeconds(0.5f);
 		// tell the Client socket the identity
-		ConfigController.UserSettings.userId = receiverUser.Id;
+		ConfigController.ActiveUserId = receiverUser.Id;
 
 
 		ClientSocket.Instance.SendCommand(
@@ -285,7 +285,7 @@ public class CoflnetUserTests
 		{
 			response = data;
 		});
-		ConfigController.UserSettings.userId = SourceReference.Default;
+		ConfigController.ActiveUserId = SourceReference.Default;
 
 
 		yield return new UnityEngine.WaitForSeconds(0.5f);

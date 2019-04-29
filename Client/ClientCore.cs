@@ -33,6 +33,7 @@
 		{
 			ClientInstance.socket.Reconnect();
 			LocalizationManager.Instance.LoadCompleted();
+			if(ClientInstance != null)
 			ClientInstance.CheckInstallation();
 		}
 
@@ -127,7 +128,7 @@
 			}
 		}
 
-		public override void SendCommand<C, T>(SourceReference receipient, T data)
+		public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0)
 		{
 			ServerController.Instance.SendCommand<C, T>(receipient, data);
 		}

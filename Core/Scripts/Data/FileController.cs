@@ -33,13 +33,17 @@ namespace Coflnet
 
 		/// <summary>
 		/// Writes all bytes.
+		/// Creates folder if it doesn't exist
 		/// </summary>
 		/// <param name="path">Path.</param>
 		/// <param name="bytes">Bytes.</param>
 		public static void WriteAllBytes(string path, byte[] bytes)
 		{
-			File.WriteAllBytes(Path.Combine(dataPaht, path), bytes);
+			System.IO.FileInfo file = new FileInfo(Path.Combine(dataPaht, path));
+			file.Directory.Create();
+			File.WriteAllBytes(file.FullName, bytes);
 		}
+
 
 
 		/// <summary>

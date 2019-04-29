@@ -248,6 +248,12 @@ namespace Coflnet
 			return random.Next(0, max);
 		}
 
+		/// <summary>
+		/// Gets a random element from a list.
+		/// </summary>
+		/// <returns>The random.</returns>
+		/// <param name="list">List.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public static T GetRandom<T>(this List<T> list)
 		{
 			return list[Next(list.Count)];

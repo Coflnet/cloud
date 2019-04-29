@@ -61,26 +61,12 @@ namespace Coflnet.Client
 			}
 		}
 
-		/// <summary>
-		/// Updates an user privacy setting.
-		/// </summary>
-		public class UpdatePrivacySetting : ValueSetter
-		{
-			public override void Execute(MessageData data)
-			{
-				var updatePair = data.GetAs<KeyValuePair<string, bool>>();
-				data.GetTargetAs<CoflnetUser>().PrivacySettings[updatePair.Key] = updatePair.Value;
-			}
 
-			public override string GetSlug()
-			{
-				return "updatePrivacySetting";
-			}
-		}
 
 		public void GetFileInfo(MessageData data)
 		{
-			UserFile file = data.User.Files[data.GetAs<long>()];
+
+			UserFile file = data.GetTargetAs<CoflnetUser>().Files[data.GetAs<long>()];
 		}
 
 		public void GetFileInfoByReference(MessageData data)

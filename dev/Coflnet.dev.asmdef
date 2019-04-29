@@ -1,0 +1,12 @@
+{
+    "name": "Coflnet.dev",
+    "references": [
+        "Coflnet",
+        "Coflnet.Client",
+        "Coflnet.Server"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

@@ -32,7 +32,7 @@ public class UserController
 
 	public CoflnetUser GetUser(SourceReference userId)
 	{
-		if (ReferenceManager.Instance.Contains(userId))
+		if (ReferenceManager.Instance.Exists(userId))
 			return ReferenceManager.Instance.GetResource<CoflnetUser>(userId);
 		throw new Exception("User not found");
 	}

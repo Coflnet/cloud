@@ -173,43 +173,36 @@ public interface IClientConnection
 }
 
 
-
-public class CoflnetEncoder
+/// <summary>
+/// Coflnet encoder extention methods.
+/// </summary>
+public static class CoflnetEncoderExtention
 {
-	public virtual T Deserialize<T>(MessageEventArgs args)
+	public static T Deserialize<T>(this CoflnetEncoder encoder, MessageEventArgs args)
 	{
-		return Deserialize<T>(args.RawData);
+		return encoder.Deserialize<T>(args.RawData);
 	}
 
-	public virtual ServerMessageData Deserialize(MessageEventArgs args)
+	public static ServerMessageData Deserialize(this CoflnetEncoder encoder, MessageEventArgs args)
 	{
-		return Deserialize<ServerMessageData>(args.RawData);
+		return encoder.Deserialize<ServerMessageData>(args.RawData);
 	}
 
-	public virtual T Deserialize<T>(byte[] args)
+	/// <summary>
+	/// Send the specified data after encoding with the given socket.
+	/// </summary>
+	/// <param name="encoder">Encoder.</param>
+	/// <param name="data">Data.</param>
+	/// <param name="socket">Socket.</param>
+	/// <typeparam name="T">The 1st type parameter.</typeparam>
+	public static void Send<T>(this CoflnetEncoder encoder, T data, CoflnetWebsocketServer socket)
 	{
-		return MessagePackSerializer.Deserialize<T>(args);
-	}
-
-	public virtual byte[] Serialize<T>(T target)
-	{
-		return MessagePackSerializer.Serialize<T>(target);
-	}
-
-	public static CoflnetEncoder Instance { get; }
-
-	public virtual void Send<T>(T data, CoflnetWebsocketServer socket)
-	{
-		socket.SendBack(Serialize<T>(data));
-	}
-
-
-
-	static CoflnetEncoder()
-	{
-		Instance = new CoflnetEncoder();
+		socket.SendBack(encoder.Serialize<T>(data));
 	}
 }
+
+
+
 
 /// <summary>
 /// Coflnet json encoder used to send back json.
@@ -222,11 +215,10 @@ public class CoflnetJsonEncoder : CoflnetEncoder
 	{
 		Instance = new CoflnetJsonEncoder();
 	}
-
+	/*
 	public override T Deserialize<T>(MessageEventArgs args)
 	{
 		var bytes = MessagePackSerializer.FromJson(args.Data);
-		Debug.Log(JsonUtility.ToJson(new ByteContainer(bytes)));
 		return CoflnetEncoder.Instance.Deserialize<T>(bytes);
 	}
 
@@ -234,10 +226,9 @@ public class CoflnetJsonEncoder : CoflnetEncoder
 	public override ServerMessageData Deserialize(MessageEventArgs args)
 	{
 		var bytes = MessagePackSerializer.FromJson(args.Data);
-		Debug.Log(JsonUtility.ToJson(new ByteContainer(bytes)));
 		return (ServerMessageData)CoflnetEncoder.Instance.Deserialize<DevMessageData>(bytes);
 	}
-
+*/
 
 	public override T Deserialize<T>(byte[] args)
 	{
@@ -260,12 +251,12 @@ public class CoflnetJsonEncoder : CoflnetEncoder
 	{
 		return Encoding.UTF8.GetBytes(MessagePackSerializer.ToJson<T>(target));
 	}
-
+	/*
 	public override void Send<T>(T data, CoflnetWebsocketServer socket)
 	{
 		socket.SendBack(MessagePackSerializer.ToJson<T>(data));
 	}
-
+*/
 	[MessagePackObject]
 	public class DevMessageData : ServerMessageData
 	{
@@ -395,6 +386,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		var protocols = Context.SecWebSocketProtocols;
 
 
+		Debug.Log("opening socket");
 		foreach (var item in protocols)
 		{
 			if (item == "dev")

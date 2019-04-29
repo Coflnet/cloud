@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Coflnet;
+using MessagePack.Resolvers;
 
 public class SerializationTests
 {
@@ -221,5 +222,43 @@ public class SerializationTests
 		// Use the Assert class to test conditions.
 		// yield to skip a frame
 		yield return null;
+	}
+
+
+
+
+
+	[Test]
+	public void ResourceSave()
+	{
+
+		var user = new CoflnetUser();
+		user.AssignId();
+		user.OnlyFriendsMessage = true;
+		user.FirstName = "Bernd das Brot ist";
+		DataController.Instance.SaveData($"res/{user.Id.ToString()}aaaa", user.Serialize());
+		ReferenceManager.Instance.Save(user.Id, true);
+	}
+
+
+	/// <summary>
+	/// Resources the save and load and actually useable after loading
+	/// </summary>
+	[Test]
+	public void ResourceSaveAndLoad()
+	{
+		CompositeResolver.RegisterAndSetAsDefault(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
+
+		var user = new CoflnetUser();
+		user.AssignId();
+		user.OnlyFriendsMessage = true;
+		user.FirstName = "Bernd das Brot";
+
+
+		DataController.Instance.SaveData($"res/{user.Id.ToString()}aaaa", MessagePack.MessagePackSerializer.Typeless.Serialize(user));
+		ReferenceManager.Instance.Save(user.Id, true);
+
+		var loadedUser = ReferenceManager.Instance.GetResource<CoflnetUser>(user.Id);
+		Assert.AreEqual(user.FirstName, loadedUser.FirstName);
 	}
 }

@@ -82,10 +82,22 @@ namespace Coflnet.Client
 
 	}
 
+	/// <summary>
+	/// Representing an alert that is or will displayed to a user.
+	/// </summary>
 	public class AlertItem
 	{
+		/// <summary>
+		/// Text displayed in the alert
+		/// </summary>
 		public string text;
+		/// <summary>
+		/// Custom action that will invoked when button is clicked
+		/// </summary>
 		public System.Action action;
+		/// <summary>
+		/// Custom text display on the action button
+		/// </summary>
 		public string buttonText;
 
 		public AlertItem(string text)

@@ -7,12 +7,12 @@ namespace Coflnet
 	/// <summary>
 	/// Messagedata represents a message, contains
 	/// m = actual message
-	/// d = delete timestamp
+	/// d = delete timestamp // deprecated
 	/// t = type (command slug)
 	/// s = sender Id
 	/// r = receiverId
 	/// i = message identifier choosen by the sender
-	/// x = senders signature of the message content Ed25519(m|d|t|s|r|i)
+	/// x = senders signature of the message content Ed25519(m|t|s|r|i)
 	/// </summary>
 	[MessagePackObject]
 	public class MessageData
