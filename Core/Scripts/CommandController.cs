@@ -20,10 +20,10 @@ namespace Coflnet
 		protected Dictionary<string, Command> commands;
 		protected Dictionary<Type, string> commandIdentifiers;
 		/// <summary>
-		/// This commandController will be searched for a command 
-		/// if a command was not found in the current one
+		/// This commandController will be searched for commands
+		/// if a slug was not found in the current one
 		/// </summary>
-		protected CommandController backfall;
+		public CommandController Backfall {get;set;}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Coflnet.CommandController"/> class with no commands.
@@ -35,8 +35,23 @@ namespace Coflnet
 
 		public CommandController(CommandController backfall) : this()
 		{
-			this.backfall = backfall;
+			this.Backfall = backfall;
 		}
+
+
+		/// <summary>
+		/// Adds additional <see cref="CommandController"> to search for commands.
+		/// Will shift other backfalls back.
+		/// </summary>
+		/// <param name="backfall">Controller to add</param>
+		public void AddBackfall(CommandController backfall)
+		{
+			if(Backfall != null){
+				backfall.AddBackfall(Backfall);
+			} 
+			Backfall = backfall;
+		}
+
 
 		public void RemoveAllCommands()
 		{
@@ -178,9 +193,10 @@ namespace Coflnet
 			if (!commands.ContainsKey(slug))
 			{
 				// was this the last command controller or can we check another?
-				if (backfall != null)
+				if (Backfall != null)
 				{
-					return backfall.GetCommand(slug);
+					UnityEngine.Debug.Log("searching deeper");
+					return Backfall.GetCommand(slug);
 				}
 
 				throw new CommandUnknownException(slug);
@@ -222,6 +238,9 @@ namespace Coflnet
 		}
 	}
 
+	/// <summary>
+	/// interface for adding commands
+	/// </summary>
 	public interface IRegisterCommands
 	{
 		/// <summary>

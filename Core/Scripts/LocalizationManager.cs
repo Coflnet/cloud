@@ -67,7 +67,7 @@ namespace Coflnet
 		public void LoadCompleted()
 		{
 			loadDone = true;
-			localLoadedCallBack.Invoke();
+			localLoadedCallBack?.Invoke();
 		}
 
 		/// <summary>

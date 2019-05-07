@@ -187,6 +187,13 @@ namespace Coflnet
 			}
 		}
 
+		[IgnoreMember]
+		public SourceReference FullServerId
+		{
+			get{
+				return new SourceReference(this.ServerId,0);
+			}
+		}
 
 		[IgnoreMember]
 		public int Region

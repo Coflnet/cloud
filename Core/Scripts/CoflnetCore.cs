@@ -51,7 +51,7 @@ namespace Coflnet
 		/// <param name="callback">Callback to be executed when the response is received.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public void SendCommand<C, T>(SourceReference receipient, T data, Command.CommandMethod callback) where C : ReturnResponseCommand
+		public void SendCommand<C, T>(SourceReference receipient, T data, Command.CommandMethod callback) where C : ReturnCommand
 		{
 			long id = ThreadSaveIdGenerator.NextId;
 			ReturnCommandService.Instance.AddCallback(id, callback);

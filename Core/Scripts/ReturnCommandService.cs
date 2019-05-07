@@ -8,7 +8,7 @@ namespace Coflnet
 	{
 		public static ReturnCommandService Instance;
 
-		protected Dictionary<long, Command.CommandMethod> callbacks;
+		protected Dictionary<long, Command.CommandMethod> callbacks = new Dictionary<long,Command.CommandMethod>();
 
 		static ReturnCommandService()
 		{

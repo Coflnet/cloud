@@ -115,6 +115,7 @@ namespace Coflnet.Server
 
 			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.GetSlug(), id);
 
+			messageData.rId = receipient;
 
 
 			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation)

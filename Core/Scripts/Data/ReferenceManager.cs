@@ -390,7 +390,7 @@ namespace Coflnet
 
 			if (resource != null)
 			{
-				UnityEngine.Debug.Log($"executing {data.t}");
+				UnityEngine.Debug.Log($"executing {data.t} on {resource.Id}");
 				var command = resource.GetCommandController().GetCommand(data.t);
 
 				// only execute changing commands command if we are the managing server 
@@ -418,7 +418,7 @@ namespace Coflnet
 			UnityEngine.Debug.Log("distributing");
 
 			// block distributing command received from the managing node
-			if (sender.ServerId != data.sId.ServerId || sender.ResourceId != 0)
+			if ((sender.ServerId != data.sId.ServerId || sender.ResourceId != 0)&&sender.ServerId != 0)
 				reference.ExecuteForResource(data);
 		}
 

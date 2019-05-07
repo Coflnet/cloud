@@ -18,7 +18,7 @@ namespace Coflnet
 
 		public override bool CheckPermission(MessageData data, Referenceable target)
 		{
-			return ConfigController.Users.Find(user => user.userId == target.Id).managingServers.Contains(data.sId.ServerId) && data.sId.ResourceId == 0;
+			return data.sId == target.Id.FullServerId || ConfigController.Users.Find(user => user.userId == target.Id).managingServers.Contains(data.sId.ServerId) && data.sId.ResourceId == 0;
 		}
 
 		public override string GetSlug()

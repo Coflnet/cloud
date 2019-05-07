@@ -14,6 +14,10 @@ namespace Coflnet
 		{
 			get
 			{
+				if(Users == null || Users.Count == 0){
+					Users =new List<UserSettings>();
+					Users.Add(new UserSettings(){userId = ActiveUserId});
+				}
 				return Users.Find(u => u.userId == ActiveUserId);
 			}
 		}
@@ -85,7 +89,8 @@ namespace Coflnet
 			}
 
 			// serverId 1,1,* is reserved for development 
-			if (serverId == (new SourceReference(1, 1, 1, 0)).ServerId)
+			// also region 0 is development / not set
+			if (serverId <= (new SourceReference(1, 1, 1, 0)).ServerId)
 			{
 				return $"localhost:{port}";
 			}

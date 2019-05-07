@@ -588,7 +588,6 @@ namespace Coflnet
 	/// </summary>
 	public class GetUserKeyValue : ReturnCommand
 	{
-
 		public override MessageData ExecuteWithReturn(MessageData data)
 		{
 			String result;
@@ -642,7 +641,7 @@ namespace Coflnet
 
 		public override CommandSettings GetSettings()
 		{
-			return new CommandSettings(false, true, true, true, WritePermission.Instance);
+			return new CommandSettings(false, true, false, true, WritePermission.Instance);
 		}
 	}
 

@@ -58,7 +58,7 @@ namespace Coflnet.Client
 			var request = new RegisterUserRequest();
 			request.clientId = ConfigController.ApplicationSettings.id;
 			request.privacySettings = privacyOptions;
-
+			UnityEngine.Debug.Log($"creating user {request.clientId} {CoflnetCore.Instance.GetType().Name}");
 			CoflnetCore.Instance.SendCommand<RegisterUser, RegisterUserRequest>(request.clientId, request);
 		}
 

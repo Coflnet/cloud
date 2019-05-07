@@ -16,6 +16,7 @@ namespace Coflnet
 
 			// validate captcha Token
 			// todo :)
+			UnityEngine.Debug.Log("nice");
 
 			// get the client         
 			CoflnetUser user = CoflnetUser.Generate(request.clientId);

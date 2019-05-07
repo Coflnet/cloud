@@ -50,6 +50,11 @@ namespace Coflnet.Client
 
 			ValuesController.SetInt("setupCompleted", 1);
 		}
+
+		public void RedoSetup(bool afterRestart)
+		{
+			ValuesController.DeleteKey("setupCompleted");
+		}
 	}
 
 

@@ -1,0 +1,12 @@
+{
+    "name": "ClientTests",
+    "references": [
+        "Coflnet.Client"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

@@ -10,7 +10,7 @@ namespace Coflnet.Server
 			var serverMessage = data as ServerMessageData;
 			if (serverMessage == null || serverMessage.Connection == null)
 			{
-				throw new CoflnetException("connection_invalid", "");
+				throw new CoflnetException("connection_invalid", "Nothing connected");
 			}
 
 			var options = serverMessage.GetAs<LoginParams>();
