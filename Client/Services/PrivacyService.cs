@@ -81,13 +81,17 @@ namespace Coflnet.Client
 		}
 	}
 
-
+    
 	public interface IPrivacyScreen
 	{
 		/// <summary>
 		/// Shows the privacy screen.
 		/// </summary>
-		/// <param name="whenDone">Should be exectued with the coresponding privacy level when done.</param>
+		/// <param name="whenDone">Should be exectued with the coresponding privacy level when done.
+		///     0 no permissions granted
+		///     1 only basic permissions (anonymized analysis,local soring of data)
+		///     2 targeted tracking inside coflnet
+		///     3 do whatever you want </param>
 		void ShowScreen(System.Action<int> whenDone);
 	}
 }
