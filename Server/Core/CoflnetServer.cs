@@ -11,7 +11,7 @@ namespace Coflnet.Server
 	/// </summary>
 	public class ServerCore : CoflnetCore
 	{
-		public static ServerCore ServerInstance { get; protected set; }
+		public static ServerCore ServerInstance { get; set; }
 
 		public static CommandController Commands
 		{
@@ -37,12 +37,16 @@ namespace Coflnet.Server
 			MessageDataPersistence.Instance = MessagePersistence.ServerInstance;
 		}
 
-		public ServerCore()
+		public ServerCore() : this(ReferenceManager.Instance)
 		{
 
 		}
 
-
+		public ServerCore(ReferenceManager referenceManager)
+		{
+			this.ReferenceManager = referenceManager;
+			this.ReferenceManager.coreInstance = this;
+		}
 
 
 		/// <summary>
@@ -80,7 +84,7 @@ namespace Coflnet.Server
 		/// <summary>
 		/// Loads and Sets the commands live.
 		/// </summary>
-		protected void SetCommandsLive()
+		public void SetCommandsLive()
 		{
 			Commands.RemoveAllCommands();
 			Commands.RegisterCommand<RegisterUser>();
@@ -90,9 +94,8 @@ namespace Coflnet.Server
 			{
 				item.RegisterCommands(Commands);
 			}
-			// we are the application
-			this.Id = ConfigController.ApplicationSettings.id;
-			ReferenceManager.Instance.AddReference(this);
+			this.ReferenceManager.AddReference(this);
+			UnityEngine.Debug.Log($"Set Live {this.Id}");
 		}
 
 		public override CommandController GetCommandController()
@@ -109,13 +112,14 @@ namespace Coflnet.Server
 			MessagePersistence.ServerInstance.SaveMessage(data);
 		}
 
-		public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0)
+		public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference))
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
 			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.GetSlug(), id);
 
 			messageData.rId = receipient;
+			messageData.sId = sender;
 
 
 			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation)

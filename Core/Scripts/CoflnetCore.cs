@@ -11,6 +11,18 @@ namespace Coflnet
 	{
 		private static CoflnetCore _instance;
 
+		/// <summary>
+		/// Instance of an <see cref="ReferenceManager"> used for executing commands
+		/// </summary>
+		/// <value></value>
+		public ReferenceManager ReferenceManager{get;set;}
+
+
+		/// <summary>
+		/// Is set to the correct server or client version of the core when calling the 
+		/// `Init` method on the correct `Core` eg. `ClientCore`
+		/// </summary>
+		/// <value>a</value>
 		public static CoflnetCore Instance
 		{
 			get
@@ -21,7 +33,7 @@ namespace Coflnet
 				}
 				return _instance;
 			}
-			set
+			protected set
 			{
 				_instance = value;
 			}
@@ -37,9 +49,10 @@ namespace Coflnet
 		/// <param name="receipient">Receipient to send to.</param>
 		/// <param name="data">Data to send.</param>
 		/// <param name="id">Unique Identifier of the message.</param>
+		/// <param name="sender">Optional sender, if not sent the core will attempt to replace with active Referenceable eg CoflnetUser.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public abstract void SendCommand<C, T>(SourceReference receipient, T data, long id = 0) where C : Command;
+		public abstract void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) where C : Command;
 		public abstract void SendCommand<C>(SourceReference receipient, byte[] data) where C : Command;
 
 
@@ -53,10 +66,25 @@ namespace Coflnet
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
 		public void SendCommand<C, T>(SourceReference receipient, T data, Command.CommandMethod callback) where C : ReturnCommand
 		{
+			SendCommand<C,T>(receipient,data,default(SourceReference),callback);
+		}
+
+
+		/// <summary>
+		/// Sends a command that returns a value, allows a callback to be passed.
+		/// </summary>
+		/// <param name="receipient">Receipient to send to.</param>
+		/// <param name="data">Data to send.</param>
+		/// <param name="sender">Identity under which to send the command.</param>
+		/// <param name="callback">Callback to be executed when the response is received.</param>
+		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
+		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
+		public void SendCommand<C, T>(SourceReference receipient, T data, SourceReference sender, Command.CommandMethod callback) where C : ReturnCommand
+		{
 			long id = ThreadSaveIdGenerator.NextId;
 			ReturnCommandService.Instance.AddCallback(id, callback);
-			SendCommand<C, T>(receipient, data, id);
-
+			SendCommand<C, T>(receipient, data, id,sender);
 		}
+
 	}
 }

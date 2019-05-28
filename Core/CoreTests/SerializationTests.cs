@@ -247,7 +247,7 @@ public class SerializationTests
 	[Test]
 	public void ResourceSaveAndLoad()
 	{
-		CompositeResolver.RegisterAndSetAsDefault(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
+		//CompositeResolver.RegisterAndSetAsDefault(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
 
 		var user = new CoflnetUser();
 		user.AssignId();

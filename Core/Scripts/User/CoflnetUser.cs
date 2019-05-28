@@ -534,12 +534,12 @@ namespace Coflnet
 			return commandController;
 		}
 
-		public static CoflnetUser Generate(SourceReference owner)
+		public static CoflnetUser Generate(SourceReference owner, ReferenceManager referenceManager = null)
 		{
 			var user = new CoflnetUser(owner);
 			// generate a secret
 			user.Secret = unity.libsodium.StreamEncryption.GetRandomBytes(16);
-			user.AssignId();
+			user.AssignId(referenceManager);
 			return user;
 		}
 
@@ -619,9 +619,12 @@ namespace Coflnet
 	{
 		public override void Execute(MessageData data)
 		{
-			UnityEngine.Debug.Log("data ist:  " + data.Data);
+			UnityEngine.Debug.Log("data is:  " + data.Data);
 			var okay = data.GetAs<KeyValuePair<string, string>>();
-			ReferenceManager.Instance
+
+			UnityEngine.Debug.Log($"trying {data.rId} on {data.CoreInstance.ReferenceManager.RelativeStorageFolder}");
+
+			data.CoreInstance.ReferenceManager
 							.GetResource<CoflnetUser>(data.rId)
 							.KeyValues[okay.Key] = okay.Value;
 		}
@@ -661,7 +664,7 @@ namespace Coflnet
 	{
 		public override void Execute(MessageData data)
 		{
-			SendBack(data, data.Serialize<string>(data.User.UserName));
+			SendBack(data, data.Serialize<string>(data.GetTargetAs<CoflnetUser>().UserName));
 		}
 
 		public override string GetSlug()
@@ -688,7 +691,7 @@ namespace Coflnet
 			}
 
 
-			data.SendBack(MessageData.CreateMessageData<BasicInfoResponse, PublicUserInfo>(result, data.sId));
+			data.SendBack(MessageData.CreateMessageData<BasicInfoResponse, PublicUserInfo>(data.sId,result));
 		}
 
 		public override CommandSettings GetSettings()

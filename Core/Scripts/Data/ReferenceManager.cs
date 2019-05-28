@@ -7,9 +7,21 @@ namespace Coflnet
 {
 	public class ReferenceManager
 	{
+		
 		protected ConcurrentDictionary<SourceReference, InnerReference<Referenceable>> references = new ConcurrentDictionary<SourceReference, InnerReference<Referenceable>>();
 		protected static ReferenceManager instance;
 		//protected CoflnetServer CurrentServer = new CoflnetServer(011111);
+
+		/// <summary>
+		/// Name of folder to store resources in that are unloaded from memory or persisted
+		/// </summary>
+		/// <value>Name of folder</value>
+		public string RelativeStorageFolder {get;}
+
+		/// <summary>
+		/// The core Instance used for sending commands and getting the correct deviceId
+		/// </summary>
+		public CoflnetCore coreInstance;
 
 		public static ReferenceManager Instance
 		{
@@ -21,6 +33,19 @@ namespace Coflnet
 				}
 				return instance;
 			}
+		}
+
+		public ReferenceManager() : this("res")
+		{
+		}		
+		
+		/// <summary>
+		/// Creates a new instance of the ReferenceManager
+		/// </summary>
+		/// <param name="relativeStorageFolder">Relative sub-Directory to the data directory to store references and resources in</param>
+		public ReferenceManager(string relativeStorageFolder)
+		{
+			RelativeStorageFolder = relativeStorageFolder;
 		}
 
 		public ConcurrentDictionary<SourceReference, InnerReference<Referenceable>> References
@@ -130,7 +155,7 @@ namespace Coflnet
 			//var rr = new RedundantReference<CoflnetUser>((CoflnetUser)data, ((CoflnetUser)data).Id, new CoflnetServer(11111, "", 12, new byte[16]));
 
 			FileController.WriteAllBytes($"res/{id.ToString()}-a", MessagePack.MessagePackSerializer.Typeless.Serialize(h));
-			DataController.Instance.SaveData($"res/{id.ToString()}", bytes);
+			DataController.Instance.SaveData($"{RelativeStorageFolder}/{id.ToString()}", bytes);
 
 			if (!removeFromRam) return;
 
@@ -177,17 +202,10 @@ namespace Coflnet
 		public T GetResource<T>(SourceReference id) where T : Referenceable
 		{
 			InnerReference<Referenceable> reference;
-			references.TryGetValue(id, out reference);
 
-			if (reference == null || reference.Resource == null)
+			if (!TryGetReference(id, out reference) || reference.Resource == null)
 			{
-				// attempt to find it on disc
-				if (!TryLoadReference(id, out reference, true))
-				{
-					throw new ObjectNotFound(id);
-				}
-				// found it
-
+				throw new ObjectNotFound(id);
 			}
 
 
@@ -243,7 +261,7 @@ namespace Coflnet
 		public bool TryGetResource<T>(SourceReference id, out T data) where T : Referenceable
 		{
 			InnerReference<Referenceable> reference;
-			references.TryGetValue(id, out reference);
+			TryGetReference(id, out reference);
 
 			if (reference == null || reference.Resource == null)
 			{
@@ -325,7 +343,7 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The reference identifier.</returns>
 		/// <param name="referenceable">Referencable object to store.</param>
-		public SourceReference CreateReference(Referenceable referenceable, bool force = false)
+		public virtual SourceReference CreateReference(Referenceable referenceable, bool force = false)
 		{
 			long nextIndex = ThreadSaveIdGenerator.NextId;
 			SourceReference newReference = new SourceReference(ConfigController.ApplicationSettings.id.ServerId, nextIndex);
@@ -350,9 +368,41 @@ namespace Coflnet
 			return references.TryAdd(reference.Resource.Id, reference);
 		}
 
+		/// <summary>
+		/// Adds a referenceable and to the reference dictionary.
+		/// </summary>
+		/// <param name="referenceable"></param>
+		/// <returns><c>true</c>, if reference was added, <c>false</c> otherwise.</returns>
 		public bool AddReference(Referenceable referenceable)
 		{
 			return AddReference(new InnerReference<Referenceable>(referenceable));
+		}
+
+
+		public bool TryGetReference(SourceReference id, out InnerReference<Referenceable> result)
+		{
+			InnerReference<Referenceable> reference;
+			references.TryGetValue(id, out reference);
+
+			if (reference == null)
+			{
+				if (!TryLoadReference(id, out reference, true))
+				{
+					result = null;
+					return false;
+				}
+			}
+
+			// special references 
+			// Redirects occur if offline ids were used
+			if(reference is RedirectReference<Referenceable>){
+				var redirectReference = reference as RedirectReference<Referenceable>;
+				UnityEngine.Debug.Log("redirecting :)");
+				return TryGetReference(redirectReference.newId,out result);
+			}
+
+			result = reference;
+			return true;
 		}
 
 
@@ -364,9 +414,19 @@ namespace Coflnet
 		/// <param name="sender">The vertified sender of the message (for distribution purposes)</param>
 		public void ExecuteForReference(MessageData data, SourceReference sender = default(SourceReference))
 		{
-			UnityEngine.Debug.Log("searching");
+
+			if(data.rId.ServerId == 0){
+				// special case it is myself
+				coreInstance.ExecuteCommand(data);
+				return;
+			}
+
+			UnityEngine.Debug.Log($"searching {coreInstance.Id} ({coreInstance.GetType().Name}) for {data.rId}");
 			InnerReference<Referenceable> reference;
-			references.TryGetValue(data.rId, out reference);
+			TryGetReference(data.rId, out reference);
+
+			
+
 
 			if (reference == null)
 			{
@@ -390,7 +450,7 @@ namespace Coflnet
 
 			if (resource != null)
 			{
-				UnityEngine.Debug.Log($"executing {data.t} on {resource.Id}");
+				UnityEngine.Debug.Log($"executing {data} on {resource.Id} ({coreInstance.GetType().Name})");
 				var command = resource.GetCommandController().GetCommand(data.t);
 
 				// only execute changing commands command if we are the managing server 
@@ -444,8 +504,10 @@ namespace Coflnet
 					}
 				}
 
+
+
 				/// try to find another server if main managing node is down
-				if(reference is RedundantInnerReference<Referenceable>){
+				if(reference.InnerReference is RedundantInnerReference<Referenceable>){
 					foreach(var sibbling in (reference.InnerReference as RedundantInnerReference<Referenceable>)
 					.SiblingNodes
 					.ConvertAll<SourceReference>((id)=> new SourceReference(id,0))){
@@ -493,11 +555,41 @@ namespace Coflnet
 			}
 		}
 
-		public InnerReference<T> GetReference<T>(SourceReference referenceId) where T : Referenceable
+		/// <summary>
+		/// A strong typed reference of the target <see cref="Referenceable"/>
+		/// </summary>
+		/// <param name="referenceId"></param>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		public InnerReference<T> GetNewReference<T>(SourceReference referenceId) where T : Referenceable
 		{
-			return references[referenceId] as InnerReference<T>;
+			return new InnerReference<T>(references[referenceId].Resource as T);
+		}
+
+
+		public InnerReference<Referenceable> GetInnerReference(SourceReference referenceId) 
+		{
+			return references[referenceId];
+		}
+
+		public void UpdateIdAndAddRedirect(SourceReference oldId, SourceReference newId){
+			references[newId]= references[oldId];
+			// update the id
+			references[newId].Resource.Id = newId;
+
+			// replace old with a pointer
+			references[oldId] = new RedirectReference<Referenceable>(){newId=newId};
+		}
+
+
+		public ICollection<SourceReference> AllIds()
+		{
+			return references.Keys;
 		}
 	}
+
+
+
 
 	/// <summary>
 	/// Defines objects that are Referenceable across servers.
@@ -546,15 +638,20 @@ namespace Coflnet
 		static Referenceable()
 		{
 			globalCommands = new CommandController();
-			//globalCommands.RegisterCommand<>()
+			globalCommands.RegisterCommand<ReturnResponseCommand>();
 		}
 
 		/// <summary>
 		/// Assigns an identifier and registers the object in the <see cref="ReferenceManager"/>
 		/// </summary>
-		public void AssignId()
+		/// <param name="referenceManager">Optional other instance of an referencemanager</param>
+		public void AssignId(ReferenceManager referenceManager= null)
 		{
-			this.Id = ReferenceManager.Instance.CreateReference(this);
+			if(referenceManager != null ){
+				this.Id = referenceManager.CreateReference(this);
+			} else {
+				this.Id = ReferenceManager.Instance.CreateReference(this);
+			}
 		}
 
 		/// <summary>
@@ -904,7 +1001,7 @@ namespace Coflnet
 			{
 				if (InnerReference == null)
 				{
-					InnerReference = ReferenceManager.Instance.GetReference<T>(this.ReferenceId);
+					InnerReference = ReferenceManager.Instance.GetNewReference<T>(this.ReferenceId);
 				}
 				return InnerReference.Resource;
 			}
@@ -1029,6 +1126,8 @@ namespace Coflnet
 				return closest;
 			}
 		}
+
+
 
 		public RedundantReference() { }
 

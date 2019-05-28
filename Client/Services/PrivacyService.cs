@@ -81,7 +81,9 @@ namespace Coflnet.Client
 		}
 	}
 
-    
+    /// <summary>
+    /// Any Custom Privacy Screen class/handler needs to implement this interface
+    /// </summary>
 	public interface IPrivacyScreen
 	{
 		/// <summary>

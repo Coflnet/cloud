@@ -25,8 +25,10 @@ namespace Coflnet
 			try
 			{
 				var command = base.ExecuteCommand(data);
+				UnityEngine.Debug.Log($"ohh man");
 				if (command.Settings.IsChaning)
 				{
+					UnityEngine.Debug.Log($"sending command ");
 					CoflnetCore.Instance.SendCommand(data);
 				}
 				return command;
@@ -66,6 +68,15 @@ namespace Coflnet
 			{
 				return "getMessages";
 			}
+		}
+
+		/// <summary>
+		/// Will send the provided Command and replace the <see cref="MessageData.sId"/> with the id of the resource
+		/// </summary>
+		/// <param name="data"></param>
+		public void SendCommand(MessageData data){
+			data.sId = this.Id;
+			CoflnetCore.Instance.SendCommand(data);
 		}
 	}
 }

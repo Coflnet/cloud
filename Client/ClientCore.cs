@@ -1,7 +1,7 @@
 ﻿namespace Coflnet.Client {
 	/// <summary>
 	/// Coflnet client.
-	/// Main class to work with from the outside.
+	/// Main class to work with from the outside on a client device.
 	/// </summary>
 	public class ClientCore : CoflnetCore {
 		static void HandleReceiveMessageData (MessageData data) { }
@@ -25,15 +25,23 @@
 			ClientInstance = new ClientCore ();
 			Instance = ClientInstance;
 			// setup
-			ClientSocket.Instance.AddCallback (OnMessage);
+			ClientSocket.Instance.AddCallback (ClientInstance.OnMessage);
 		}
 
-		public ClientCore () : this (new CommandController (), ClientSocket.Instance) { }
+		public ClientCore () : this (new CommandController (globalCommands), ClientSocket.Instance) { }
 
-		public ClientCore (CommandController commandController, ClientSocket socket) {
+		public ClientCore (CommandController commandController, ClientSocket socket) : this(commandController,socket,ReferenceManager.Instance) {
+		}
+
+		public ClientCore (CommandController commandController, ClientSocket socket, ReferenceManager manager) {
 			this.commandController = commandController;
 			this.socket = socket;
+			socket.AddCallback(OnMessage);
+			this.ReferenceManager = manager;
+			this.ReferenceManager.coreInstance = this;
 		}
+
+
 
 		public static void Init () {
 			ClientInstance.SetCommandsLive ();
@@ -52,7 +60,7 @@
 			}
 
 			this.Id = ConfigController.ActiveUserId;
-			ReferenceManager.Instance.AddReference (this);
+			ReferenceManager.AddReference (this);
 		}
 
 		public void CheckInstallation () {
@@ -62,7 +70,7 @@
 				return;
 			}
 			// This is a fresh install, register at the managing server after showing privacy statement
-			SetupStartController.Instance.Setup ();
+			FirstStartSetupController.Instance.Setup ();
 
 		}
 
@@ -86,12 +94,12 @@
 			ConfigController.UserSettings.managingServers.AddRange (serverIds);
 		}
 
-		public static void OnMessage (MessageData data) {
+		public void OnMessage (MessageData data) {
 			// special case before we are logged in 
 			if (data.rId == SourceReference.Default) {
-				ClientCore.ClientInstance.ExecuteCommand (data);
+				ExecuteCommand (data);
 			}
-			ReferenceManager.Instance.ExecuteForReference (data);
+			ReferenceManager.ExecuteForReference (data);
 		}
 
 		/// <summary>
@@ -130,7 +138,7 @@
 			}
 		}
 
-		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0) {
+		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0,SourceReference sender = default(SourceReference)) {
 			ServerController.Instance.SendCommand<C, T> (receipient, data);
 		}
 

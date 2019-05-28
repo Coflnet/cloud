@@ -16,18 +16,18 @@ namespace Coflnet
 
 			// validate captcha Token
 			// todo :)
-			UnityEngine.Debug.Log("nice");
 
-			// get the client         
-			CoflnetUser user = CoflnetUser.Generate(request.clientId);
+			CoflnetUser user = CoflnetUser.Generate(request.clientId,data.CoreInstance.ReferenceManager);
 			user.PrivacySettings = request.privacySettings;
 
 			var response = new RegisterUserResponse();
 			response.id = user.Id;
 			response.secret = user.Secret;
 
+			UnityEngine.Debug.Log($"received from {data.sId}");
 
-			data.SendBack(MessageData.CreateMessageData<RegisteredUser, RegisterUserResponse>(response, response.id));
+
+			data.SendBack(MessageData.CreateMessageData<RegisteredUser, RegisterUserResponse>(data.sId,response));
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
 
@@ -52,6 +52,11 @@ namespace Coflnet
 		public SourceReference clientId;
 		[Key(2)]
 		public Dictionary<string, bool> privacySettings;
+		/// <summary>
+		/// Temporary assigned local id
+		/// </summary>
+		[Key(3)]
+		public SourceReference localId;
 	}
 
 	[MessagePackObject]

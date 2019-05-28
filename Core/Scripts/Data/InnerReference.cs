@@ -19,7 +19,7 @@ namespace Coflnet
 		public object InnerResource { get; set; }
 
 		[IgnoreMember]
-		public T Resource
+		public virtual T Resource
 		{
 			get
 			{
@@ -63,6 +63,11 @@ namespace Coflnet
 	[MessagePackObject]
 	public class RedundantInnerReference<T> : InnerReference<T> where T : Referenceable
 	{
+		/// TODO add list of local subscribed <see cref="ReceiveableResource"/>
+	// <summary>
+	/// Currently updates are not distributed to end devices
+	/// </summary>
+	/// <value></value>/ 	
 		[Key(1)]
 		public List<long> SiblingNodes { get; set; }
 
@@ -109,4 +114,23 @@ namespace Coflnet
 			return Resource.IsAllowedAccess(requestingReference, mode);
 		}
 	}
+
+	[MessagePackObject]
+	public class RedirectReference<T> : InnerReference<T> where T:Referenceable
+	{
+		[Key(1)]
+		public SourceReference newId;
+
+        
+    }
+
+	public class RedirectReferenceable : Referenceable
+        {
+			public SourceReference newId;
+
+            public override CommandController GetCommandController()
+            {
+                return ReferenceManager.Instance.GetResource<Referenceable>(newId).GetCommandController();
+            }
+        }
 }

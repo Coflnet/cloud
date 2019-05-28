@@ -23,9 +23,12 @@ public class FirstStartupTest {
 
     [Test]
     public void FirstStartupRegisterLoginTest () {
-        SetupStartController.Instance.RedoSetup (true);
+        FirstStartSetupController.Instance.RedoSetup (true);
         PrivacyService.Instance.privacyScreen = new AcceptAllScreen ();
-        DevCore.Init (new SourceReference (1, 1, 1, 0), true);
+        var serverId = new SourceReference (1, 1, 1, 0);
+        DevCore.Init (serverId, true);
+
+
 
         Debug.Log (ConfigController.UserSettings.userId);
         // userid exists client side
@@ -33,25 +36,52 @@ public class FirstStartupTest {
 
         // exists server side
         CoflnetUser user;
-        ReferenceManager.Instance.TryGetResource<CoflnetUser> (ConfigController.UserSettings.userId, out user);
+        // ActiveUserId should change on first register
+        DevCore.DevInstance
+            .simulationInstances[serverId]
+            .core.ReferenceManager
+            .TryGetResource<CoflnetUser> (ConfigController.ActiveUserId, out user);
+        
         Assert.NotNull (user);
+
+
+        // exists client side
+        CoflnetUser userOnClient;
+        // ActiveUserId should change on first register
+        DevCore.DevInstance
+            .simulationInstances[serverId]
+            .core.ReferenceManager
+            .TryGetResource<CoflnetUser> (ConfigController.ActiveUserId, out userOnClient);
+        
+        Assert.NotNull (userOnClient);
     }
 
     [Test]
     public void FirstStartupStoreValue () {
-        SetupStartController.Instance.RedoSetup (true);
+        FirstStartSetupController.Instance.RedoSetup (true);
         PrivacyService.Instance.privacyScreen = new AcceptAllScreen ();
-        DevCore.Init (new SourceReference (1, 1, 1, 0), true);
+        var serverId = new SourceReference (1, 1, 1, 0);
+        DevCore.Init (serverId, true);
 
         Debug.Log (ConfigController.UserSettings.userId);
 
-        CoflnetCore.Instance
-            .SendCommand<SetUserKeyValue, KeyValuePair<string, string>> (
+        var valueToStore = "abc123Hellou :D";
+
+        var data =  MessageData.CreateMessageData<SetUserKeyValue,KeyValuePair<string, string>> (
                 ConfigController.ActiveUserId,
-                new KeyValuePair<string, string> ("mykey", "avalue"));
+                new KeyValuePair<string, string> ("mykey", valueToStore));
+                data.sId = ConfigController.ActiveUserId;
+        CoflnetCore.Instance
+            .SendCommand(data);
 
-        CoflnetCore.Instance.SendCommand<GetUserKeyValue, string> (ConfigController.ActiveUserId, "mykey", (d) => {
+        foreach (var item in DevCore.DevInstance.simulationInstances.Keys)
+        {
+            Debug.Log ($"having {item}");
+        }
 
+        CoflnetCore.Instance.SendCommand<GetUserKeyValue, string> (ConfigController.ActiveUserId, "mykey",ConfigController.ActiveUserId, (d) => {
+            Assert.AreEqual(valueToStore,d.GetAs<string>());
+            UnityEngine.Debug.Log("response received and validated successfully");
         });
     }
 }

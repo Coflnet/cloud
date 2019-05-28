@@ -16,7 +16,7 @@ namespace Coflnet.Server
 			var options = serverMessage.GetAs<LoginParams>();
 
 
-			var user = ReferenceManager.Instance.GetResource<CoflnetUser>(options.id);
+			var user = data.CoreInstance.ReferenceManager.GetResource<CoflnetUser>(options.id);
 
 			if (user.Secret == null || options.secret == null || !user.Secret.SequenceEqual(options.secret))
 			{
@@ -25,8 +25,9 @@ namespace Coflnet.Server
 			UnityEngine.Debug.Log("authentiated");
 			serverMessage.Connection.User = user;
 
-
-			data.SendBack(MessageData.CreateMessageData<LoginUserResponse, SourceReference>(user.Id, user.Id));
+			var response = MessageData.CreateMessageData<LoginUserResponse, SourceReference>(user.Id, user.Id);
+			response.sId = data.CoreInstance.Id;
+			data.SendBack(response);
 		}
 	}
 

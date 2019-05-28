@@ -72,8 +72,8 @@ namespace Coflnet
 					// confirm receival
 					SendCommand(
 						MessageData.CreateMessageData<ReceiveConfirm, ReceiveConfirmParams>(
-							new ReceiveConfirmParams(data.sId, data.mId),
-							ConnectedServerId));
+							ConnectedServerId,
+							new ReceiveConfirmParams(data.sId, data.mId)));
 				}
 				catch (System.Exception ex)
 				{

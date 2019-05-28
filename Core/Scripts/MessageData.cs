@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using System;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -42,6 +43,8 @@ namespace Coflnet
 
 		protected dynamic deserialized;
 
+		private CoflnetCore _coreInstance;
+
 		/// <summary>
 		/// Nexts the message identifier.
 		/// </summary>
@@ -81,6 +84,27 @@ namespace Coflnet
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the <see cref="CoflnetCore"/> used for this message.
+		/// </summary>
+		/// <value>The core wich should be used.</value>
+		[IgnoreMember]
+		public CoflnetCore CoreInstance
+		{
+			get
+			{
+				if(_coreInstance == null){
+					UnityEngine.Debug.Log("falling back to default");
+					return CoflnetCore.Instance;
+				}
+				return _coreInstance;
+			}
+			set
+			{
+				_coreInstance = value;
+			}
+		}
+
 		#region Constructors
 
 		/// <summary>
@@ -113,7 +137,7 @@ namespace Coflnet
 		/// <param name="m_id">M identifier.</param>
 		/// <typeparam name="C">The 1st type parameter.</typeparam>
 		/// <typeparam name="T">The 2nd type parameter.</typeparam>
-		public static MessageData CreateMessageData<C, T>(T data, SourceReference target, long m_id = 0) where C : Command
+		public static MessageData CreateMessageData<C, T>(SourceReference target,T data,  long m_id = 0) where C : Command
 		{
 			return new MessageData(target, m_id, MessagePackSerializer.Serialize<T>(data), System.Activator.CreateInstance<C>().GetSlug());
 		}
@@ -189,7 +213,7 @@ namespace Coflnet
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public virtual T GetAs<T>()
 		{
-			if (deserialized == null)
+			if (Object.ReferenceEquals(null, deserialized))
 			{
 				if (message.Length == 0)
 				{
@@ -288,7 +312,7 @@ namespace Coflnet
 		public virtual void SendBack(MessageData data)
 		{
 			data.rId = this.sId;
-			CoflnetCore.Instance.SendCommand(data);
+			CoreInstance.SendCommand(data);
 		}
 
 		public MessageData(SourceReference sId, SourceReference rId, long mId, string t, byte[] message) : this(rId, mId, message, t)
@@ -301,9 +325,9 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The target as.</returns>
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public T GetTargetAs<T>() where T : Referenceable
+		public virtual T GetTargetAs<T>() where T : Referenceable
 		{
-			return ReferenceManager.Instance.GetResource<T>(rId);
+			return CoreInstance.ReferenceManager.GetResource<T>(rId);
 		}
 	}
 }

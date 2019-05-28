@@ -163,9 +163,8 @@ namespace Coflnet
 					if (!item.CheckPermission(data, target))
 					{
 						UnityEngine.Debug.Log(MessagePackSerializer.ToJson(data));
-						UnityEngine.Debug.Log(System.BitConverter.ToString(MessagePackSerializer.Typeless.Serialize(target as CoflnetUser)));
 						UnityEngine.Debug.Log("concludes to : " + item.CheckPermission(data, target));
-						throw new CoflnetException("permission_not_met", $"The permission {item.GetSlug()} required for executing this command wasn't met");
+						throw new CoflnetException("permission_not_met", $"The permission {item.GetSlug()} required for executing the command {command.GetSlug()} on {data.rId} wasn't met by {data.sId}");
 					}
 				}
 			}
@@ -272,7 +271,7 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Invokes the actual code to do some work
+		/// Invokes the actual code to do some logic
 		/// </summary>
 		/// <param name="data">Data.</param>
 		public abstract void Execute(MessageData data);
@@ -353,7 +352,11 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Custom Settings for command
+		/// Custom Settings for command.
+		/// Has the command to be executed on the main thread (ui)?
+		/// Is it changing and has it to be distributed?
+		/// Does it have to be encrypted?
+		/// Can and should it be ran locally first (eg. to update the ui)? 
 		/// </summary>
 		public class CommandSettings
 		{
@@ -413,7 +416,7 @@ namespace Coflnet
 			/// <summary>
 			/// Initializes a new instance of the <see cref="T:Coflnet.Command.CommandSettings"/> class.
 			/// </summary>
-			/// <param name="threadSave">Set to <c>true</c> if command can be run in multiple threads at the same time.</param>
+			/// <param name="threadSave">Set to <c>true</c> if command can be run in multiple threads at the same time. Set it to false if you interact with the UI.</param>
 			/// <param name="encrypted">Set to <c>true</c> if command is end-to-end encrypted and should be decrypted prior to execution.</param>
 			/// <param name="localPropagation">Set to <c>true</c>if command should also be executed locally if resource is present. Should be true if update to the ui is required.</param>
 			public CommandSettings(bool threadSave = false, bool encrypted = false, bool localPropagation = false)
@@ -608,7 +611,7 @@ namespace Coflnet
 		public override void Execute(MessageData data)
 		{
 			Device device = new Device();
-			device.Users.Add(new Reference<CoflnetUser>(data.User.PublicId));
+			device.Users.Add(new Reference<CoflnetUser>(data.GetTargetAs<CoflnetUser>().PublicId));
 			SendBack(data, device.PublicKey);
 		}
 

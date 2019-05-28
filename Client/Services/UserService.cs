@@ -11,6 +11,8 @@ namespace Coflnet.Client
 
 		public static UserService Instance { get; }
 
+		public ClientCore ClientCoreInstance {get;set;}
+
 		static UserService()
 		{
 			Instance = new UserService();
@@ -58,8 +60,21 @@ namespace Coflnet.Client
 			var request = new RegisterUserRequest();
 			request.clientId = ConfigController.ApplicationSettings.id;
 			request.privacySettings = privacyOptions;
-			UnityEngine.Debug.Log($"creating user {request.clientId} {CoflnetCore.Instance.GetType().Name}");
-			CoflnetCore.Instance.SendCommand<RegisterUser, RegisterUserRequest>(request.clientId, request);
+
+
+
+			var user = new CoflnetUser(ConfigController.ApplicationSettings.id);
+			user.AssignId(ClientCoreInstance.ReferenceManager);
+
+			// assign temporary local id to request so we can have multiple requests at the same time 
+			// and are able to continue with setup locally and update it with the server asyncronously
+			var requestData = MessageData.CreateMessageData<RegisterUser, RegisterUserRequest>(request.clientId,request);
+			requestData.sId = user.Id;
+
+			UnityEngine.Debug.Log($"creating user {user.Id} {CoflnetCore.Instance.GetType().Name} in {ClientCoreInstance.ReferenceManager.RelativeStorageFolder}");
+
+			user.SendCommand(requestData);
+			//CoflnetCore.Instance.SendCommand(requestData);
 		}
 
 		/// <summary>

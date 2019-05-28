@@ -119,7 +119,9 @@ namespace Coflnet
 	}
 
 
-
+	/// <summary>
+	/// Out of cloud settings for users, to make sure private details are not synced
+	/// </summary>
 	[MessagePackObject]
 	public class UserSettings
 	{
@@ -151,5 +153,7 @@ namespace Coflnet
 	public class ApplicationSettings
 	{
 		public SourceReference id;
+
+		public long serverId;
 	}
 }

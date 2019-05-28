@@ -15,13 +15,13 @@ namespace Coflnet
 		{
 			var returnData = ExecuteWithReturn(data);
 			// set headers
-			returnData.t = "return";
+			returnData.t = "response";
 			returnData.rId = data.sId;
 			returnData.sId = data.rId;
 
 			// wrap it into a container so receiver knows to what request it coresponds to
 			returnData.message = IEncryption.ConcatBytes(BitConverter.GetBytes(data.mId), returnData.message);
-
+			UnityEngine.Debug.Log($"sending back with {returnData}");
 			data.SendBack(returnData);
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
@@ -46,7 +46,8 @@ namespace Coflnet
 			// The command may not be present anymore
 			long id = BitConverter.ToInt64(data.message, 0);
 			byte[] dataWithoutId = new byte[data.message.Length - 8];
-			data.message.CopyTo(dataWithoutId, 8);
+			Array.Copy(data.message,8,dataWithoutId,0,dataWithoutId.Length);
+			//data.message.CopyTo(dataWithoutId, 8);
 			data.message = dataWithoutId;
 
 
@@ -67,7 +68,7 @@ namespace Coflnet
 		/// <returns>The slug .</returns>
 		public override string GetSlug()
 		{
-			return "return";
+			return "response";
 		}
 	}
 

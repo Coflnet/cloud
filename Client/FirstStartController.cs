@@ -5,10 +5,10 @@ namespace Coflnet.Client
 	/// <summary>
 	/// Setup controller handles device setup, registration and tutorials.
 	/// </summary>
-	public class SetupStartController
+	public class FirstStartSetupController
 	{
 
-		public static SetupStartController Instance;
+		public static FirstStartSetupController Instance;
 
 
 		//public GameObject tutorialScreen;
@@ -16,18 +16,16 @@ namespace Coflnet.Client
 
 
 
-		static SetupStartController()
+		static FirstStartSetupController()
 		{
-			Instance = new SetupStartController();
+			Instance = new FirstStartSetupController();
 		}
 
-		public SetupStartController()
+		public FirstStartSetupController()
 		{
 
 
 		}
-
-
 
 
 		/// <summary>
