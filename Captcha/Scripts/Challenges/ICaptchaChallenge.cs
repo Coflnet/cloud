@@ -20,7 +20,7 @@ public interface ICaptchaChallenge
 	/// Gets the slug for this challenge
 	/// </summary>
 	/// <returns>The slug.</returns>
-	string GetSlug();
+	string Slug {get;}
 
 	/// <summary>
 	/// Callback executed when additional data has been loaded.

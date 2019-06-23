@@ -116,7 +116,7 @@ namespace Coflnet.Server
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
-			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.GetSlug(), id);
+			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.Slug, id);
 
 			messageData.rId = receipient;
 			messageData.sId = sender;
@@ -134,7 +134,7 @@ namespace Coflnet.Server
 		public override void SendCommand<C>(SourceReference receipient, byte[] data)
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
-			var messageData = new MessageData(receipient, data, commandInstance.GetSlug());
+			var messageData = new MessageData(receipient, data, commandInstance.Slug);
 
 			SendCommand(messageData);
 		}

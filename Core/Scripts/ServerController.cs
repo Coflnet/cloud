@@ -55,7 +55,7 @@ namespace Coflnet
 		public void SendCommandToServer<T>(Command command, T data, long serverId)
 		{
 
-			MessageData message = new MessageData(command.GetSlug(),
+			MessageData message = new MessageData(command.Slug,
 												 MessagePack.MessagePackSerializer.Serialize<T>(data));
 			SendCommandToServer(message, serverId);
 		}
@@ -81,7 +81,7 @@ namespace Coflnet
 			{
 				bytes = data;
 			}
-			var message = new MessageData(to, bytes, commandInstance.GetSlug());
+			var message = new MessageData(to, bytes, commandInstance.Slug);
 
 			SendCommandToServer(message);
 		}

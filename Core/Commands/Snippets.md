@@ -54,7 +54,7 @@ Linux               ~/.local/share/MonoDevelop-{version}/Snippets/
     /// Gets the globally unique slug (short human readable id).
     /// </summary>
     /// <returns>The slug .</returns>
-    public override string GetSlug()
+    public override string Slug
     {
         return "$name$";
     }

@@ -55,7 +55,7 @@ public class OAuth2Controller
 
 		if (response.StatusCode != System.Net.HttpStatusCode.OK)
 		{
-			throw new CoflnetException("oauth_failed", $"Oauth handshake failed, {client.service.GetSlug()} responded with: `{response.Content}`");
+			throw new CoflnetException("oauth_failed", $"Oauth handshake failed, {client.service.Slug} responded with: `{response.Content}`");
 		}
 
 
@@ -69,7 +69,7 @@ public class OAuth2Controller
 											System.DateTime.Now.AddSeconds(content.expires_in),
 											content.refresh_token);
 
-		user.ThirdPartyTokens[client.service.GetSlug()] = token;
+		user.ThirdPartyTokens[client.service.Slug] = token;
 	}
 
 

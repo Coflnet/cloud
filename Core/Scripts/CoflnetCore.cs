@@ -39,7 +39,17 @@ namespace Coflnet
 			}
 		}
 
+		/// <summary>
+		/// Receives and processes a command.
+		/// Counterpart to <see cref="SendCommand"/>
+		/// </summary>
+		/// <param name="data">Command data received from eg. the network</param>
 
+		/// <param name="sender">The vertified sender of the command, controls if the command is executed right away or only sent to the managing server</param>
+		public void ReceiveCommand(MessageData data, SourceReference sender = default(SourceReference))
+		{
+			this.ReferenceManager.ExecuteForReference(data,sender);
+		}
 
 
 		public abstract void SendCommand(MessageData data, long serverId = 0);

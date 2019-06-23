@@ -135,11 +135,12 @@ namespace Coflnet
 		/// <param name="data">Data.</param>
 		/// <param name="target">Target.</param>
 		/// <param name="m_id">M identifier.</param>
+		/// <param name="sender">Sender of the message.</param>
 		/// <typeparam name="C">The 1st type parameter.</typeparam>
 		/// <typeparam name="T">The 2nd type parameter.</typeparam>
-		public static MessageData CreateMessageData<C, T>(SourceReference target,T data,  long m_id = 0) where C : Command
+		public static MessageData CreateMessageData<C, T>(SourceReference target,T data,  long m_id = 0,SourceReference sender = default(SourceReference)) where C : Command
 		{
-			return new MessageData(target, m_id, MessagePackSerializer.Serialize<T>(data), System.Activator.CreateInstance<C>().GetSlug());
+			return new MessageData(sender,target, m_id,System.Activator.CreateInstance<C>().Slug, MessagePackSerializer.Serialize<T>(data));
 		}
 
 
@@ -185,7 +186,7 @@ namespace Coflnet
 		/// <param name="command">Command object to send.</param>
 		/// <param name="m">The command data to send with the command.</param>
 		/// <param name="m_id">Message- identifier.</param>
-		public MessageData(Command command, byte[] m, long m_id = 0) : this(new SourceReference(), m_id, m, command.GetSlug())
+		public MessageData(Command command, byte[] m, long m_id = 0) : this(new SourceReference(), m_id, m, command.Slug)
 		{
 
 		}
@@ -279,7 +280,7 @@ namespace Coflnet
 
 		public void SetCommand<C>() where C : Command, new()
 		{
-			this.t = (new C()).GetSlug();
+			this.t = (new C()).Slug;
 		}
 
 

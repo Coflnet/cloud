@@ -66,10 +66,7 @@ namespace Coflnet
 		/// Gets the globally unique slug (short human readable id).
 		/// </summary>
 		/// <returns>The slug .</returns>
-		public override string GetSlug()
-		{
-			return "response";
-		}
+		public override string Slug => "response";
 	}
 
 

@@ -88,7 +88,7 @@ namespace Coflnet
 		/// Usualy the domain 
 		/// </summary>
 		/// <returns>The slug.</returns>
-		string GetSlug();
+		string Slug{get;}
 
 		string GetDescription();
 
@@ -149,7 +149,7 @@ namespace Coflnet
 		}
 
 
-		public abstract string GetSlug();
+		public abstract string Slug{get;}
 
 		public abstract string GetDescription();
 

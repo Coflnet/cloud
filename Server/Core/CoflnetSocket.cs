@@ -682,7 +682,7 @@ public class AuthorizationMessage
 [DataContract]
 public class OAuthClient : ILocalReferenceable
 {
-	private CommandController commandController;
+	private CommandController commandController = new CommandController();
 
 	private static Dictionary<string, OAuthClient> clients = new Dictionary<string, OAuthClient>();
 

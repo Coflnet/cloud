@@ -42,10 +42,8 @@ public class MultiImageSelectCaptcha : MonoBehaviour, ICaptchaChallenge
 		return JsonUtility.ToJson(submit);
 	}
 
-	public string GetSlug()
-	{
-		return "multiimage-select";
-	}
+	public string Slug => "multiimage-select";
+	
 
 	/// <summary>
 	/// Called when Images were set.

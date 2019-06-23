@@ -5,7 +5,7 @@ namespace Coflnet
 {
 	public abstract class Permission
 	{
-		public abstract string GetSlug();
+		public abstract string Slug{get;}
 		/// <summary>
 		/// Checks for a permission.
 		/// </summary>
@@ -22,12 +22,12 @@ namespace Coflnet
 				return false;
 			}
 
-			return this.GetSlug() == item.GetSlug();
+			return this.Slug == item.Slug;
 		}
 
 		public override int GetHashCode()
 		{
-			return this.GetSlug().GetHashCode();
+			return this.Slug.GetHashCode();
 		}
 	}
 

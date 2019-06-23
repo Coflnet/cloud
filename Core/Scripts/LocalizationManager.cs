@@ -8,8 +8,7 @@ namespace Coflnet
 {
 	public class LocalizationManager
 	{
-		public delegate void LocalizationLoaded();
-		private event LocalizationLoaded localLoadedCallBack;
+		private event Action localLoadedCallBack;
 		public bool loadDone { get; private set; }
 
 		/// <summary>
@@ -52,6 +51,18 @@ namespace Coflnet
 			return result;
 		}
 
+		/// <summary>
+		/// Gets a translation.
+		/// Allows one key value pair that is replaced within the translated string.
+		/// </summary>
+		/// <param name="key">For wich to search for a translation</param>
+		/// <param name="valueKey">The key within the translation to translate</param>
+		/// <param name="value">The value to replace it with (can also be another translation key)</param>
+		/// <returns>The localized text</returns>
+		public string GetTranslation(string key, string valueKey, string value){
+			return GetTranslation(key, new KeyValuePair<string,string>(valueKey,value));
+		}
+
 		public void AddTranslations(Dictionary<string, string> values)
 		{
 			foreach (var item in values)
@@ -76,7 +87,7 @@ namespace Coflnet
 		/// The callback will be removed after invocation has happened once.
 		/// </summary>
 		/// <param name="callback">Callback to call when translations are ready.</param>
-		public void AddLoadCallback(LocalizationLoaded callback)
+		public void AddLoadCallback(Action callback)
 		{
 			if (loadDone)
 			{

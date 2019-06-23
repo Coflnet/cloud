@@ -96,13 +96,15 @@ namespace Coflnet.Dev {
 		/// Adds a new Server to the simulation and initializes it.
 		/// </summary>
 		/// <param name="id">Id of the server</param>
-		public void AddServerCore(SourceReference id)
+		public SimulationInstance AddServerCore(SourceReference id)
 		{
 			var newServerCore = new ServerCore(new ReferenceManager($"res{simulationInstances.Count}"))
 			{Id=id};
-			AddCore(newServerCore);
+			var simulationInstance =AddCore(newServerCore);
 
 			newServerCore.SetCommandsLive();
+
+			return simulationInstance;
 			
 		}
 
@@ -110,7 +112,7 @@ namespace Coflnet.Dev {
 		/// Adds a new Client to the simulation
 		/// </summary>
 		/// <param name="id">Id of the client</param>
-		public void AddClientCore(SourceReference id)
+		public SimulationInstance AddClientCore(SourceReference id)
 		{
 			var newClientCore = new ClientCore(new CommandController(globalCommands),ClientSocket.Instance,new ClientReferenceManager($"res{simulationInstances.Count}"))
 			{Id=id};
@@ -119,6 +121,8 @@ namespace Coflnet.Dev {
 			// activate
 			newClientCore.SetCommandsLive();
 			lastAddedClient=addedInstance;
+
+			return addedInstance;
 		}
 
 		/// <summary>
@@ -161,14 +165,14 @@ namespace Coflnet.Dev {
 				data.sId = new SourceReference (data.rId.ServerId, 0);
 			}
 
-			var serverData =  new DevMessageData(data);
-				serverData.Connection = new DevConnection();
-				data = serverData;
+			var devData =  new DevMessageData(data);
+				devData.Connection = new DevConnection();
+				data = devData;
 			
 
 			if(data.t == "registerUser" || data.t == "loginUser" || data.t == "response"){
 
-				serverData.sender = lastAddedClient;
+				devData.sender = lastAddedClient;
 			}
 
 			if (data.t == "registeredUser" || data.t == "loginUserResponse" || data.t =="response") {
@@ -180,28 +184,21 @@ namespace Coflnet.Dev {
 			//UnityEngine.Debug.Log(data);
 
 			if(simulationInstances.ContainsKey(data.rId)){
-				data.CoreInstance=simulationInstances[data.rId].core;
-				simulationInstances[data.rId].core.ReferenceManager.ExecuteForReference(data);
+				// the receiver is known, send it to him
+				simulationInstances[data.rId].ReceiveCommand(devData);
 				
 			} else if(simulationInstances.ContainsKey(SourceReference.Default) && simulationInstances[SourceReference.Default].core.Id == data.rId)
 			{
+				// the receiver is unknown but is asigned the last added client since it hasn't got an ID yet
 				simulationInstances[data.rId] = simulationInstances[SourceReference.Default];
-				data.CoreInstance=simulationInstances[data.rId].core;
-				simulationInstances[data.rId].core.ReferenceManager.ExecuteForReference(data);
+				simulationInstances[data.rId].ReceiveCommand(devData);
 			}
 			else if(simulationInstances.ContainsKey(data.rId.FullServerId)){
-				UnityEngine.Debug.Log("abc " + data);
-
-				foreach (var item in simulationInstances.Keys)
-				{
-					UnityEngine.Debug.Log("abc " + item);
-				}
-
-				data.CoreInstance=simulationInstances[data.rId.FullServerId].core;
-				simulationInstances[data.rId.FullServerId].core.ReferenceManager.ExecuteForReference(data);
+				// the receiver itself doesn't exist, but the server for it does
+				simulationInstances[data.rId.FullServerId].ReceiveCommand(devData);
 				
 			}else if(data is DevMessageData && (data as DevMessageData).sender != null){
-				// depending on the sending type this might not help
+				// no idea what id this is supposed to go but the container has a sender
 				(data as DevMessageData).sender.core.ReferenceManager.ExecuteForReference(data);
 			}
 			else{
@@ -222,7 +219,36 @@ namespace Coflnet.Dev {
 		/// Messagedata used within the development enviroment.
 		/// Useful for knowing who sent int in the simulated  enviroment before ids are set
 		/// </summary>
-		class DevMessageData : ServerMessageData
+		
+
+		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) {
+			UnityEngine.Debug.Log ($"executing for ");
+			var commandInstance = ((C) Activator.CreateInstance (typeof (C)));
+
+			var messageData = MessageData.SerializeMessageData<T> (data, commandInstance.Slug, id);
+
+			messageData.rId = receipient;
+			messageData.sId = sender;
+
+			 
+			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation) {
+				messageData.CoreInstance = simulationInstances[messageData.rId].core;
+				UnityEngine.Debug.Log("using thread");
+				ThreadController.Instance.ExecuteCommand (commandInstance, messageData);
+			}
+
+			SendCommand (messageData);
+		}
+
+		public override void SendCommand<C> (SourceReference receipient, byte[] data) {
+			var commandInstance = ((C) Activator.CreateInstance (typeof (C)));
+			var messageData = new MessageData (receipient, data, commandInstance.Slug);
+
+			SendCommand (messageData);
+		}
+	}
+
+	public class DevMessageData : ServerMessageData
 		{
 			// TODO
 			public SimulationInstance sender;
@@ -246,32 +272,6 @@ namespace Coflnet.Dev {
 			}
 		}
 
-		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) {
-			UnityEngine.Debug.Log ($"executing for ");
-			var commandInstance = ((C) Activator.CreateInstance (typeof (C)));
-
-			var messageData = MessageData.SerializeMessageData<T> (data, commandInstance.GetSlug (), id);
-
-			messageData.rId = receipient;
-			messageData.sId = sender;
-
-			 
-			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation) {
-				messageData.CoreInstance = simulationInstances[messageData.rId].core;
-				UnityEngine.Debug.Log("using thread");
-				ThreadController.Instance.ExecuteCommand (commandInstance, messageData);
-			}
-
-			SendCommand (messageData);
-		}
-
-		public override void SendCommand<C> (SourceReference receipient, byte[] data) {
-			var commandInstance = ((C) Activator.CreateInstance (typeof (C)));
-			var messageData = new MessageData (receipient, data, commandInstance.GetSlug ());
-
-			SendCommand (messageData);
-		}
-	}
 
     class DevConnection : IClientConnection
     {
@@ -296,9 +296,4 @@ namespace Coflnet.Dev {
     }
 
 
-
-	public class SimulationInstance 
-	{
-		public CoflnetCore core {set;get;}
-	}
 }

@@ -54,7 +54,7 @@ namespace Coflnet.Server
 			MessageData message = new MessageData()
 			{
 				message = MessagePack.MessagePackSerializer.Serialize<T>(data),
-				t = command.GetSlug()
+				t = command.Slug
 			};
 			SendCommandToServer(message, serverId);
 		}

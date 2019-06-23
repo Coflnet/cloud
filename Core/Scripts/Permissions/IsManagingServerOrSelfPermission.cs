@@ -21,10 +21,8 @@ namespace Coflnet
 			return IsManagingServerPermission.Instance.CheckPermission(data,target)|| IsSelfPermission.Instance.CheckPermission(data,target);
 		}
 
-		public override string GetSlug()
-		{
-			return "isManagingServerOrSelf";
-		}
+		public override string Slug =>  "isManagingServerOrSelf";
+		
 	}
 
 }

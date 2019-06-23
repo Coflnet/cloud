@@ -375,7 +375,7 @@ public class CaptchaController : MonoBehaviour
 		ShowLoadingAnimation();
 
 		string data = currentCaptcha.GetChallengeData();
-		string url = apiUrl + "captcha/c/" + currentCaptcha.GetSlug();
+		string url = apiUrl + "captcha/c/" + currentCaptcha.Slug;
 		ApiController.instance.SendToApi(url, ReceiveApiResponse, data);
 	}
 

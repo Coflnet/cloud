@@ -18,10 +18,14 @@ namespace Coflnet.Client
 				return new CommandSettings(true);
 			}
 
-			public override string GetSlug()
-			{
-				return "get:user/files";
+			public override string Slug
+{
+	get
+	{
+	
+				return "getFiles";
 			}
+}
 		}
 
 		public class SetName : Command
@@ -36,10 +40,14 @@ namespace Coflnet.Client
 				return new CommandSettings();
 			}
 
-			public override string GetSlug()
-			{
+			public override string Slug
+{
+	get
+	{
+	
 				return "put:user/name";
 			}
+		}
 		}
 
 
@@ -55,10 +63,14 @@ namespace Coflnet.Client
 				throw new System.NotImplementedException();
 			}
 
-			public override string GetSlug()
-			{
+			public override string Slug
+{
+	get
+	{
+	
 				throw new System.NotImplementedException();
 			}
+		}
 		}
 
 

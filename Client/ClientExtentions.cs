@@ -7,7 +7,8 @@ namespace Coflnet.Client
 		
 		public static IRegisterCommands[] Commands =
 		{
-			new UserClientExtention()
+			new UserClientExtention(),
+			new MessagingClientExtention()
 		};
 	}
 }
