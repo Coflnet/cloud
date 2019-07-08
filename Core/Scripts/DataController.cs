@@ -24,6 +24,7 @@ namespace Coflnet
 
 		public static DataController Instance { get; }
 
+
 		static DataController()
 		{
 			Instance = new DataController();
@@ -103,11 +104,17 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The loaded object.</returns>
 		/// <param name="relativePath">Path relative to the data folder.</param>
+		/// <param name="createNew">Function to create a new instance of the object when not found on disc.</param>
 		/// <typeparam name="T">Type to deserialize to.</typeparam>
-		public T LoadObject<T>(string relativePath)
+		public T LoadObject<T>(string relativePath, Func<T> createNew = null)
 		{
+			if(!FileController.Exists(relativePath)&&createNew != null){
+				return createNew();
+			}
 			return MessagePackSerializer.Deserialize<T>(LoadData(relativePath));
 		}
+
+
 
 		/// <summary>
 		/// Decrypt the specified data with the encryption key

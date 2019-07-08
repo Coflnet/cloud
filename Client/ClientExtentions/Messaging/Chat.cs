@@ -20,12 +20,22 @@ namespace Coflnet.Client.Messaging
 		[IgnoreMember]
         public SourceReference ID => partner.userId;
 
+		[Key(2)]
+        public long lastMessageIndex {get;set;}
+
+
+		public Chat(ChatMember partner)
+		{
+			this.partner = partner;
+		}
+
         public void SendMessage(string message)
 		{
 			var msg = new ChatMessage(message);
 			CoflnetCore.Instance.SendCommand<ChatMessageCommand,ChatMessage>(partner.userId,msg);
 		}
 
+		public long MessageCount{get; set;}
 
 	}
 
@@ -50,6 +60,12 @@ namespace Coflnet.Client.Messaging
 		[IgnoreMember]
         public SourceReference ID => GroupId;
 
+		[Key(1)]
+
+        public long lastMessageIndex{get; set;}
+		[Key(2)]
+        public long MessageCount{get; set;}
+
         public void SendMessage(string message)
         {
             throw new NotImplementedException();
@@ -65,6 +81,18 @@ namespace Coflnet.Client.Messaging
 
 		SourceReference ID {get;}
 
+		/// <summary>
+		/// The index of the latest received message.
+		/// Either choosen by the chat resource on the server or the other party
+		/// </summary>
+		/// <value></value>
+		long lastMessageIndex {get;}
+
+		/// <summary>
+		/// The total count of messages in the chat
+		/// </summary>
+		/// <value></value>
+		long MessageCount {get;}
 	}
 
 
@@ -82,6 +110,17 @@ namespace Coflnet.Client.Messaging
         {
             return chatCommands;
         }
+
+		public override void ExecuteCommand(MessageData data, Command command)
+		{
+			// TODO distribute
+			foreach (var member in Members)
+			{
+				var newData = new MessageData(data);
+				newData.rId = member.userId;
+				CoflnetCore.Instance.SendCommand(newData);
+			}
+		}
 	}
 
 
@@ -93,20 +132,29 @@ namespace Coflnet.Client.Messaging
 	}
 
 
+[MessagePackObject]
 	public class ChatMember
 	{
+		[Key(0)]
 		public SourceReference userId;
+		[Key(1)]
 		public byte[] receiveKey;
 		/// <summary>
 		/// The index of the last message received and vertified 
 		/// and the index of the ratchet receiveKey
 		/// </summary>
+		[Key(2)]
 		public long lastMessageIndex;
+		[Key(3)]
 		public ChatRole Role;
 
-		public ChatMember(SourceReference userId)
+		public ChatMember(SourceReference userId) : this(userId,new byte[0])
+		{
+		}
+		public ChatMember(SourceReference userId,byte[] receiveKey)
 		{
 			this.userId = userId;
+			this.receiveKey = receiveKey;
 		}
 		public ChatMember()
 		{

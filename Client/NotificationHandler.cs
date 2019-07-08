@@ -39,6 +39,17 @@ namespace Coflnet.Client
 			TryShowNextAlert();
 		}
 
+		/// <summary>
+		/// Adds a translated message to the alert stream
+		/// </summary>
+		/// <param name="message">Message key to translate</param>
+		/// <param name="values">Optional additional values</param>
+		public void AddTranslatedAlert(string message, params KeyValuePair<string,string>[] values)
+		{
+			var translation = LocalizationManager.Instance.GetTranslation(message,values);
+			AddMessageToAlertStream(translation);
+		}
+
 
 		public void AddMessageToStreamAsync(string text)
 		{

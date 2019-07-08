@@ -11,6 +11,13 @@ namespace Coflnet
 	{
 		private static CoflnetCore _instance;
 
+
+		/// <summary>
+		/// Event triggered on ApplicationExit.
+		/// You might need this if you need to save something bevore exiting.
+		/// </summary>
+		public event Action OnApplicationExit;
+
 		/// <summary>
 		/// Instance of an <see cref="ReferenceManager"> used for executing commands
 		/// </summary>

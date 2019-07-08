@@ -164,13 +164,13 @@ public class CoflnetUserTests {
 
 		// register second user
 		var receiverUser = CoflnetUser.Generate (ConfigController.ApplicationSettings.id);
-		receiverUser.GetCommandController ().OverwriteCommand<ChatMessage> ();
+		receiverUser.GetCommandController ().OverwriteCommand<ChatMessageCommand> ();
 
 		(new CoflnetUser ()).GetCommandController ().OverwriteCommand<TestCommandWithPermission> ();
 		//tell the client what user we are
 		ConfigController.ActiveUserId = login.id;
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<ChatMessage, string> (receiverUser.Id, "hi"));
+			MessageData.CreateMessageData<ChatMessageCommand, string> (receiverUser.Id, "hi"));
 
 		yield return new WaitForSeconds (0.5f);
 
@@ -205,7 +205,7 @@ public class CoflnetUserTests {
 		ServerCore.Stop ();
 	}
 
-	class ChatMessage : Command {
+	class ChatMessageCommand : Command {
 		public override void Execute (MessageData data) {
 			Debug.Log ("executed");
 		}
@@ -259,13 +259,13 @@ public class CoflnetUserTests {
 		// register second user on virtual other server
 		var receiverUser = CoflnetUser.Generate (new SourceReference (1, 1, 2, 0));
 		receiverUser.Id = new SourceReference (3, 1, 2, ThreadSaveIdGenerator.NextId);
-		receiverUser.GetCommandController ().OverwriteCommand<ChatMessage> ();
+		receiverUser.GetCommandController ().OverwriteCommand<ChatMessageCommand> ();
 		Debug.Log (receiverUser.Id);
 
 		(new CoflnetUser ()).GetCommandController ().OverwriteCommand<TestCommandWithPermission> ();
 
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<ChatMessage, string> (receiverUser.Id, "hi"));
+			MessageData.CreateMessageData<ChatMessageCommand, string> (receiverUser.Id, "hi"));
 
 		yield return new WaitForSeconds (0.5f);
 
