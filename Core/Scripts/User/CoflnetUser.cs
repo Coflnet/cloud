@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Coflnet.Core.User;
 
 namespace Coflnet {
 	/// <summary>
@@ -262,6 +263,7 @@ namespace Coflnet {
 			commandController = new CommandController (persistenceCommands);
 			commandController.RegisterCommand<GetUserKeyValue> ();
 			commandController.RegisterCommand<SetUserKeyValue> ();
+			commandController.RegisterCommand<UpdateUserNameCommand>();
 		}
 
 		/// <summary>

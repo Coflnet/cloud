@@ -61,6 +61,7 @@ namespace Coflnet.Client
 			request.clientId = ConfigController.ApplicationSettings.id;
 			request.privacySettings = privacyOptions;
 
+			
 
 
 			var user = new CoflnetUser(ConfigController.ApplicationSettings.id);

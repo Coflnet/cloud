@@ -72,6 +72,7 @@ namespace Coflnet
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
+
 			byte[] bytes;
 			if (commandInstance.Settings.Encrypted)
 			{
@@ -82,6 +83,16 @@ namespace Coflnet
 				bytes = data;
 			}
 			var message = new MessageData(to, bytes, commandInstance.Slug);
+
+
+
+			// go around network if receiver is local (0.x)
+			if(to.ServerId == 0){
+				Debug.Log("oh no :/");
+				CoflnetCore.Instance.ReceiveCommand(message);
+				return;
+			}
+
 
 			SendCommandToServer(message);
 		}

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using MessagePack;
+using System;
 
 namespace Coflnet.Client
 {
@@ -43,6 +44,10 @@ namespace Coflnet.Client
 			}
 		}
 
+		/// <summary>
+		/// Generates new unique <see cref="MessageReference"/>
+		/// </summary>
+		/// <value></value>
 		[IgnoreMember]
 		public static MessageReference Next
 		{
@@ -54,7 +59,11 @@ namespace Coflnet.Client
 			}
 		}
 
-		// override object.Equals
+		/// <summary>
+		/// Determines if the id is equal to this one
+		/// </summary>
+		/// <param name="obj">The id to compare to</param>
+		/// <returns>true if it is equal falso otherwise</returns>
 		public override bool Equals(object obj)
 		{			
 			if (obj == null || GetType() != obj.GetType())
@@ -71,10 +80,13 @@ namespace Coflnet.Client
 		// override object.GetHashCode
 		public override int GetHashCode()
 		{
-			// TODO: write your implementation of GetHashCode() here
-			throw new System.NotImplementedException();
-			return base.GetHashCode();
+			return (idfromSource ^ source.GetHashCode()).GetHashCode();
 		}	
+
+		public override string ToString()
+		{
+			return $"{source.ToString()}-{Convert.ToString(idfromSource, 16)}";
+		}
 	}
 
 }

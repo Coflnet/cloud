@@ -29,6 +29,8 @@ namespace Coflnet.Dev {
 
 		static DevCore () {
 
+			// postfix the datapath to not corrupt other data
+			FileController.dataPaht += "/dev";
 		}
 
 		public DevCore(){
@@ -59,6 +61,7 @@ namespace Coflnet.Dev {
 			ConfigController.ActiveUserId = id;
 			ConfigController.ApplicationSettings.id = id.FullServerId;
 
+
 			UnityEngine.Debug.Log($"setting up with {id}");
 
 			if (!preventDefaultSetup) {
@@ -75,8 +78,8 @@ namespace Coflnet.Dev {
 			} else {
 				// reset if there was an devinstance bevore
 				DevInstance.simulationInstances.Clear();
-				ServerCore.ServerInstance = new ServerCore();
-				ClientCore.ClientInstance = new ClientCore();
+				ServerCore.ServerInstance = new ServerCoreProxy();
+				ClientCore.ClientInstance = new ClientCoreProxy();
 			}
 
 			DevInstance.AddServerCore(id.FullServerId );
@@ -98,7 +101,7 @@ namespace Coflnet.Dev {
 		/// <param name="id">Id of the server</param>
 		public SimulationInstance AddServerCore(SourceReference id)
 		{
-			var newServerCore = new ServerCore(new ReferenceManager($"res{simulationInstances.Count}"))
+			var newServerCore = new ServerCoreProxy(new ReferenceManager($"res{simulationInstances.Count}"))
 			{Id=id};
 			var simulationInstance =AddCore(newServerCore);
 
@@ -114,7 +117,7 @@ namespace Coflnet.Dev {
 		/// <param name="id">Id of the client</param>
 		public SimulationInstance AddClientCore(SourceReference id)
 		{
-			var newClientCore = new ClientCore(new CommandController(globalCommands),ClientSocket.Instance,new ClientReferenceManager($"res{simulationInstances.Count}"))
+			var newClientCore = new ClientCoreProxy(new CommandController(globalCommands),ClientSocket.Instance,new ClientReferenceManager($"res{simulationInstances.Count}"))
 			{Id=id};
 			UserService.Instance.ClientCoreInstance = newClientCore;
 			var addedInstance = AddCore(newClientCore);
@@ -293,6 +296,54 @@ namespace Coflnet.Dev {
 			UnityEngine.Debug.Log("sending now to " + data.rId);
             DevCore.Instance.SendCommand(data);
         }
+    }
+
+	public class ServerCoreProxy : ServerCore
+	{
+		public override void SendCommand(MessageData data, long serverId = 0)
+		{
+			// set the correct sender
+			data.sId = this.Id;
+			// go around the network 
+			DevCore.DevInstance.SendCommand(data,serverId);
+		}
+
+		public ServerCoreProxy(ReferenceManager referenceManager) : base(referenceManager)
+        {
+        }
+
+        public ServerCoreProxy()
+        {
+        }
+    }
+
+    public class ClientCoreProxy : ClientCore
+    {
+        public ClientCoreProxy()
+        {
+        }
+
+        public ClientCoreProxy(CommandController commandController, ClientSocket socket) : base(commandController, socket)
+        {
+        }
+
+        public ClientCoreProxy(CommandController commandController, ClientSocket socket, ReferenceManager manager) : base(commandController, socket, manager)
+        {
+        }
+
+		public override void SendCommand(MessageData data, long serverId = 0)
+		{
+			// set the correct sender
+			data.sId = this.Id;
+			// go around the network 
+			DevCore.DevInstance.SendCommand(data,serverId);
+		}
+
+		public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference))
+		{
+			
+			DevCore.DevInstance.SendCommand<C,T>(receipient,data,id,sender);
+		}
     }
 
 

@@ -37,6 +37,8 @@ namespace Coflnet.Client
 			if (ValuesController.HasKey("setupCompleted"))
 				return;
 
+			UnityEngine.Debug.Log("doing setup :)");
+
 			PrivacyService.Instance.ShowScreen(Done);
 		}
 

@@ -165,6 +165,28 @@ namespace Coflnet {
 		}
 
 		/// <summary>
+		/// Clones a resource locally 
+		/// </summary>
+		/// <param name="id">The id of the resource to clone</param>
+		public void CloneResource(SourceReference id,Action<Referenceable> afterReceive, bool subscribe = false)
+		{
+			if(Exists(id)){
+				// break if the resource is already cloned
+				return;
+			}
+
+			UnityEngine.Debug.Log($"cloning {id}");
+
+			coreInstance.SendCommand<GetResourceCommand,short>(id,0,o =>{
+				var resource = MessagePack.MessagePackSerializer.Typeless.Deserialize(o.message) as Referenceable;
+				this.AddReference(resource);
+				afterReceive?.Invoke(resource);
+			});
+
+			
+		}
+
+		/// <summary>
 		/// Gets the resource.
 		/// </summary>
 		/// <returns>The resource.</returns>
@@ -177,9 +199,11 @@ namespace Coflnet {
 				throw new ObjectNotFound (id);
 			}
 
+
 			if (reference.Resource is T) {
 				return (T) reference.Resource;
 			}
+			UnityEngine.Debug.Log($"this is {reference.Resource.GetType().Name} not the requested type {typeof(T).Name}");
 			try {
 				return (T) Convert.ChangeType (reference, typeof (T));
 			} catch (InvalidCastException) {
@@ -297,7 +321,14 @@ namespace Coflnet {
 		/// <param name="referenceable">Referencable object to store.</param>
 		public virtual SourceReference CreateReference (Referenceable referenceable, bool force = false) {
 			long nextIndex = ThreadSaveIdGenerator.NextId;
-			SourceReference newReference = new SourceReference (ConfigController.ApplicationSettings.id.ServerId, nextIndex);
+
+			SourceReference newReference;
+			// generate new Id for the current server
+			if(this.coreInstance == null){
+				newReference  = new SourceReference (0, nextIndex);
+			} else {
+				newReference  = new SourceReference (this.coreInstance.Id.ServerId, nextIndex);
+			}
 			if (referenceable.Id != new SourceReference () && !force)
 				throw new Exception ("The referenceable already had an id, it may already have been registered. Call with force = true to ignore");
 			referenceable.Id = newReference;
@@ -387,7 +418,7 @@ namespace Coflnet {
 			var resource = reference.Resource;
 
 			if (resource != null) {
-				UnityEngine.Debug.Log ($"executing {data} on {resource.Id} ({coreInstance.GetType().Name})");
+				//UnityEngine.Debug.Log ($" on {this.coreInstance.Id} ({coreInstance.GetType().Name}) executing {data} ");
 				var command = resource.GetCommandController ().GetCommand (data.t);
 
 				// only execute changing commands command if we are the managing server 
@@ -517,6 +548,7 @@ namespace Coflnet {
 		/// Global commands useable for every <see cref="Referenceable"/> in the system.
 		/// Contains commands for syncing resources between servers.
 		/// </summary>
+		[IgnoreDataMember]
 		public static CommandController globalCommands;
 
 		protected Referenceable (Access access, SourceReference id) {
@@ -543,6 +575,8 @@ namespace Coflnet {
 		static Referenceable () {
 			globalCommands = new CommandController ();
 			globalCommands.RegisterCommand<ReturnResponseCommand> ();
+			globalCommands.RegisterCommand<GetResourceCommand>();
+			globalCommands.RegisterCommand<CreationResponseCommand>();
 		}
 
 		/// <summary>
@@ -596,15 +630,29 @@ namespace Coflnet {
 
 		public abstract CommandController GetCommandController ();
 
+		/// <summary>
+		/// Will generate and add a new Access Instance if none exists yet.
+		/// </summary>
+		/// <returns>The Access Settings for this Resource</returns>
+		public Access GetAccess()
+		{
+			if(Access == null){
+				Access = new Access();
+			}
+			return Access;
+		}
 	}
 
-	public class GetResource : ReturnCommand {
+	public class GetResourceCommand : ReturnCommand {
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
 		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
 		public override MessageData ExecuteWithReturn (MessageData data) {
-			data.message = ReferenceManager.Instance.SerializeWithoutAccess (data.rId);
+			data.message = data.CoreInstance.ReferenceManager.SerializeWithoutAccess (data.rId);
+			
+			UnityEngine.Debug.Log("returning resource");
+			
 			return data;
 			//MessagePack.MessagePackSerializer.Typeless.Serialize()                
 		}
@@ -731,18 +779,21 @@ namespace Coflnet {
 		/// For any combination add them together
 		/// </summary>
 		public enum GeneralAccess {
-			ALL_READ = 1,
-			LOCAL_READ = 10,
-			SERVER_READ = 100,
-			ALL_WRITE = 2,
-			LOCAL_WRITE = 20,
-			ALL_READ_LOCAL_WRITE = 21,
-			SERVER_WRITE = 200,
-			ALL_READ_AND_WRITE = 3,
-			LOCAL_READ_AND_WRITE = 30,
-			ALL_READ_LOCAL_READ_AND_WRITE = 31,
-			SERVER_READ_AND_WRITE = 300,
-			ALL_READ_SERVER_READ_AND_WRITE = 301
+			NONE = 0,
+			SERVER_READ = 1,
+			SERVER_WRITE = 2,
+			LOCAL_READ = 0x1 << 3,
+			LOCAL_WRITE = 0x2 << 3,
+
+			ALL_READ= 0x1 << 6,
+			ALL_WRITE = 0x2 << 6,
+			
+			ALL_READ_LOCAL_WRITE = ALL_READ | LOCAL_WRITE,
+			ALL_READ_AND_WRITE = ALL_READ | ALL_WRITE,
+			LOCAL_READ_AND_WRITE = LOCAL_READ | LOCAL_WRITE,
+			ALL_READ_LOCAL_READ_AND_WRITE = ALL_READ_LOCAL_WRITE | LOCAL_WRITE,
+			SERVER_READ_AND_WRITE = SERVER_READ | SERVER_WRITE,
+			ALL_READ_SERVER_READ_AND_WRITE = SERVER_READ_AND_WRITE | ALL_READ
 		}
 
 		[DataMember]
@@ -760,6 +811,11 @@ namespace Coflnet {
 			Owner = owner;
 		}
 
+		public Access()
+		{
+			
+		}
+
 		/// <summary>
 		/// Checks if some reference has some level of access to this resource
 		/// </summary>
@@ -767,24 +823,40 @@ namespace Coflnet {
 		/// <param name="requestingReference">Requesting reference.</param>
 		/// <param name="mode">AccessMode.</param>
 		public bool IsAllowedToAccess (SourceReference requestingReference, AccessMode mode = AccessMode.READ) {
+
+			// unauthorized senders can't access
+			if(requestingReference == default(SourceReference))
+			{
+				UnityEngine.Debug.Log("Sender is not set, access was blocked");
+				return false;
+			}
+
 			// is it the owner or the resource itself
 			if (requestingReference == Owner)
 				return true;
 
+				UnityEngine.Debug.Log($"{requestingReference} is requesting {mode}");
+
 			//is there a special case?
-			if (resourceAccess != null && resourceAccess.ContainsKey (requestingReference)) {
-				return resourceAccess[requestingReference].CompareTo (mode) >= 0;
-			}
+			if (resourceAccess != null) {
+				if(resourceAccess.ContainsKey (requestingReference))
+					return resourceAccess[requestingReference].CompareTo (mode) >= 0;
+				else if(resourceAccess.ContainsKey (requestingReference.FullServerId))
+					return resourceAccess[requestingReference.FullServerId].CompareTo (mode) >= 0;
+			} 
 
 			// check for "all"
-			if ((int) mode - (int) generalAccess % 10 >= 0)
+			if (((((int)generalAccess) >> 6)  & (int) mode) > 0)
 				return true;
+
 			// check for local
-			if ((int) mode * 10 - (int) generalAccess >= 0)
+			if (((((int)generalAccess) >> 3)  & (int) mode) > 0)
 				return requestingReference.IsSameLocationAs (Owner);
 			// check for same server
-			if ((int) mode * 100 - (int) generalAccess >= 0)
+			if (((((int)generalAccess))  & (int) mode) > 0)
 				return Owner.ServerId == requestingReference.ServerId;
+
+
 
 			// requestingReference doesn't have access
 			return false;

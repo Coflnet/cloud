@@ -6,6 +6,7 @@ namespace Coflnet.Client.Messaging
     /// <summary>
     /// A message inside a chat
     /// </summary>
+	[MessagePackObject]
     public class ChatMessage
 	{
 		[Key(1)]

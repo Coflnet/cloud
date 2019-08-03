@@ -42,10 +42,26 @@ namespace Coflnet.Client.Messaging
 	[MessagePackObject]
     public class GroupChat : IChat
     {
+		/// <summary>
+		/// The id of the chat
+		/// </summary>
 		[Key(0)]
 		public SourceReference GroupId;
 
-		[IgnoreMember]
+        public GroupChat()
+        {
+        }
+
+		/// <summary>
+		/// Generates a new instance of a <see cref="GroupChat"/>
+		/// </summary>
+		/// <param name="groupId"></param>
+		public GroupChat(SourceReference groupId)
+        {
+			GroupId = groupId;
+        }
+
+        [IgnoreMember]
         public string Name 
 		{ 
 			get
@@ -61,7 +77,6 @@ namespace Coflnet.Client.Messaging
         public SourceReference ID => GroupId;
 
 		[Key(1)]
-
         public long lastMessageIndex{get; set;}
 		[Key(2)]
         public long MessageCount{get; set;}
@@ -70,6 +85,8 @@ namespace Coflnet.Client.Messaging
         {
             throw new NotImplementedException();
         }
+
+		
     }
 
 	[MessagePack.Union(0, typeof(Chat))]
@@ -86,13 +103,13 @@ namespace Coflnet.Client.Messaging
 		/// Either choosen by the chat resource on the server or the other party
 		/// </summary>
 		/// <value></value>
-		long lastMessageIndex {get;}
+		long lastMessageIndex {get;set;}
 
 		/// <summary>
 		/// The total count of messages in the chat
 		/// </summary>
 		/// <value></value>
-		long MessageCount {get;}
+		long MessageCount {get;set;}
 	}
 
 
@@ -123,8 +140,68 @@ namespace Coflnet.Client.Messaging
 		}
 	}
 
+    public class CreateGroupChat : CreationCommand
+    {
+        public override string Slug => "createGroupChat";
 
-	public enum ChatRole
+        public override Referenceable CreateResource(MessageData data)
+        {
+            var chat = new GroupChatResource();
+			var options = data.GetAs<Params>();
+
+			chat.Name = options.Name;
+
+			foreach (var user in options.Members)
+			{
+				chat.Members.Add(new ChatMember(user));
+			}
+
+			return chat;
+        }
+
+        public override CommandSettings GetSettings()
+        {
+            return new CommandSettings();
+        }
+
+		[MessagePackObject]
+		public class Params : CreationParamsBase
+		{
+			[Key(1)]
+			public string Name;
+			[Key(2)]
+			public List<SourceReference> Members;
+
+			/// <summary>
+			/// Creates a new instance of the command Params
+			/// </summary>
+			/// <param name="members">The members to add to the group</param>
+			/// <param name="name">The name the group will have</param>
+            public Params(List<SourceReference> members, string name)
+            {
+				this.Members = members;
+				this.Name = name;
+            }
+        }
+    }
+
+    public class GroupChatCreateResponse : Command
+    {
+        public override string Slug => "createGroupResponse";
+
+        public override void Execute(MessageData data)
+        {
+            //ChatService.Instance.GetChat
+        }
+
+        public override CommandSettings GetSettings()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+
+    public enum ChatRole
 	{
 		Member,
 		Admin = 1,

@@ -149,8 +149,17 @@ public class ServerMessageData : MessageData
 
 	public override void SendBack(MessageData data)
 	{
-		data.rId = this.sId;
-		Connection.SendBack(data);
+		if(this.sId.ServerId == 0)
+		{
+			// the senderId is local to the device
+			// we don't know who he is, yet just return the data
+			data.rId = this.sId;
+			Connection.SendBack(data);
+		} else 
+		{
+			// use the senderId to send back the data
+			base.SendBack(data);
+		}
 	}
 }
 

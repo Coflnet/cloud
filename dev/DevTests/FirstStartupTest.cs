@@ -23,14 +23,13 @@ public class FirstStartupTest {
 
     [Test]
     public void FirstStartupRegisterLoginTest () {
-        FirstStartSetupController.Instance.RedoSetup (true);
         PrivacyService.Instance.privacyScreen = new AcceptAllScreen ();
         var serverId = new SourceReference (1, 1, 1, 0);
         DevCore.Init (serverId, true);
 
 
 
-        Debug.Log (ConfigController.UserSettings.userId);
+        Debug.Log ("The new user has the id: " + ConfigController.UserSettings.userId);
         // userid exists client side
         Assert.NotNull (ConfigController.Users.Find ((u) => u.userId == ConfigController.UserSettings.userId));
 
@@ -54,6 +53,9 @@ public class FirstStartupTest {
             .TryGetResource<CoflnetUser> (ConfigController.ActiveUserId, out userOnClient);
         
         Assert.NotNull (userOnClient);
+
+
+        FirstStartSetupController.Instance.RedoSetup (true);
     }
 
     [Test]
@@ -66,6 +68,9 @@ public class FirstStartupTest {
         Debug.Log (ConfigController.UserSettings.userId);
 
         var valueToStore = "abc123Hellou :D";
+
+        // sometimes it comes to errors when the test is run alone and the static constructor 
+        // of CoflnetUser didn't register the SetUserKeyValue Command
 
         var data =  MessageData.CreateMessageData<SetUserKeyValue,KeyValuePair<string, string>> (
                 ConfigController.ActiveUserId,

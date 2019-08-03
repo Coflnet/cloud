@@ -24,6 +24,14 @@ namespace Coflnet
 
 		public static List<UserSettings> Users { get; private set; }
 
+		public static SourceReference ManagingServer
+		{
+			get
+			{
+				return applicationSettings.id;
+			}
+		}
+
 
 		/// <summary>
 		/// Settings for the current application

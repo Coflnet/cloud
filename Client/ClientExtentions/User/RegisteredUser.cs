@@ -16,8 +16,9 @@ namespace Coflnet.Client
 			.UpdateIdAndAddRedirect(data.rId,response.id);
 
 			// add the core behind
-			data.GetTargetAs<CoflnetUser>()
-				.GetCommandController()
+			var user = data.GetTargetAs<CoflnetUser>();
+
+			user.GetCommandController()
 				.AddBackfall(data.CoreInstance.GetCommandController());
 
 			// The core itself also has the same id

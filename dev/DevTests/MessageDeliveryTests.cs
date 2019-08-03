@@ -26,9 +26,10 @@ public class MessageDeliveryTests {
             return false;
         };
 
+
         CoflnetCore.Instance.SendCommand(
             MessageData.CreateMessageData<ChatMessageCommand,string>(
-                alice,"hi",0,bob));
+                bob,"hi",0,alice));
     }
     
     [Test]
@@ -37,13 +38,14 @@ public class MessageDeliveryTests {
         var bob = new SourceReference(2,555);
         DevCore.Init(alice);
         DevCore.DevInstance.AddClientCore(bob).OnMessage = m => {
+            // when bob receives the message make sure it is valid
             Assert.AreEqual("msg",m.t);
             return false;
         };
 
         CoflnetCore.Instance.SendCommand(
             MessageData.CreateMessageData<ChatMessageCommand,string>(
-                alice,"hi",0,bob));
+                bob,"hi",0,alice));
     }
 
         [Test]

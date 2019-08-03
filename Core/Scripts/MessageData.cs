@@ -221,8 +221,12 @@ namespace Coflnet
 					throw new System.InvalidOperationException($"Could not get data as {nameof(T)} because it is empty");
 				}
 				Deserialize<T>();
+			} else if(!(deserialized is T)){
+				// if eg a derived class is needed this will redeserialize it correctly
+				Deserialize<T>();
 			}
 			return (T)deserialized;
+			
 		}
 
 		/// <summary>

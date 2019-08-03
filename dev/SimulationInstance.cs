@@ -30,6 +30,8 @@ namespace Coflnet.Dev
 
 		public void ReceiveCommand(DevMessageData data, SourceReference sender = default(SourceReference))
 		{
+
+			UnityEngine.Debug.Log($"Executing on {core.Id} " + data);
 			data.CoreInstance = core;
 			if(OnMessage == null || OnMessage.Invoke(data)){
 				core.ReceiveCommand(data,sender);

@@ -1,4 +1,7 @@
-﻿namespace Coflnet.Client {
+﻿using System;
+using System.Collections.Generic;
+
+namespace Coflnet.Client {
 	/// <summary>
 	/// Coflnet client.
 	/// Main class to work with from the outside on a client device.
@@ -69,6 +72,7 @@
 				// we are registered
 				return;
 			}
+			UnityEngine.Debug.Log("Detected no setup, setting up now");
 			// This is a fresh install, register at the managing server after showing privacy statement
 			FirstStartSetupController.Instance.Setup ();
 
@@ -125,6 +129,17 @@
 		}
 
 		public override void SendCommand (MessageData data, long serverId = 0) {
+			// if the sender is a local one try to update it (the server may block the command otherwise)
+			if(data.sId.IsLocal && data.sId  != default(SourceReference))
+			{
+				Referenceable res;
+				// getting the object from the old id will be redirected to the new object with new id (if exists)
+				this.ReferenceManager.TryGetResource<Referenceable>(data.sId,out res);
+				if(res != null)
+				{
+					data.sId = res.Id;
+				}
+			}
 			try {
 				socket.SendCommand (data);
 			} catch (System.InvalidOperationException) {
@@ -157,6 +172,111 @@
 			}
 			this.Access.Owner = id;
 			ConfigController.ApplicationSettings.id = id;
+		}
+
+
+		/// <summary>
+		/// Creates a new Object on the server that doesn't need extra params for creation
+		/// </summary>
+		/// <typeparam name="C">Command that creates the resource</typeparam>
+		/// <returns>Proxy Referenceable</returns>
+		public Referenceable CreateResource<C>() where C : CreationCommand
+		{
+			return this.CreateResource<C,CreationCommand.CreationParamsBase>(new CreationCommand.CreationParamsBase());
+		}
+
+
+
+		/// <summary>
+		/// Generates a new Resources On the server and returns a temporary proxy resource.
+		/// When the server created the Resource it will be replaced locally.
+		/// </summary>
+		/// <param name="options">Options to pass along</param>
+		/// <typeparam name="C"></typeparam>
+		/// <returns>Temporary proxy object storing executed commands</returns>
+		public Referenceable CreateResource<C,T>(T options) where C : CreationCommand where T:CreationCommand.CreationParamsBase
+		{
+
+			options.OldId = SourceReference.NextLocalId;
+
+
+			// create it locally
+			// first craft MessageData
+			var data = MessageData.CreateMessageData<C,T>(this.Id,options,0,this.Id);
+			var core = new CreationCore(){ReferenceManager=this.ReferenceManager};
+
+			data.CoreInstance = core;
+
+			// exeute it
+			ExecuteCommand(data);
+			
+			// remove the RedirectReferenceable again (todo)
+
+			options.OldId = core.createdId;
+			
+
+			// create it on the server
+			SendCommand<C,T>(ConfigController.ManagingServer,options,0,this.Id);
+
+			return ReferenceManager.GetResource<Referenceable>(core.createdId);
+		}
+
+		private class CreationCore : ClientCore
+		{
+			public SourceReference createdId;
+
+			public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference))
+			{
+				// this only exists as a "callback" 
+				createdId = ((KeyValuePair<SourceReference,SourceReference>)((object)data)).Value;
+
+				UnityEngine.Debug.Log($"The created resource has the id: {createdId}");
+			}
+		}
+
+/* 
+        private class CreationCore : ClientCore
+        {
+			SourceReference createdResourceId;
+
+            public override CommandController GetCommandController()
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void SendCommand(MessageData data, long serverId = 0)
+            {
+                if(data.t == "creationResponse")
+				{
+					createdResourceId = data.GetAs<SourceReference>();
+					return;
+				}
+            }
+        }*/
+
+        /// <summary>
+        /// Generates a new Resources On the server and returns a temporary proxy resource.
+        /// When the server created the Resource it will be replaced locally.
+        /// Allows additional callback which is executed when the creation is completed.
+        /// It won't be executed after a program restart since it isn't persisted in any way.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="afterCreate">Callback executed when creation is done and program isn't restarted in between. Can be used for updating the UI.</param>
+        /// <typeparam name="C"></typeparam>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public Referenceable CreateResource<C,T>(T options, Action<T> afterCreate) where C : CreationCommand where T:CreationCommand.CreationParamsBase
+		{
+			var temp =  CreateResource<C,T>(options);
+
+			ReturnCommandService.Instance.AddCallback(temp.Id.ResourceId,
+				d=>{
+					// clone the resource
+					ReferenceManager.Instance.GetResource(d.GetAs<SourceReference>());
+					afterCreate.Invoke(d.GetAs<T>());
+				});
+
+			return temp;
 		}
 	}
 }

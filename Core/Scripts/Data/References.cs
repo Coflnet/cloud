@@ -137,6 +137,18 @@ namespace Coflnet
 
 
 		/// <summary>
+		/// Wherether or not this Reference was created offline/is local
+		/// </summary>
+		/// <value></value>
+		[IgnoreMember]
+		public bool IsLocal
+		{
+			get{
+				return ServerId == 0;
+			}
+		}
+
+		/// <summary>
 		/// Executes a command on the server containing the resource referenced by this object
 		/// </summary>
 		/// <param name="data">Command data to send</param>
@@ -223,6 +235,15 @@ namespace Coflnet
 			get
 			{
 				return (ushort)((ServerId) % (1 << 16));
+			}
+		}
+
+
+		public static SourceReference NextLocalId
+		{
+			get
+			{
+				return new SourceReference(0,ThreadSaveIdGenerator.NextId);
 			}
 		}
 

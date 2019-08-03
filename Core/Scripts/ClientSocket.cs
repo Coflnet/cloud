@@ -77,7 +77,7 @@ namespace Coflnet
 				}
 				catch (System.Exception ex)
 				{
-					UnityEngine.Debug.Log("error " + ex.Message + " json: " + MessagePackSerializer.ToJson(e.RawData));
+					UnityEngine.Debug.Log("socket error " + ex.Message + " json: " + MessagePackSerializer.ToJson(e.RawData));
 				}
 
 
@@ -106,6 +106,8 @@ namespace Coflnet
 			if (changeSender)
 				// add the userId if present as sender
 				data.sId = ConfigController.ActiveUserId;
+
+			
 
 			webSocket.Send(MessagePackSerializer.Serialize(data));
 		}

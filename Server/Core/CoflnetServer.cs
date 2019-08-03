@@ -25,7 +25,7 @@ namespace Coflnet.Server
 		{
 			CompositeResolver.RegisterAndSetAsDefault(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
 
-			Commands = new CommandController();
+			Commands = new CommandController(globalCommands);
 			ServerInstance = new ServerCore();
 			Instance = ServerInstance;
 			Instance.Id = ConfigController.ApplicationSettings.id;
@@ -89,6 +89,7 @@ namespace Coflnet.Server
 			Commands.RemoveAllCommands();
 			Commands.RegisterCommand<RegisterUser>();
 			Commands.RegisterCommand<ReceiveConfirm>();
+			Commands.RegisterCommand<GetResourceCommand>();
 
 			foreach (var item in ExtraModules.Commands)
 			{
@@ -108,6 +109,9 @@ namespace Coflnet.Server
 		{
 			if (CoflnetSocket.TrySendCommand(data, serverId))
 				return;
+
+			UnityEngine.Debug.Log("couldn't send " + data.t);
+
 			// Command couldn't be sent we have to persist it         
 			MessagePersistence.ServerInstance.SaveMessage(data);
 		}

@@ -9,8 +9,8 @@ namespace Coflnet
 {
 	public static class FileController
 	{
-		private static string dataPaht = "/var/lib/coflnet";
-		private static string configPath = "/etc/coflnet";
+		public static string dataPaht = "/var/lib/coflnet";
+		public static string configPath = "/etc/coflnet";
 
 
 		static FileController()
@@ -108,11 +108,17 @@ namespace Coflnet
 		/// <typeparam name="T">The type to deserialize to.</typeparam>
 		public static IEnumerable<T> ReadLinesAs<T>(string relativePath, IFormatterResolver resolver)
 		{
-			using (var file = File.Open(Path.Combine(dataPaht, relativePath), FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read))
+			var path = Path.Combine(dataPaht, relativePath);
+			if(!File.Exists(path)){
+				// there is nothing to read
+				yield break;
+			}
+
+			using (var file = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
 				while (file.Position < file.Length)
 				{
-					yield return MessagePackSerializer.Deserialize<T>(file, resolver);
+					yield return MessagePackSerializer.Deserialize<T>(file, resolver,true);
 				}
 			}
 		}
@@ -212,8 +218,22 @@ namespace Coflnet
 		public static void Delete(string relativePath)
 		{
 			var path = Path.Combine(dataPaht, relativePath);
+			UnityEngine.Debug.Log($"Trying to delete {path}");
 			if (Directory.Exists(Path.GetDirectoryName(path)))
 				File.Delete(path);
+		}
+
+
+		/// <summary>
+		/// Deletes the relative folder with everything in it
+		/// </summary>
+		/// <param name="relativePath">Relative path to the folder</param>
+		public static void DeleteFolder(string relativePath)
+		{
+			var path = Path.Combine(dataPaht, relativePath);
+			if(Directory.Exists(path)){
+				Directory.Delete(path,true);
+			}
 		}
 
 		/// <summary>

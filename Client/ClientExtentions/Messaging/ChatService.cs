@@ -2,6 +2,7 @@
 using MessagePack;
 using Coflnet.Client;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Coflnet.Client.Messaging
 {
@@ -68,8 +69,25 @@ namespace Coflnet.Client.Messaging
 			
 		}
 
-		public void SaveMessage(LocalChatMessage message)
+		/// <summary>
+		/// Adds a message to the chat.
+		/// If the chat parameter is null we try to load the chat from the chatManager.
+		/// </summary>
+		/// <param name="message">The message to save</param>
+		/// <param name="chat">Optional the chat to save it to</param>
+		public void AddMessage(LocalChatMessage message, IChat chat = null)
 		{
+			if(chat == null){
+				chat = GetChat(message.chatId);
+			}
+			if(chat.lastMessageIndex<message.id.IdfromSource){
+				chat.lastMessageIndex = message.id.IdfromSource;
+			}
+
+
+			message.LocalMessageChatIndex = chat.MessageCount;
+			
+			chat.MessageCount++;
 			MessageManager.SaveMessage(message);
 		}
 
@@ -80,15 +98,32 @@ namespace Coflnet.Client.Messaging
 		}
 
 
+		public IChat CreatePivateChat(SourceReference partner)
+		{
+			return new Chat(new ChatMember(partner));
+		}
+
+		public IChat CreateGroupChat(string name,params SourceReference[] partners)
+		{
+			var options = new CreateGroupChat.Params(partners.ToList(),name);
+			var chatResource = ClientCore.ClientInstance
+								.CreateResource<CreateGroupChat,CreateGroupChat.Params>(options);
+			
+
+			// return the chat with temporary local id
+			return new GroupChat(chatResource.Id);
+		}
+
+
 
 		public ChatMessage GetMessage(MessageReference reference)
 		{
 			return new ChatMessage();
 		}
 
-		public IEnumerable<ChatMessage> GetMessages(SourceReference chat, long startIndex = 0, long endIndex = long.MaxValue)
+		public IEnumerable<ChatMessage> GetMessages(IChat chat, int count = 10, long offset = 0)
 		{
-			yield break;
+			return MessageManager.MessagesForChat(chat,count,offset);
 		}
 
 		public IEnumerable<IChat> GetChats()
@@ -131,7 +166,7 @@ namespace Coflnet.Client.Messaging
 
 		}
 
-		public ChatNotFoundException(SourceReference chatId) : base("The chat {chatId} wans't found")
+		public ChatNotFoundException(SourceReference chatId) : base($"The chat {chatId} wans't found")
 		{
 
 		}
@@ -246,33 +281,59 @@ namespace Coflnet.Client.Messaging
 
 			// prevent searching for longer than the chat exists
 			// TODO
+			if(chat.MessageCount < count){
+				count = (int)chat.MessageCount;
+			}
 
 			var reverseMessageIndex = chat.lastMessageIndex;
 
-			List<LocalChatMessage> result = new List<LocalChatMessage>();
+
+			var result = new List<LocalChatMessage>(count/2);
+			
+
+			// don't search more than 10k files
+			var cap = 1000;
+
 
 			// we try to find older files as long as we don't have reached the requested count
-			while(result.Count < count)
+			while(result.Count < count && reverseMessageIndex >0 && cap > 0)
 			{
-				reverseMessageIndex-=GroupSize;
-				foreach (var message in FileController.ReadLinesAs<LocalChatMessage>(FileName(chat.ID,reverseMessageIndex)))
+				var fileName = FileName(chat.ID,reverseMessageIndex);
+				UnityEngine.Debug.Log(fileName);
+				UnityEngine.Debug.Log($"chat messagecount = {chat.MessageCount-offset}");
+
+				var fileContent = new List<LocalChatMessage>();
+
+				foreach (var message in FileController.ReadLinesAs<LocalChatMessage>(fileName))
 				{
-					
-					result.Add(message);
-					if(result.Count == count+1){
+					// skip this file if the offset is to high
+					if(message.LocalMessageChatIndex >= chat.MessageCount-offset)
+					{
 						break;
 					}
+
+					fileContent.Add(message);
 				}
+
+
+				// add them in the right order 
+				// (the last ones after this file, since files are read backwards)
+				fileContent.AddRange(result);
+				// replace the old one
+				result = fileContent;
+
+				// to the next group
+				reverseMessageIndex-=GroupSize;
+				cap--;
 			}
 			// we want the youngest message to be first
-			result.RemoveAt(count);
 			result.Reverse();
-			return result;
+			return result.Take(count);
         }
 
         public void SaveMessage(LocalChatMessage message)
         {
-            FileController.AppendLineAs<LocalChatMessage>(FileName(message.chat,message.id.IdfromSource),message);
+            FileController.AppendLineAs<LocalChatMessage>(FileName(message.chatId,message.id.IdfromSource),message);
         }
 
         public void SaveMessages()
@@ -283,10 +344,13 @@ namespace Coflnet.Client.Messaging
         private string FileName(SourceReference chatId,long messageIndex)
 		{
 			var index = messageIndex /GroupSize;
-			return $"messages/{chatId}-{index}";
+			return $"messages/{UserService.Instance.CurrentUserId}{chatId}-{index}";
 		}
-
-		private long GroupSize => 86400L*10000*1000;
+    
+		private readonly static long _TICKINADAY = 86400L*10000000;
+		
+		
+		private long GroupSize => _TICKINADAY*1;
 
     }
 
@@ -315,7 +379,15 @@ namespace Coflnet.Client.Messaging
 		/// The chat id this message coresponds to.
 		/// </summary>
 		[Key(12)]
-		public SourceReference chat;
+		public SourceReference chatId;
+
+
+		/// <summary>
+		/// Local counter equal to <see cref="IChat.MessageCount"/> at the time the message is received or sent
+		/// Used to find messages faster locally
+		/// </summary>
+		[Key(13)]
+		public long LocalMessageChatIndex;
 
 
 
@@ -324,8 +396,33 @@ namespace Coflnet.Client.Messaging
 			States = states;
 		}
 
+		public LocalChatMessage(LocalChatMessage message) : this(message.content,message.timetamp,message.refs,message.id,message.type,message.States)
+		{
+
+		}
+
 		public LocalChatMessage()
 		{
+		}
+
+		/// <summary>
+		/// Matches the id of the message
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <returns></returns>
+		public override bool Equals(object obj)
+		{
+			var message = obj as LocalChatMessage;
+			if(message == null){
+				return false;
+			}
+
+			return message.id.Equals( this.id);
+		}
+
+		public override string ToString()
+		{
+			return $"Message {id}({LocalMessageChatIndex}) '{content}' type {type}";
 		}
 	}
 }
