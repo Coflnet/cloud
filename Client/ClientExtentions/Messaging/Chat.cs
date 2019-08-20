@@ -35,6 +35,7 @@ namespace Coflnet.Client.Messaging
 			CoflnetCore.Instance.SendCommand<ChatMessageCommand,ChatMessage>(partner.userId,msg);
 		}
 
+		[Key(3)]
 		public long MessageCount{get; set;}
 
 	}
@@ -185,20 +186,52 @@ namespace Coflnet.Client.Messaging
         }
     }
 
-    public class GroupChatCreateResponse : Command
+    public class GroupChatMessageOut : Command
     {
-        public override string Slug => "createGroupResponse";
+        public override string Slug => "msg";
 
         public override void Execute(MessageData data)
         {
-            //ChatService.Instance.GetChat
+			// distribute the message
+            foreach (var item in data.GetTargetAs<GroupChatResource>().Members)
+			{
+				data.CoreInstance.SendCommand<GroupChatMessageIn,byte[]>(item.userId,data.message,0,data.rId);
+			}
         }
 
         public override CommandSettings GetSettings()
         {
-            throw new NotImplementedException();
+            return new CommandSettings(true,false,false,IsChatMember.Instance);
         }
     }
+
+
+	public class GroupChatMessageIn : Command
+	{
+		/// <summary>
+		/// Execute the command logic with specified data.
+		/// </summary>
+		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+		public override void Execute(MessageData data)
+		{
+			
+		}
+
+		/// <summary>
+		/// Special settings and Permissions for this <see cref="Command"/>
+		/// </summary>
+		/// <returns>The settings.</returns>
+		public override CommandSettings GetSettings()
+		{
+			return new CommandSettings( );
+		}
+		/// <summary>
+		/// The globally unique slug (short human readable id) for this command.
+		/// </summary>
+		/// <returns>The slug .</returns>
+		public override string Slug => "groupMsg";
+	}
+	
 
 
     public enum ChatRole
@@ -209,7 +242,7 @@ namespace Coflnet.Client.Messaging
 	}
 
 
-[MessagePackObject]
+	[MessagePackObject]
 	public class ChatMember
 	{
 		[Key(0)]

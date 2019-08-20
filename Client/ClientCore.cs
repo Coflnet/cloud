@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Coflnet.Core;
+using Coflnet.Core.Commands;
 
 namespace Coflnet.Client {
 	/// <summary>
 	/// Coflnet client.
 	/// Main class to work with from the outside on a client device.
+	/// Also has the Id of the client device.
 	/// </summary>
 	public class ClientCore : CoflnetCore {
 		static void HandleReceiveMessageData (MessageData data) { }
@@ -56,15 +59,35 @@ namespace Coflnet.Client {
 		}
 
 		public void SetCommandsLive () {
-			UnityEngine.Debug.Log ("setting client commands");
-			foreach (var extention in ClientExtentions.Commands) {
-				extention.RegisterCommands (commandController);
-				UnityEngine.Debug.Log ("added client extention");
+			commandController.RegisterCommand<ReferenceManager.UpdateResourceCommand>();
+
+			foreach (var item in CoreExtentions.Commands)
+			{
+				item.RegisterCommands(commandController);
 			}
 
-			this.Id = ConfigController.ActiveUserId;
-			ReferenceManager.AddReference (this);
+			foreach (var extention in ClientExtentions.Commands) {
+				extention.RegisterCommands (commandController);
+			}
+
+			// set the current device id if nothing is set
+			if(this.Id == default(SourceReference))
+				this.Id = ConfigController.DeviceId;
+
+
+			// add commands behind the device
+			if(this.ReferenceManager.Exists(this.Id))
+			{
+				ReferenceManager.GetResource<Device>(this.Id)
+					.GetCommandController()
+					.AddBackfall(GetCommandController());
+			} else 
+			{
+				UnityEngine.Debug.Log("There is no device yet for the clientCore");
+				ReferenceManager.AddReference (this);
+			}
 		}
+
 
 		public void CheckInstallation () {
 			if (ConfigController.UserSettings != null &&
@@ -129,6 +152,9 @@ namespace Coflnet.Client {
 		}
 
 		public override void SendCommand (MessageData data, long serverId = 0) {
+			// persist data
+			MessageDataPersistence.Instance.SaveMessage (data);
+
 			// if the sender is a local one try to update it (the server may block the command otherwise)
 			if(data.sId.IsLocal && data.sId  != default(SourceReference))
 			{
@@ -140,6 +166,7 @@ namespace Coflnet.Client {
 					data.sId = res.Id;
 				}
 			}
+
 			try {
 				socket.SendCommand (data);
 			} catch (System.InvalidOperationException) {
@@ -148,8 +175,6 @@ namespace Coflnet.Client {
 				UnityEngine.Debug.Log ("Reconnecting");
 
 				socket.SendCommand (data);
-				// persist data
-				MessageDataPersistence.Instance.SaveMessage (data);
 			}
 		}
 
@@ -234,7 +259,7 @@ namespace Coflnet.Client {
 			}
 		}
 
-/* 
+		/* 
         private class CreationCore : ClientCore
         {
 			SourceReference createdResourceId;
@@ -277,6 +302,19 @@ namespace Coflnet.Client {
 				});
 
 			return temp;
+		}
+
+		public override void CloneAndSubscribe(SourceReference id, Action<Referenceable> afterClone = null)
+		{
+			// create temporary proxy to receive commands bevore cloning is finished
+			ReferenceManager.AddReference(new SubscribeProxy(id));
+
+			// this is different on server sides
+			SendCommand<Sub2Command,SourceReference>(ConfigController.ManagingServer,id,0,this.Id);
+			UnityEngine.Debug.Log($"Subscribing client from {Id}");
+
+			// now clone it
+			FinishSubscribing(id,afterClone);
 		}
 	}
 }

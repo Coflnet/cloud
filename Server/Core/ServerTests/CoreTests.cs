@@ -115,7 +115,7 @@ public class CoreTests {
 		var res = new TestResource ();
 		res.Id = new SourceReference (5, 2);
 		Assert.Throws<Exception> (() => {
-			var id = ReferenceManager.Instance.CreateReference (res);
+			ReferenceManager.Instance.CreateReference (res);
 		});
 	}
 

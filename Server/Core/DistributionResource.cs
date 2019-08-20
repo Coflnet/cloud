@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 namespace Coflnet {
+	// special Resource which Distributes everyCommand that wasn't found to members
 	public class DistributionResource : Referenceable {
 		protected static CommandController _commandController;
 

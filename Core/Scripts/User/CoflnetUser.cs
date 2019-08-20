@@ -390,7 +390,6 @@ namespace Coflnet {
 			get {
 				return friends;
 			}
-
 		}
 
 		[IgnoreDataMember]

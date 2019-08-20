@@ -1,4 +1,6 @@
 ﻿using System;
+using Coflnet.Core;
+using Coflnet.Core.Commands;
 
 namespace Coflnet
 {
@@ -56,6 +58,8 @@ namespace Coflnet
 		public void ReceiveCommand(MessageData data, SourceReference sender = default(SourceReference))
 		{
 			this.ReferenceManager.ExecuteForReference(data,sender);
+
+			//SendCommand<ReceiveConfirm,ReceiveConfirmParams>(data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
 		}
 
 
@@ -71,6 +75,19 @@ namespace Coflnet
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
 		public abstract void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) where C : Command;
 		public abstract void SendCommand<C>(SourceReference receipient, byte[] data) where C : Command;
+
+
+		/// <summary>
+		/// Sends a command that doesn't have any data
+		/// </summary>
+		/// <param name="receipient">Receipient to send to</param>
+		/// <param name="id">ID of the message (optional)</param>
+		/// <param name="sender">As who to send the command, required for permission checking</param>
+		/// <typeparam name="C">Command class to send</typeparam>
+		public void SendCommand<C>(SourceReference receipient,long id = 0, SourceReference sender = default(SourceReference)) where C:Command
+		{
+			SendCommand<C,short>(receipient,0,id,sender);
+		}
 
 
 		/// <summary>
@@ -100,7 +117,85 @@ namespace Coflnet
 		{
 			long id = ThreadSaveIdGenerator.NextId;
 			ReturnCommandService.Instance.AddCallback(id, callback);
+
+			if(sender == default(SourceReference))
+			{
+				sender = this.Id;
+			}
+
 			SendCommand<C, T>(receipient, data, id,sender);
+		}
+
+
+
+		/// <summary>
+		/// Sends a command that returns a value, allows a callback to be passed.
+		/// </summary>
+		/// <param name="data"></param>
+		/// <param name="callback"></param>
+		/// <typeparam name="T"></typeparam>
+		public void SendGetCommand(MessageData data, Command.CommandMethod callback) 
+		{
+			if(String.IsNullOrEmpty(data.t))
+			{
+				throw new ArgumentException("Command identifier has not been set");
+			}
+
+			long id = ThreadSaveIdGenerator.NextId;
+			ReturnCommandService.Instance.AddCallback(id, callback);
+
+			if(data.sId == default(SourceReference))
+			{
+				data.sId = this.Id;
+			}
+
+			SendCommand(data);
+		}
+
+
+		/// <summary>
+		/// Clones and subscribes to updates for a resource
+		/// </summary>
+		/// <param name="resourceId">Id of the resource to clone</param>
+		/// <param name="afterClone">Callback invoked when cloning is done</param>
+		public virtual void CloneAndSubscribe(SourceReference resourceId, Action<Referenceable> afterClone = null)
+		{
+			// create temporary proxy to receive commands bevore cloning is finished
+			ReferenceManager.AddReference(new SubscribeProxy(resourceId));
+
+			UnityEngine.Debug.Log($"Subscribing to {resourceId} from {Id}");
+
+			// this is different on clinet sides
+			SendCommand<SubscribeCommand>(resourceId,0,Id);
+
+
+			// now clone it
+			FinishSubscribing(resourceId,afterClone);
+		}
+
+		protected void FinishSubscribing(SourceReference resourceId, Action<Referenceable> afterClone)
+		{
+			SendCommand<GetResourceCommand,short>(resourceId,0,o =>{
+				var resource = MessagePack.MessagePackSerializer.Typeless.Deserialize(o.message) as Referenceable;
+
+				// detach the old proxy
+				var proxy = ReferenceManager.GetResource<SubscribeProxy>(resourceId);
+
+				// replace it
+				ReferenceManager.ReplaceResource(resource);
+
+				var test = ReferenceManager.GetResource<Referenceable>(resourceId);
+
+				UnityEngine.Debug.Log($"Cloned and replaced {resource.Id} on {Id}({this.GetType().Name}) type: {test.GetType().Name}");
+
+				// replay messages
+				foreach (var data in proxy.buffer)
+				{
+					resource.ExecuteCommand(data);
+				}
+
+				afterClone?.Invoke(resource);
+			});
 		}
 
 

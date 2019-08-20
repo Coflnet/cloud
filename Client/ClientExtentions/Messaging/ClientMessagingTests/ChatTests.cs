@@ -45,6 +45,7 @@ public class ChatTests {
         // chat can't be found
         Assert.Throws<ChatNotFoundException>(()=>{
             var loadedChat = ChatService.Instance.GetChat(chat.ID);
+            Assert.IsNull(loadedChat);
         });
         
     }

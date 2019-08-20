@@ -28,8 +28,10 @@ namespace Coflnet
 			Instance.webSocket.Log.Level = LogLevel.Trace;
 			Instance.webSocket.Log.Output += (arg1, arg2) =>
 			{
-				UnityEngine.Debug.Log("clientsocket: " + arg1);
+				//UnityEngine.Debug.Log("clientsocket: " + arg1);
 			};
+			UnityEngine.Debug.Log("clientsocket log is deactivated: ");
+
 			Instance.webSocket.Connect();
 		}
 

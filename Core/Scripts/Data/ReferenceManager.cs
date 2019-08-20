@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
+using Coflnet.Core.Commands;
 
-namespace Coflnet {
-	public class ReferenceManager {
+namespace Coflnet
+{
+    public partial class ReferenceManager {
 
 		protected ConcurrentDictionary<SourceReference, InnerReference<Referenceable>> references = new ConcurrentDictionary<SourceReference, InnerReference<Referenceable>> ();
 		protected static ReferenceManager instance;
@@ -77,6 +78,17 @@ namespace Coflnet {
 			return GetResource<T>(new SourceReference(Coflnet.Server.ServerController.ServerInstance.CurrentServer.ServerId, id));
 		}
         */
+
+		public string GetReferences()
+		{
+			string content = "";
+
+			foreach (var item in references)
+			{
+				content += $"{item.Key}={item.Value.Resource}";
+			}
+			return content;
+		}
 
 		public Referenceable GetResource (SourceReference id) {
 			return GetResource<Referenceable> (id);
@@ -168,7 +180,7 @@ namespace Coflnet {
 		/// Clones a resource locally 
 		/// </summary>
 		/// <param name="id">The id of the resource to clone</param>
-		public void CloneResource(SourceReference id,Action<Referenceable> afterReceive, bool subscribe = false)
+		public void CloneResource(SourceReference id,Action<Referenceable> afterReceive)
 		{
 			if(Exists(id)){
 				// break if the resource is already cloned
@@ -186,16 +198,31 @@ namespace Coflnet {
 			
 		}
 
+
+
+
 		/// <summary>
-		/// Gets the resource.
+		/// Replaces Resoure if it exists or adds it if not
 		/// </summary>
-		/// <returns>The resource.</returns>
-		/// <param name="id">Identifier.</param>
-		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public T GetResource<T> (SourceReference id) where T : Referenceable {
+		/// <param name="resource">The resource to add</param>
+		public void ReplaceResource(Referenceable resource)
+		{
+			references.AddOrUpdate(resource.Id,new InnerReference<Referenceable>(resource),
+			(a,b)=>new InnerReference<Referenceable>(resource));
+		}
+
+
+        /// <summary>
+        /// Gets the resource.
+        /// </summary>
+        /// <returns>The resource.</returns>
+        /// <param name="id">Identifier.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public T GetResource<T> (SourceReference id) where T : Referenceable {
 			InnerReference<Referenceable> reference;
 
 			if (!TryGetReference (id, out reference) || reference.Resource == null) {
+				UnityEngine.Debug.LogError($"Notfound error on {coreInstance.Id}({coreInstance.GetType().Name})");
 				throw new ObjectNotFound (id);
 			}
 
@@ -387,23 +414,25 @@ namespace Coflnet {
 		/// </summary>
 		/// <param name="data">Command data to execute.</param>
 		/// <param name="sender">The vertified sender of the message (for distribution purposes)</param>
-		public void ExecuteForReference (MessageData data, SourceReference sender = default (SourceReference)) {
+		public virtual void ExecuteForReference (MessageData data, SourceReference sender = default (SourceReference)) {
 
-			if (data.rId.ServerId == 0) {
-				// special case it is myself
+			if (data.rId == default(SourceReference)) {
+				// special case it is myself (0 is local)
 				coreInstance.ExecuteCommand (data);
 				return;
 			}
+
+
+			var mainManagingNode = ManagingNodeFor(data.rId);
+			var IAmTheManager = mainManagingNode == CurrentServerId;
 
 			UnityEngine.Debug.Log ($"searching {coreInstance.Id} ({coreInstance.GetType().Name}) for {data.rId}");
 			InnerReference<Referenceable> reference;
 			TryGetReference (data.rId, out reference);
 
 			if (reference == null) {
-				UnityEngine.Debug.Log ("not found");
-
 				// is the current server the managing server?
-				if (data.rId.ServerId != ConfigController.ApplicationSettings.id.ServerId) {
+				if (!IAmTheManager) {
 					UnityEngine.Debug.Log ("passing on to " + data.rId);
 					// we are not the main managing server, pass it on to it
 					CoflnetCore.Instance.SendCommand (data);
@@ -413,37 +442,195 @@ namespace Coflnet {
 				throw new ObjectNotFound (data.rId);
 			}
 
-			UnityEngine.Debug.Log ("found executing");
+			//var amIAManagingNode = IsManagingNodeFor(this.coreInstance.Id,data.rId);
+			var isTheSenderTheManager = IsManagingNodeFor(sender,data.rId);
+
 
 			var resource = reference.Resource;
+			bool acknowledge = false;
 
 			if (resource != null) {
-				//UnityEngine.Debug.Log ($" on {this.coreInstance.Id} ({coreInstance.GetType().Name}) executing {data} ");
 				var command = resource.GetCommandController ().GetCommand (data.t);
+				if(IAmTheManager)
+				{
+					// I can do everything
+					resource.ExecuteCommand(data,command);
+					
+					if(command.Settings.Distribute)
+					{
+						// update
+						UpdateSubscribers(resource,data);
+					}
+
+
+					// Not the only managing node? 
+					// delay execution until they confirm update
+					// coreInstance.SendCommand
+
+					// confirm execution escept it is a confirm itself
+					if(ReceiveConfirm.CommandSlug != command.Slug)
+					{
+						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
+							data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
+					}
+
+				
+					// done
+					return;
+				}
+
+				if (!command.Settings.Distribute) {
+					// if the command isn't updating something, it is save to execute
+					resource.ExecuteCommand (data, command);
+
+					// THOUGHT: confirming may not be necessary since nonchanging commands return values otherwhise
+					coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
+						data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
+				
+					// the response should be returned now
+					return;
+				}
 
 				// only execute changing commands command if we are the managing server 
 				// or the managing server instructed us to do so
-				if (command.Settings.IsChaning &&
-					(sender.ServerId == resource.Id.ServerId && sender.IsServer) ||
-					resource.Id.ServerId == ConfigController.ApplicationSettings.id.ServerId) {
+				if (command.Settings.Distribute &&
+					(isTheSenderTheManager ||
+					IAmTheManager)) {
 					resource.ExecuteCommand (data, command);
-				} else if (!command.Settings.IsChaning) {
-					// if the command isn't updating we are done here
-					resource.ExecuteCommand (data, command);
-					return;
-				}
-				//resource.ExecuteCommand()
-				//controller.ExecuteCommand(command, data);
+					
+					// execution succeeded
+					// update subscribers
+					if(IAmTheManager)
+						UpdateSubscribers(resource,data);
 
+					// acknowledge
+
+
+				} else if(command.Settings.LocalPropagation){
+					// this is a command on its way to the manager but also needs to be applied now
+					resource.ExecuteCommand(data,command);
+				}
 			}
 			/// IMPORTANT
 			/// this could cause a loop if we are one of the sibblings managing nodes and are 
 			/// distributing this to the managing nodes and it will distribute it back
-			UnityEngine.Debug.Log ("distributing");
 
-			// block distributing command received from the managing node
-			if ((sender.ServerId != data.sId.ServerId || sender.ResourceId != 0) && sender.ServerId != 0)
-				reference.ExecuteForResource (data);
+
+			if(!IAmTheManager && (!isTheSenderTheManager) && !data.rId.IsLocal){
+				UnityEngine.Debug.Log ($"distributing {data.t} to {data.rId}, IAmTheManager: {IAmTheManager}, isTheSenderTheManager: {isTheSenderTheManager}, mainManagingNode {mainManagingNode}, CurrentServerId {CurrentServerId}, ");
+				// This message hasn't been on the manager yet, send it to him
+				reference.ExecuteForResource(data);
+			}
+		}
+
+
+		
+
+		/// <summary>
+		/// Executed by managing node of the target
+		/// </summary>
+		/// <param name="data"></param>
+		public void UpdateResource(MessageData data, SourceReference sender)
+		{
+			InnerReference<Referenceable> reference;
+			TryGetReference (data.rId, out reference);
+			if(reference == null || reference.Resource == null)
+			{
+				// we don't have this, unsubscribe
+				coreInstance.SendCommand<UnsubscribeCommand>(sender);
+				return;
+			}
+
+			// it has to be the references or my managing node
+			if(!IsManagingNodeFor(sender,data.rId) && !IsManagingNodeFor(sender,coreInstance.Id))
+			{
+				UnityEngine.Debug.LogError($"{sender} isn't the manager for {data.rId}");
+				return;
+			}
+
+			// don't forget to update the core instance
+			data.CoreInstance = this.coreInstance;
+
+			// this is here to go around the Permission checking
+			var controller = reference.Resource.GetCommandController();
+			controller.GetCommand(data.t).Execute(data);
+
+			// distribute it to other local subscribers 
+			// this allows for a exponential fade out from the Resources managing node reducing load
+			//  C                      C
+			//    ⬉ 				 ⬈
+			//		S  <--	M  --> S
+			//    ⬋                  ⬊
+			//  C 					   C
+			// Master, Server, Clients (subscribed)
+			UpdateSubscribers(reference.Resource,data,true);
+		}
+
+
+
+
+		/// <summary>
+		/// Sends an update to all subscribed Resources
+		/// </summary>
+		/// <param name="resource"></param>
+		/// <param name="data"></param>
+		protected void UpdateSubscribers(Referenceable resource, MessageData data,bool onlyLocal = false)
+		{
+			if(resource.Access == null || resource.Access.Subscribers == null)
+			{
+				return;
+			}
+			foreach (var item in resource.Access.Subscribers)
+			{
+				if(onlyLocal && item.FullServerId == CurrentServerId || !onlyLocal)
+				coreInstance.SendCommand<UpdateResourceCommand,MessageData>(item, data);
+			}
+		}
+		
+
+		/// <summary>
+		/// Do the actual execution, returns <see cref="true"/> if distribution should be attempted false otherwise
+		/// </summary>
+		/// <param name="resource"></param>
+		/// <param name="data"></param>
+		/// <param name="sender"></param>
+		/// <returns><see cref="true"/> if distribution should be attempted</returns>
+		protected bool ExecuteForReference(Referenceable resource,MessageData data,SourceReference sender)
+		{
+			//UnityEngine.Debug.Log ($" on {this.coreInstance.Id} ({coreInstance.GetType().Name}) executing {data} ");
+			var command = resource.GetCommandController ().GetCommand (data.t);
+
+			// only execute changing commands command if we are the managing server 
+			// or the managing server instructed us to do so
+			if (command.Settings.Distribute &&
+				(sender.ServerId == resource.Id.ServerId && sender.IsServer) ||
+				resource.Id.ServerId == ConfigController.ApplicationSettings.id.ServerId) {
+				resource.ExecuteCommand (data, command);
+			} else if (!command.Settings.Distribute) {
+				// if the command isn't updating we are done here
+				resource.ExecuteCommand (data, command);
+				return false;
+			}
+			return true;
+			//resource.ExecuteCommand()
+			//controller.ExecuteCommand(command, data);
+		}
+
+
+		protected SourceReference CurrentServerId
+		{
+			get
+			{
+				if(coreInstance == null)
+					return default(SourceReference);
+				return coreInstance.Id;
+			}
+		}
+
+
+		public SourceReference ManagingNodeFor(SourceReference reference)
+		{
+			return ManagingNodeFor(new Reference<Referenceable>(reference));
 		}
 
 		/// <summary>
@@ -455,6 +642,13 @@ namespace Coflnet {
 			CoflnetServer server;
 			TryGetResource<CoflnetServer> (new SourceReference (reference.ReferenceId.ServerId, 0), out server);
 
+			if(server != null && server.State == CoflnetServer.ServerState.UP)
+			{
+				// the default is the creation server if it is up
+				return server.Id;
+			}
+
+			// second is a sibbling node to the server
 			if (server != null && server.State != CoflnetServer.ServerState.UP) {
 				// search general failover servers
 				foreach (var siblingServer in server.SibblingServers) {
@@ -463,28 +657,68 @@ namespace Coflnet {
 						return id;
 					}
 				}
+			}
+			/// try to find another server if main managing node is down
+			if (reference.InnerReference is RedundantInnerReference<Referenceable>) {
+				foreach (var sibbling in (reference.InnerReference as RedundantInnerReference<Referenceable>)
+						.SiblingNodes
+						.ConvertAll<SourceReference> ((id) => new SourceReference (id, 0))) {
+					TryGetResource<CoflnetServer> (sibbling, out server);
+					// return the first that is up
+					if (server.State == CoflnetServer.ServerState.UP) {
+						return sibbling;
+					}
+				}
+			}
 
-				/// try to find another server if main managing node is down
-				if (reference.InnerReference is RedundantInnerReference<Referenceable>) {
-					foreach (var sibbling in (reference.InnerReference as RedundantInnerReference<Referenceable>)
-							.SiblingNodes
-							.ConvertAll<SourceReference> ((id) => new SourceReference (id, 0))) {
-						TryGetResource<CoflnetServer> (sibbling, out server);
-						if (server.State == CoflnetServer.ServerState.UP) {
-							return sibbling;
+
+			// all failed, we have to wait for the creation server to come back up again
+			return reference.ReferenceId.FullServerId;
+		}
+
+		public bool IsManagingNodeFor (SourceReference nodeId, SourceReference resourceId) {
+			if(!nodeId.IsServer)
+			{
+				// its not even a server, cancle
+				return false;
+			}
+			
+			if (nodeId.ServerId == resourceId.ServerId)
+				return true;
+
+			CoflnetServer mainManagingNode;
+			TryGetResource<CoflnetServer> (resourceId.FullServerId, out mainManagingNode);
+
+			if(mainManagingNode == null)
+			{
+				// we have no further information about this node
+				return false;
+			}
+
+			// if it is a sibbling server it is
+			foreach (var item in mainManagingNode.SibblingServers)
+			{
+				if(nodeId.ServerId == item)
+					return true;
+			}
+
+			// also if the resource appointed it
+			InnerReference<Referenceable> reference;
+			if(TryGetReference(resourceId,out reference))
+			{
+				var redRef =  reference as RedundantInnerReference<Referenceable>;
+				if(redRef != null)
+				{
+					foreach (var item in redRef.SiblingNodes)
+					{
+						if(item == nodeId.ServerId){
+							return true;
 						}
 					}
 				}
 			}
-			return new SourceReference (reference.ReferenceId.ServerId, 0);
-		}
 
-		protected bool IsManagingNodeFor (SourceReference node, SourceReference resource) {
-			if (node.ServerId == resource.ServerId)
-				return true;
 
-			CoflnetServer server;
-			TryGetResource<CoflnetServer> (new SourceReference (node.ServerId, 0), out server);
 
 			return false;
 		}
@@ -533,538 +767,11 @@ namespace Coflnet {
 	}
 
 	/// <summary>
-	/// Defines objects that are Referenceable across servers.
-	/// Only use for larger objects.
-	/// </summary>
-	[DataContract]
-	public abstract class Referenceable {
-		[DataMember]
-		public SourceReference Id;
-
-		[DataMember]
-		public Access Access;
-
-		/// <summary>
-		/// Global commands useable for every <see cref="Referenceable"/> in the system.
-		/// Contains commands for syncing resources between servers.
-		/// </summary>
-		[IgnoreDataMember]
-		public static CommandController globalCommands;
-
-		protected Referenceable (Access access, SourceReference id) {
-			this.Id = id;
-			this.Access = access;
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Coflnet.Server.Referenceable"/> class.
-		/// </summary>
-		/// <param name="owner">Owner creating this resource.</param>
-		protected Referenceable (SourceReference owner) : this () {
-			this.Access = new Access (owner);
-		}
-
-		public Referenceable () {
-
-			//this.Id = ReferenceManager.Instance.CreateReference(this);
-		}
-
-		/// <summary>
-		/// Initializes the <see cref="T:Coflnet.Referenceable"/> class.
-		/// </summary>
-		static Referenceable () {
-			globalCommands = new CommandController ();
-			globalCommands.RegisterCommand<ReturnResponseCommand> ();
-			globalCommands.RegisterCommand<GetResourceCommand>();
-			globalCommands.RegisterCommand<CreationResponseCommand>();
-		}
-
-		/// <summary>
-		/// Assigns an identifier and registers the object in the <see cref="ReferenceManager"/>
-		/// </summary>
-		/// <param name="referenceManager">Optional other instance of an referencemanager</param>
-		public void AssignId (ReferenceManager referenceManager = null) {
-			if (referenceManager != null) {
-				this.Id = referenceManager.CreateReference (this);
-			} else {
-				this.Id = ReferenceManager.Instance.CreateReference (this);
-			}
-		}
-
-		/// <summary>
-		/// Checks if a certain resource is allowed to access this one and or execute commands
-		/// </summary>
-		/// <returns><c>true</c>, if allowed access, <c>false</c> otherwise.</returns>
-		/// <param name="requestingReference">Requesting reference.</param>
-		/// <param name="mode">Mode.</param>
-		public virtual bool IsAllowedAccess (SourceReference requestingReference, AccessMode mode = AccessMode.READ) {
-			return (Access != null) && Access.IsAllowedToAccess (requestingReference, mode)
-				// A user might access itself
-				||
-				requestingReference == this.Id;
-		}
-
-		/// <summary>
-		/// Executes the command found in the <see cref="MessageData.t"/>
-		/// Returns the <see cref="Command"/> when done
-		/// </summary>
-		/// <returns>The command.</returns>
-		/// <param name="data">Data.</param>
-		public virtual Command ExecuteCommand (MessageData data) {
-			var controller = GetCommandController ();
-			var command = controller.GetCommand (data.t);
-
-			controller.ExecuteCommand (command, data, this);
-
-			return command;
-		}
-
-		/// <summary>
-		/// Executes the command with given data
-		/// </summary>
-		/// <param name="data">Data to pass on to the <see cref="Command"/>.</param>
-		/// <param name="command">Command to execute.</param>
-		public virtual void ExecuteCommand (MessageData data, Command command) {
-			GetCommandController ().ExecuteCommand (command, data, this);
-		}
-
-		public abstract CommandController GetCommandController ();
-
-		/// <summary>
-		/// Will generate and add a new Access Instance if none exists yet.
-		/// </summary>
-		/// <returns>The Access Settings for this Resource</returns>
-		public Access GetAccess()
-		{
-			if(Access == null){
-				Access = new Access();
-			}
-			return Access;
-		}
-	}
-
-	public class GetResourceCommand : ReturnCommand {
-		/// <summary>
-		/// Execute the command logic with specified data.
-		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override MessageData ExecuteWithReturn (MessageData data) {
-			data.message = data.CoreInstance.ReferenceManager.SerializeWithoutAccess (data.rId);
-			
-			UnityEngine.Debug.Log("returning resource");
-			
-			return data;
-			//MessagePack.MessagePackSerializer.Typeless.Serialize()                
-		}
-
-		/// <summary>
-		/// Special settings and Permissions for this <see cref="Command"/>
-		/// </summary>
-		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings () {
-			return new CommandSettings (ReadPermission.Instance);
-		}
-		/// <summary>
-		/// Gets the globally unique slug (short human readable id).
-		/// </summary>
-		/// <returns>The slug .</returns>
-		public override string Slug {
-			get {
-
-				return "GetResource";
-			}
-		}
-	}
-
-	public class GrantAccess : Command {
-		/// <summary>
-		/// Execute the command logic with specified data.
-		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute (MessageData data) {
-			var param = data.GetAs<KeyValuePair<SourceReference, AccessMode>> ();
-			data.GetTargetAs<Referenceable> ().Access.Authorize (param.Key, param.Value);
-		}
-
-		/// <summary>
-		/// Special settings and Permissions for this <see cref="Command"/>
-		/// </summary>
-		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings () {
-			return new CommandSettings (CanChangePermissionPermission.Instance);
-		}
-		/// <summary>
-		/// Gets the globally unique slug (short human readable id).
-		/// </summary>
-		/// <returns>The slug .</returns>
-		public override string Slug {
-			get {
-
-				return "GrantAccess";
-			}
-		}
-	}
-
-	public class RemoveAccess : Command {
-		/// <summary>
-		/// Execute the command logic with specified data.
-		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute (MessageData data) {
-			data.GetTargetAs<Referenceable> ().Access.Authorize (data.GetAs<SourceReference> (), AccessMode.NONE);
-		}
-
-		/// <summary>
-		/// Special settings and Permissions for this <see cref="Command"/>
-		/// </summary>
-		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings () {
-			return new CommandSettings (CanChangePermissionPermission.Instance);
-		}
-		/// <summary>
-		/// Gets the globally unique slug (short human readable id).
-		/// </summary>
-		/// <returns>The slug .</returns>
-		public override string Slug {
-			get {
-
-				return "RemoveAccess";
-			}
-		}
-	}
-
-	/// <summary>
-	/// Get the <see cref="Access"/> Property of an object which isn't part of the object itself by default.
-	/// </summary>
-	public class GetAccess : ReturnCommand {
-		/// <summary>
-		/// Execute the command logic with specified data.
-		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override MessageData ExecuteWithReturn (MessageData data) {
-			data.SerializeAndSet<Access> (data.GetTargetAs<Referenceable> ().Access);
-			return data;
-		}
-
-		/// <summary>
-		/// Special settings and Permissions for this <see cref="Command"/>
-		/// </summary>
-		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings () {
-			return new CommandSettings (WritePermission.Instance);
-		}
-		/// <summary>
-		/// Gets the globally unique slug (short human readable id).
-		/// </summary>
-		/// <returns>The slug .</returns>
-		public override string Slug {
-			get {
-
-				return "GetAccess";
-			}
-		}
-	}
-
-	[DataContract]
-	public class Access {
-		[DataMember]
-		public SourceReference Owner;
-
-		/// <summary>
-		/// enum values are given by
-		/// same server, same location, everybody
-		/// 1 = read
-		/// 2 = write
-		/// 4 = change access
-		/// For any combination add them together
-		/// </summary>
-		public enum GeneralAccess {
-			NONE = 0,
-			SERVER_READ = 1,
-			SERVER_WRITE = 2,
-			LOCAL_READ = 0x1 << 3,
-			LOCAL_WRITE = 0x2 << 3,
-
-			ALL_READ= 0x1 << 6,
-			ALL_WRITE = 0x2 << 6,
-			
-			ALL_READ_LOCAL_WRITE = ALL_READ | LOCAL_WRITE,
-			ALL_READ_AND_WRITE = ALL_READ | ALL_WRITE,
-			LOCAL_READ_AND_WRITE = LOCAL_READ | LOCAL_WRITE,
-			ALL_READ_LOCAL_READ_AND_WRITE = ALL_READ_LOCAL_WRITE | LOCAL_WRITE,
-			SERVER_READ_AND_WRITE = SERVER_READ | SERVER_WRITE,
-			ALL_READ_SERVER_READ_AND_WRITE = SERVER_READ_AND_WRITE | ALL_READ
-		}
-
-		[DataMember]
-		public GeneralAccess generalAccess;
-		[DataMember]
-		public Dictionary<SourceReference, AccessMode> resourceAccess;
-		/// <summary>
-		/// SourceReferences which want to be notified if this resource changes
-		/// </summary>
-		/// <value>The subscribers.</value>
-		[DataMember]
-		public List<SourceReference> Subscribers { get; set; }
-
-		public Access (SourceReference owner) {
-			Owner = owner;
-		}
-
-		public Access()
-		{
-			
-		}
-
-		/// <summary>
-		/// Checks if some reference has some level of access to this resource
-		/// </summary>
-		/// <returns><c>true</c>, if allowed to access, <c>false</c> otherwise.</returns>
-		/// <param name="requestingReference">Requesting reference.</param>
-		/// <param name="mode">AccessMode.</param>
-		public bool IsAllowedToAccess (SourceReference requestingReference, AccessMode mode = AccessMode.READ) {
-
-			// unauthorized senders can't access
-			if(requestingReference == default(SourceReference))
-			{
-				UnityEngine.Debug.Log("Sender is not set, access was blocked");
-				return false;
-			}
-
-			// is it the owner or the resource itself
-			if (requestingReference == Owner)
-				return true;
-
-				UnityEngine.Debug.Log($"{requestingReference} is requesting {mode}");
-
-			//is there a special case?
-			if (resourceAccess != null) {
-				if(resourceAccess.ContainsKey (requestingReference))
-					return resourceAccess[requestingReference].CompareTo (mode) >= 0;
-				else if(resourceAccess.ContainsKey (requestingReference.FullServerId))
-					return resourceAccess[requestingReference.FullServerId].CompareTo (mode) >= 0;
-			} 
-
-			// check for "all"
-			if (((((int)generalAccess) >> 6)  & (int) mode) > 0)
-				return true;
-
-			// check for local
-			if (((((int)generalAccess) >> 3)  & (int) mode) > 0)
-				return requestingReference.IsSameLocationAs (Owner);
-			// check for same server
-			if (((((int)generalAccess))  & (int) mode) > 0)
-				return Owner.ServerId == requestingReference.ServerId;
-
-
-
-			// requestingReference doesn't have access
-			return false;
-		}
-
-		public void Authorize (SourceReference sourceReference, AccessMode mode = AccessMode.READ) {
-			if (resourceAccess == null)
-				resourceAccess = new Dictionary<SourceReference, AccessMode> ();
-			resourceAccess[sourceReference] = mode;
-		}
-	}
-
-	[Flags]
-	public enum AccessMode {
-		/// <summary>
-		/// Essentially blocks
-		/// </summary>
-		NONE = 0,
-		READ = 1,
-		WRITE = 2,
-		READ_AND_WRITE = READ | WRITE,
-		/// <summary>
-		/// Permission to change others permission, includes read and write
-		/// </summary>
-		CHANGE_PERMISSIONS = 4,
-		/// <summary>
-		/// This level will be ignored
-		/// </summary>
-		ASNORMAL = 0xFF
-	}
-
-	/// <summary>
 	/// Defines an object that is Referenceable and has to have a local copy.
 	/// Use this very carefully.
 	/// </summary>
 	public abstract class ILocalReferenceable : Referenceable {
 
-	}
-
-	[DataContract (Name = "ref", Namespace = "")]
-	public class Reference<T> where T : Referenceable {
-		/// <summary>
-		/// Internal reference used for storing referenced object 
-		/// if present in memory on the current server
-		/// </summary>
-		/// <value></value>
-		[IgnoreDataMember]
-		public InnerReference<T> InnerReference { get; set; }
-
-		/// <summary>
-		/// Executes a command on the server containing the resource referenced by this object
-		/// </summary>
-		/// <param name="data">Command data to send</param>
-		public void ExecuteForResource (MessageData data) {
-			ReferenceManager.Instance.ExecuteForReference (data);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Coflnet.Server.Reference`1"/>
-		/// </summary>
-		/// <param name="resource">Resource.</param>
-		/*public Reference(T resource, SourceReference referenceId)
-		{
-			this.resource = resource;
-			this.referenceId = referenceId;
-			//referenceId = ReferenceManager.Instance.AddReference(resource);
-		}*/
-
-		public Reference (T resource) {
-			this.InnerReference = new InnerReference<T> () { Resource = resource };
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Coflnet.Server.Reference`1"/> class without actually knowing the data.
-		/// </summary>
-		/// <param name="referenceId">Reference identifier.</param>
-		public Reference (SourceReference referenceId) {
-			this.ReferenceId = referenceId;
-		}
-
-		public Reference () {
-
-		}
-
-		[IgnoreDataMember]
-		public T Resource {
-			get {
-				if (InnerReference == null) {
-					InnerReference = ReferenceManager.Instance.GetNewReference<T> (this.ReferenceId);
-				}
-				return InnerReference.Resource;
-			}
-			set {
-				InnerReference.Resource = value;
-			}
-		}
-
-		[DataMember (Name = "id")]
-		public SourceReference ReferenceId {
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// Gets the referenced resource as some type if present on the server, null otherwise
-		/// </summary>
-		/// <returns>The referenced data as specific object.</returns>
-		/// <typeparam name="Y">The 1st type parameter.</typeparam>
-		public Y GetAsIfPresent<Y> () where Y : class {
-			return Resource as Y;
-		}
-
-		/// <summary>
-		/// Is this instance of type Y.
-		/// </summary>
-		/// <returns>If this reference contains a resource with type Y.</returns>
-		/// <typeparam name="Y">The type parameter to test against.</typeparam>
-		public bool Is<Y> () {
-			return Resource is Y;
-		}
-	}
-
-	/// <summary>
-	/// Redundant reference Data exists on one or more servers (recomended)
-	/// </summary>
-	[DataContract]
-	public class RedundantReference<T> : Reference<T> where T : Referenceable {
-		[DataMember]
-		protected List<long> failoverServers = new List<long> ();
-
-		/// <summary>
-		/// Adds a new server for extra redundancy.
-		/// </summary>
-		/// <param name="server">Server to add.</param>
-		public void AddServer (CoflnetServer server) {
-			AddServer (server.Id.ServerId);
-		}
-
-		/// <summary>
-		/// Adds a new server for extra redundancy.
-		/// </summary>
-		/// <param name="serverId">Server to add.</param>
-		public void AddServer (long serverId) {
-			failoverServers.Add (serverId);
-		}
-
-		public void RemoveServer (CoflnetServer server) {
-			RemoveServer (server.Id.ServerId);
-		}
-		/// <summary>
-		/// Removes the server from the failover list.
-		/// </summary>
-		/// <param name="serverId">Server identifier.</param>
-		public void RemoveServer (long serverId) {
-			failoverServers.Remove (serverId);
-		}
-
-		/// <summary>
-		/// Executes a command on the server containing the resource referenced by this object
-		/// </summary>
-		/// <param name="data">Command data to send</param>
-		public new void ExecuteForResource (MessageData data) {
-			CoflnetCore.Instance.SendCommand (data, ReferenceId.ServerId);
-			// also send it to the failover servers
-			foreach (var item in failoverServers) {
-				CoflnetCore.Instance.SendCommand (data, item);
-			}
-		}
-
-		/// <summary>
-		/// Gets a value indicating whether this <see cref="T:Coflnet.Server.RedundantReference`1"/> s Resource is lokally available.
-		/// </summary>
-		/// <value><c>true</c> if is lokal; otherwise, <c>false</c>.</value>
-		[IgnoreDataMember]
-		public bool IsLokal {
-			get {
-
-				return ReferenceManager.Instance.Exists (this.ReferenceId);
-			}
-		}
-
-		/// <summary>
-		/// Gets the nearest server which has a copy of this resource.
-		/// </summary>
-		/// <value>The nearest server.</value>
-		[IgnoreDataMember]
-		public CoflnetServer NearestServer {
-			get {
-				CoflnetServer closest = ServerController.Instance.GetOrCreate (ReferenceId.ServerId);
-				foreach (var item in failoverServers) {
-					var server = ServerController.Instance.GetOrCreate (item);
-					// if another server that is closer or as fast as the managing server use it instead
-					if (server.PingTimeMS <= closest.PingTimeMS)
-						closest = server;
-				}
-				return closest;
-			}
-		}
-
-		public RedundantReference () { }
-
-		public RedundantReference (T resource, params CoflnetServer[] failoverServer) : base (resource) {
-			if (failoverServer == null)
-				return;
-			foreach (var item in failoverServer) {
-				this.failoverServers.Add (item.Id.ServerId);
-			}
-		}
 	}
 
 	public class InstanceAllreadyExistsException : Exception {

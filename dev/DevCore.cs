@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Coflent.Client;
 using Coflnet.Client;
 using Coflnet.Server;
 
@@ -115,17 +116,48 @@ namespace Coflnet.Dev {
 		/// Adds a new Client to the simulation
 		/// </summary>
 		/// <param name="id">Id of the client</param>
-		public SimulationInstance AddClientCore(SourceReference id)
+		/// <param name="createDevice">If an instance of <see cref="CoflnetUser"/> should be created on  the server as well</param>
+		public SimulationInstance AddClientCore(SourceReference id, bool createDevice = false)
 		{
 			var newClientCore = new ClientCoreProxy(new CommandController(globalCommands),ClientSocket.Instance,new ClientReferenceManager($"res{simulationInstances.Count}"))
 			{Id=id};
-			UserService.Instance.ClientCoreInstance = newClientCore;
+
+			SetCoreForService(newClientCore);
+
+
+
 			var addedInstance = AddCore(newClientCore);
-			// activate
+
+
+			if(createDevice)
+			{
+				// create and add the user server and client side
+				var user = new Device(){Id=id};
+				SimulationInstance server;
+				if(simulationInstances.TryGetValue(id.FullServerId,out server))
+				{
+					server.core.ReferenceManager.AddReference(user);
+				}
+				UnityEngine.Debug.Log("Added device " + user.Id);
+				if(!newClientCore.ReferenceManager.AddReference(user)){
+					UnityEngine.Debug.Log(newClientCore.ReferenceManager.GetReferences());
+					throw new Exception($"failed to add device {user.Id}");
+				}
+			}
+
+			// activate commands
 			newClientCore.SetCommandsLive();
 			lastAddedClient=addedInstance;
 
 			return addedInstance;
+		}
+
+
+		public void SetCoreForService(ClientCore core)
+		{
+
+			UserService.Instance.ClientCoreInstance = core;
+			DeviceService.Instance.clientCoreInstance = core;
 		}
 
 		/// <summary>
@@ -185,10 +217,21 @@ namespace Coflnet.Dev {
 			}
 
 			//UnityEngine.Debug.Log(data);
+			// search for the serverId first
+			if(simulationInstances.ContainsKey(new SourceReference(serverId,0))){
+				simulationInstances[new SourceReference(serverId,0)].ReceiveCommand(devData);
+			}
+			else if(simulationInstances.ContainsKey(data.rId)){
 
-			if(simulationInstances.ContainsKey(data.rId)){
+				foreach (var item in simulationInstances)
+				{
+					UnityEngine.Debug.Log($"{item.Key}={item.Value.core.Id}" );
+				}
+
 				// the receiver is known, send it to him
 				simulationInstances[data.rId].ReceiveCommand(devData);
+
+				
 				
 			} else if(simulationInstances.ContainsKey(SourceReference.Default) && simulationInstances[SourceReference.Default].core.Id == data.rId)
 			{

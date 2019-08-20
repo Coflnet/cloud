@@ -20,7 +20,7 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 	bool showing;
 
 
-	int timesToUpdateBeforeEnableClose = 40;
+	//int timesToUpdateBeforeEnableClose = 40;
 	int timesUpdateRan = 50;
 
 	private string firebaseToken;

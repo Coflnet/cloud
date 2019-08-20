@@ -166,6 +166,7 @@ public class CoflnetUserTests {
 		var receiverUser = CoflnetUser.Generate (ConfigController.ApplicationSettings.id);
 		receiverUser.GetCommandController ().OverwriteCommand<ChatMessageCommand> ();
 
+		//register the command
 		(new CoflnetUser ()).GetCommandController ().OverwriteCommand<TestCommandWithPermission> ();
 		//tell the client what user we are
 		ConfigController.ActiveUserId = login.id;

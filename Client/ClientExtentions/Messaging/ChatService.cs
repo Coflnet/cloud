@@ -109,7 +109,6 @@ namespace Coflnet.Client.Messaging
 			var chatResource = ClientCore.ClientInstance
 								.CreateResource<CreateGroupChat,CreateGroupChat.Params>(options);
 			
-
 			// return the chat with temporary local id
 			return new GroupChat(chatResource.Id);
 		}
@@ -153,6 +152,18 @@ namespace Coflnet.Client.Messaging
 		{
 			ChatManager.SaveChats();
 			MessageManager.SaveMessages();
+		}
+
+
+		/// <summary>
+		/// Deletes all information of chats and messages
+		/// </summary>
+		public void DeleteAll()
+		{
+			foreach (var item in ChatManager.GetChats())
+			{
+				ChatManager.RemoveChat(item);
+			}
 		}
 	}
 

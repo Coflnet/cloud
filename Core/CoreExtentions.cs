@@ -8,6 +8,7 @@ namespace Coflnet.Core{
 
 		public static Coflnet.IRegisterCommands[] Commands =
 		{
+			new CoreCommands(),
 			new UserCoreExtention()
 		};
 	}

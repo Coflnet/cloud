@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MessagePack;
 
 namespace Coflnet.Client.Messaging
@@ -81,14 +82,18 @@ namespace Coflnet.Client.Messaging
 			
 			return objc.id.Equals(this.id);
 		}
-		
-		// override object.GetHashCode
-		public override int GetHashCode()
-		{
-			// TODO: write your implementation of GetHashCode() here
-			throw new System.NotImplementedException();
-			return base.GetHashCode();
-		}
-	}
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1572509924;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(content);
+            hashCode = hashCode * -1521134295 + timetamp.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<MessageReference>.Default.GetHashCode(refs);
+            hashCode = hashCode * -1521134295 + EqualityComparer<MessageReference>.Default.GetHashCode(id);
+            hashCode = hashCode * -1521134295 + type.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<SourceReference>.Default.GetHashCode(sender);
+            return hashCode;
+        }
+    }
 }
 

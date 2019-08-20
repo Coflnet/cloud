@@ -61,9 +61,10 @@ namespace Coflnet {
 			return target.IsAllowedAccess (data.sId, AccessMode.WRITE);
 		}
 
-		public override string Slug => "readPermission";
+		public override string Slug => "writePermission";
 
 	}
+
 
 	public class IsDevicePermission : Permission {
 		public static IsDevicePermission Instance;

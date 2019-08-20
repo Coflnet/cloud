@@ -6,6 +6,11 @@ namespace Coflnet {
 	/// Can't be a ServerCommand because no user yet exists
 	/// </summary>   
 	public class ReceiveConfirm : Command {
+		/// <summary>
+		/// Static CommandSlug to access it from code
+		/// </summary>
+		public static string CommandSlug => "receivedCommand";
+
 		public override void Execute (MessageData data) {
 			var dataParams = data.GetAs<ReceiveConfirmParams> ();
 			UnityEngine.Debug.Log ($"deleting message {MessagePackSerializer.ToJson(dataParams.messageId)} from {dataParams.sender} for " + MessagePackSerializer.ToJson (data.sId));
@@ -17,7 +22,7 @@ namespace Coflnet {
 			return new CommandSettings ();
 		}
 
-		public override string Slug => "receivedCommand";
+		public override string Slug => CommandSlug;
 
 	}
 

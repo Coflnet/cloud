@@ -26,6 +26,6 @@ namespace Coflnet.Client.Messaging
         /// The globally unique slug (short human readable id) for this command.
         /// </summary>
         /// <returns>The slug .</returns>
-        public override string Slug => "ChatMessage";
+        public override string Slug => "msg";
     }
 }

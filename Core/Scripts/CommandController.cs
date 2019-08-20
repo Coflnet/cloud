@@ -139,7 +139,7 @@ namespace Coflnet {
 					if (!item.CheckPermission (data, target)) {
 						UnityEngine.Debug.Log (MessagePackSerializer.ToJson (data));
 						UnityEngine.Debug.Log ("concludes to : " + item.CheckPermission (data, target));
-						throw new CoflnetException ("permission_not_met", $"The permission {item.Slug} required for executing the command {command.Slug} on {data.rId} wasn't met by {data.sId}");
+						throw new PermissionNotMetException(item.Slug,data.rId,data.sId,command.Slug,data.mId);
 					}
 				}
 			}
@@ -190,15 +190,21 @@ namespace Coflnet {
 	}
 
 	public class CommandUnknownException : CoflnetException {
-		public CommandUnknownException (string slug, long msgId = -1) : base ("unknown_command", $"The command `{slug}` is unknown", null, 404, null, msgId) { }
+		public CommandUnknownException (string slug, long msgId = -1) : base ("unknown_command", $"The command `{slug}` is unknown. It may not be registered on the target Resource yet.", null, 404, null, msgId) { }
 	}
 
 	/// <summary>
 	/// Insuficient permission exception.
 	/// Thrown when at least one Permission required is not fullfilled
 	/// </summary>
-	public class InsuficientPermissionException : CoflnetException {
-		public InsuficientPermissionException (long msgId = -1, string message = "You are currently not allowed to execute this command. Upgrade your connection with authentication and try again.", string userMessage = "No permission", string info = null) : base ("insuficient_permission", message, userMessage, 403, null, msgId) { }
+	public class PermissionNotMetException : CoflnetException {
+		public PermissionNotMetException (long msgId = -1, string message = "You are currently not allowed to execute this command. ", string userMessage = "No permission", string info = null) 
+		: base ("permission_not_met", message, userMessage, 403, null, msgId) { }
+	
+	
+		public PermissionNotMetException(string permissionSlug,SourceReference targetId,SourceReference senderId,string commandSlug,long messageId = -1) 
+		: base("permission_not_met", $"The permission {permissionSlug} required for executing the command {commandSlug} on {targetId} wasn't met by {senderId}","No permission",403,null,messageId)
+		{}
 	}
 
 	/// <summary>
@@ -298,7 +304,7 @@ namespace Coflnet {
 		/// Has the command to be executed on the main thread (ui)?
 		/// Is it changing and has it to be distributed?
 		/// Does it have to be encrypted?
-		/// Can and should it be ran locally first (eg. to update the ui)? 
+		/// Can and should it be ran locally first, bevore the managing node (eg. to update the ui)? 
 		/// </summary>
 		public class CommandSettings {
 			/// <summary>
@@ -314,7 +320,7 @@ namespace Coflnet {
 			/// Gets or sets a value indicating whether the target resource will be changed by this command.
 			/// </summary>
 			/// <value><c>true</c> if command updates the resource and has to be distributed; otherwise, <c>false</c>.</value>
-			public bool IsChaning {
+			public bool Distribute {
 				get;
 				protected set;
 			}
@@ -378,13 +384,13 @@ namespace Coflnet {
 			/// Initializes a new instance of the <see cref="T:Coflnet.Command.CommandSettings"/> class.
 			/// </summary>
 			/// <param name="threadSave">If set to <c>true</c> command is thread save.</param>
-			/// <param name="isChanging">If set to <c>true</c> is changing (will be distributed).</param>
+			/// <param name="distribute">If set to <c>true</c> is changing (will be distributed).</param>
 			/// <param name="encrypted">If set to <c>true</c> encrypted.</param>
 			/// <param name="localPropagation">If set to <c>true</c> local propagation.</param>
 			/// <param name="permissions">Permissions.</param>
-			public CommandSettings (bool threadSave, bool isChanging, bool encrypted, bool localPropagation, params Permission[] permissions) {
+			public CommandSettings (bool threadSave, bool distribute, bool encrypted, bool localPropagation, params Permission[] permissions) {
 				ThreadSave = threadSave;
-				IsChaning = isChanging;
+				Distribute = distribute;
 				Encrypted = encrypted;
 				LocalPropagation = localPropagation;
 				Permissions = permissions;
@@ -501,20 +507,21 @@ namespace Coflnet {
 		}
 	}
 
-	public class RegisterDevice : ServerCommand {
-		public override void Execute (MessageData data) {
-			Device device = new Device ();
-			device.Users.Add (new Reference<CoflnetUser> (data.GetTargetAs<CoflnetUser> ().PublicId));
-			SendBack (data, device.PublicKey);
+	public class RegisterDevice : CreationCommand {
+		public override CommandSettings GetSettings () {
+			// everyone can register devices
+			return new CommandSettings ();
 		}
 
-		public override ServerCommandSettings GetServerSettings () {
-			// Only users can register devices
-			return new ServerCommandSettings (new IsUserPermission ());
-		}
+        public override Referenceable CreateResource(MessageData data)
+        {
+            return new Device ();
+        }
 
-		public override string Slug => "registerDevice";
+        public override string Slug => "registerDevice";
 	}
+
+
 
 	/// <summary>
 	/// Represents a command that invokes a external rest api
@@ -662,6 +669,8 @@ namespace Coflnet {
 	}
 
 	public class LegacyCommand : Command {
+		// disable the deprecated warning
+		#pragma warning disable 612, 618
 		CoflnetCommand oldCommand;
 
 		public override void Execute (MessageData data) {
@@ -686,6 +695,9 @@ namespace Coflnet {
 		public LegacyCommand (string slug, CoflnetCommand.Command command, bool threadable = false, bool encrypted = false) {
 			this.oldCommand = new CoflnetCommand (slug, command, threadable, encrypted);
 		}
+
+		// enable warning for obsulete again
+		#pragma warning restore 612, 618
 	}
 
 	[Obsolete ("Yous should now derive from the abstract class 'Command'")]

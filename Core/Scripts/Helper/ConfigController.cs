@@ -8,6 +8,8 @@ namespace Coflnet
 	{
 		private static ApplicationSettings applicationSettings;
 
+		public static SourceReference DeviceId;
+
 		public static SourceReference ActiveUserId = SourceReference.Default;
 
 		public static UserSettings UserSettings
@@ -69,6 +71,11 @@ namespace Coflnet
 				ActiveUserId = ValuesController.GetValue<SourceReference>("currentUserIdentifier");
 			}
 
+			if (ValuesController.HasKey("deviceId"))
+			{
+				DeviceId = ValuesController.GetValue<SourceReference>("deviceId");
+			}
+
 			AppDomain.CurrentDomain.ProcessExit += (object sender, EventArgs e) => Save();
 		}
 
@@ -113,6 +120,7 @@ namespace Coflnet
 		{
 			FileController.WriteAllBytes("userSettings", MessagePackSerializer.Serialize(UserSettings));
 			ValuesController.SetValue<SourceReference>("currentUserIdentifier", ActiveUserId);
+			ValuesController.SetValue<SourceReference>("deviceId", DeviceId);
 		}
 
 		public static long PrimaryServer

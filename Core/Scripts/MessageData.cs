@@ -244,9 +244,10 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="ob">The object to serialize</param>
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public void SerializeAndSet<T>(T ob)
+		public MessageData SerializeAndSet<T>(T ob)
 		{
 			message = Serialize<T>(ob);
+			return this;
 		}
 
 		/// <summary>

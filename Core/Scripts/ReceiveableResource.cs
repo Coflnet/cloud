@@ -19,7 +19,7 @@ namespace Coflnet {
 			try {
 				var command = base.ExecuteCommand (data);
 				UnityEngine.Debug.Log ($"ohh man");
-				if (command.Settings.IsChaning) {
+				if (command.Settings.Distribute) {
 					UnityEngine.Debug.Log ($"sending command ");
 					CoflnetCore.Instance.SendCommand (data);
 				}

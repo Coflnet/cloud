@@ -5,7 +5,12 @@ namespace Coflnet
 {
 	public abstract class Permission
 	{
-		public abstract string Slug{get;}
+		public virtual string Slug {
+			get
+			{
+				return this.GetType().Name;
+			} 
+		}
 		/// <summary>
 		/// Checks for a permission.
 		/// </summary>

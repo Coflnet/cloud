@@ -8,13 +8,13 @@ public class OAuth2Controller
 
 	//private static string DataShifter.ufURL = "https://beta.coflnet.com";
 	private static string publicAppID = "5005455241412926";
-	private static string appSecret = "";
+//	private static string appSecret = "";
 	//private static string redirectUri = "";
 
-	private static string accessCode = "";
+	//private static string accessCode = "";
 
 
-	public delegate void ApiCallBack(string response, int statusCode);
+	//public delegate void ApiCallBack(string response, int statusCode);
 	public delegate void RegisterCallback();
 
 	public event RegisterCallback afterRegister;

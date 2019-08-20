@@ -15,6 +15,35 @@ namespace Coflnet.Client {
 		}
 
 
+		public override void ExecuteForReference(MessageData data, SourceReference sender = default(SourceReference))
+		{
+			if (data.rId.ServerId == 0) {
+				// special case it is myself (0 is local)
+				coreInstance.ExecuteCommand (data);
+				return;
+			}
+
+			UnityEngine.Debug.Log ($"searching {coreInstance.Id} (ClientRefmanager) for {data.rId}");
+			InnerReference<Referenceable> reference;
+			TryGetReference (data.rId, out reference);
+
+			if (reference == null || reference.Resource == null) {
+				// we dont't have it
+				return;
+			}
+
+			// execute the command if it is localPropagation
+			var command = reference
+						.Resource
+						.GetCommandController ()
+						.GetCommand (data.t);
+
+			if(command.Settings.LocalPropagation)
+			{
+				command.Execute(data);
+			}
+		}
+
 
         /// <summary>
 		/// Creates a new reference.

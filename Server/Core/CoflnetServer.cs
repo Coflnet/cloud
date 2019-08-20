@@ -2,6 +2,8 @@
 using MessagePack.Resolvers;
 using System.Linq;
 using Coflnet;
+using Coflnet.Core.Commands;
+using Coflnet.Core;
 
 namespace Coflnet.Server
 {
@@ -87,9 +89,15 @@ namespace Coflnet.Server
 		public void SetCommandsLive()
 		{
 			Commands.RemoveAllCommands();
-			Commands.RegisterCommand<RegisterUser>();
-			Commands.RegisterCommand<ReceiveConfirm>();
+			//Commands.RegisterCommand<ReceiveConfirm>();
 			Commands.RegisterCommand<GetResourceCommand>();
+			Commands.RegisterCommand<ReferenceManager.UpdateResourceCommand>();
+			Commands.RegisterCommand<Sub2Command>();
+
+			foreach (var item in CoreExtentions.Commands)
+			{
+				item.RegisterCommands(Commands);
+			}
 
 			foreach (var item in ExtraModules.Commands)
 			{

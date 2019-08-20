@@ -50,6 +50,16 @@ namespace Coflnet
 			DataController.Instance.RemoveFromFile<MessageData>(Path(receipient), m => m.mId == id && m.sId == sender);
 		}
 
+
+		/// <summary>
+		/// Gets all Messages and tries to send them
+		/// </summary>
+		/// <returns></returns>
+		public virtual IEnumerable<MessageData> GetAllUnsent()
+		{
+			yield break;
+		}
+
 		private string Path(SourceReference rId)
 		{
 			return "datas/" + rId.ToString();

@@ -115,6 +115,11 @@ public class MessageTests {
     /// </summary>
             [Test]
     public void LoadMessagesWithOffsetBig() {
+        // make sure the test conditions are met
+        FileController.DeleteFolder("messages");
+        FileController.Delete("chats");
+        ChatService.Instance.DeleteAll();
+
         UserService.Instance.ChangeCurrentUser(new SourceReference(5,12));
         List<LocalChatMessage> messages = new List<LocalChatMessage>();
         var chat = CreateChat();

@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System;
+using MessagePack;
+using Coflnet.Core.Commands;
+using Coflnet.Core.DeviceCommands;
+using Coflnet.Core;
 
 namespace Coflnet
 {
 
-	[DataContract]
+    [DataContract]
 	public class Device : Referenceable
 	{
 		private static CommandController commandController;
@@ -20,163 +24,126 @@ namespace Coflnet
 		/// Public Key is used for authetication purposes
 		/// </summary>
 		[DataMember]
-		private byte[] publicKey;
+		public byte[] PublicKey;
 		/// <summary>
 		/// Device secret used for authentication purposes
 		/// </summary>
 		[DataMember]
-		private string secret;
+		public string Secret;
 		/// <summary>
 		/// The device model, used for helping the user remember which device this is
 		/// </summary>
 		[DataMember]
-		private string model;
+		public string Model;
 		/// <summary>
 		/// If access was granted contains the current installed apps (applicationId) we know of
 		/// </summary>
 		[DataMember]
-		private List<string> installedApps;
+		public List<string> InstalledApps;
 		/// <summary>
 		/// users using this device
 		/// </summary>
 		[DataMember]
-		private List<Reference<CoflnetUser>> users;
+		public List<Reference<CoflnetUser>> Users;
 		/// <summary>
 		/// All IP-Adresses under which this device has connected until now
 		/// </summary>
 		[DataMember]
-		private List<string> ipAdresses;
+		public List<string> IpAdresses;
 		/// <summary>
 		/// The latesst location of the device
 		/// </summary>
 		[DataMember]
-		private LocationInfo location;
+		public RemoteObject<LocationInfo> Location;
 		/// <summary>
 		/// The device resolution
 		/// </summary>
 		[DataMember]
-		private Resolution resolution;
+		public Resolution Resolution;
 		/// <summary>
 		/// If this device should receive pushNotifications
 		/// </summary>
 		[DataMember]
-		private bool receiveNotifications;
+		public bool ReceiveNotifications;
 		/// <summary>
 		/// When revoked device has to be authenticated again to access the user
 		/// </summary>
 		[DataMember]
-		private bool revoked;
+		public bool Revoked;
 
 
 		/// <summary>
 		/// Messages in sending queue
 		/// </summary>
-		private List<MessageData> unsentMessages;
+		public List<MessageData> UnsentMessages;
 
 
 
-
-		public byte[] PublicKey
-		{
-			get
-			{
-				return publicKey;
-			}
-		}
-
-		public string Secret
-		{
-			get
-			{
-				return secret;
-			}
-		}
-
-		public string Model
-		{
-			get
-			{
-				return model;
-			}
-		}
-
-		public List<string> InstalledApps
-		{
-			get
-			{
-				return installedApps;
-			}
-		}
-
-		public List<Reference<CoflnetUser>> Users
-		{
-			get
-			{
-				return users;
-			}
-		}
-
-		public List<string> IpAdresses
-		{
-			get
-			{
-				return ipAdresses;
-			}
-		}
-
-		public LocationInfo Location
-		{
-			get
-			{
-				return location;
-			}
-		}
-
-		public Resolution Resolution
-		{
-			get
-			{
-				return resolution;
-			}
-		}
-
-		public bool ReceiveNotifications
-		{
-			get
-			{
-				return receiveNotifications;
-			}
-		}
-
-		public bool Revoked
-		{
-			get
-			{
-				return revoked;
-			}
-		}
-
-		public List<MessageData> UnsentMessages
-		{
-			get
-			{
-				return unsentMessages;
-			}
-		}
 
 		public Device(SourceReference owner) : base(owner)
 		{
+			
 		}
 
 
 
 		public Device() { }
 
+		static Device()
+		{
+			commandController = new CommandController(globalCommands);
+			commandController.RegisterCommand<DeviceInstalledCommand>();
+			commandController.RegisterCommand<AddUserCommand>();
+			commandController.RegisterCommand<RemoveUserCommand>();
+
+			// Add commands for the users list
+			RemoteList<Reference<CoflnetUser>>.AddCommands
+				(commandController,nameof(Users),m=>m.GetTargetAs<Device>().Users
+				,m=>new Reference<CoflnetUser>(m.GetAs<SourceReference>()));
+				
+			// Add commands for the installed apps list
+			RemoteList<string>.AddCommands
+				(commandController,nameof(InstalledApps),m=>m.GetTargetAs<Device>().InstalledApps);
+		}
+
 		public override CommandController GetCommandController()
 		{
 			return commandController;
 		}
 	}
+
+
+	
+	/// <summary>
+	/// Command that each device receives when the user has received a command (distribute)
+	/// </summary>
+	public class DeviceDistributeCommand : Command
+	{
+		/// <summary>
+		/// Execute the command logic with specified data.
+		/// </summary>
+		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+		public override void Execute(MessageData data)
+		{
+			// execute it on the local user
+			data.CoreInstance.ReceiveCommand(data.GetAs<MessageData>());
+		}
+
+		/// <summary>
+		/// Special settings and Permissions for this <see cref="Command"/>
+		/// </summary>
+		/// <returns>The settings.</returns>
+		public override CommandSettings GetSettings()
+		{
+			return new CommandSettings( );
+		}
+		/// <summary>
+		/// The globally unique slug (short human readable id) for this command.
+		/// </summary>
+		/// <returns>The slug .</returns>
+		public override string Slug => "usercmd";
+	}
+	
 
 	/// <summary>
 	/// Device/monitor resolution
@@ -251,90 +218,67 @@ namespace Coflnet
 	/// <summary>
 	/// Location information for a place on earth.
 	/// </summary>
+	[MessagePackObject]
 	public struct LocationInfo
 	{
-		private double _timestamp;
-
-		private float _latitude;
-
-		private float _longitude;
-
-		private float _altitude;
-
-		private float _horizontalAccuracy;
-
-		private float _verticalAccuracy;
-
 		/// <summary>
 		/// Geographical device location latitude
 		/// </summary>
 		/// <value>The latitude.</value>
+		[Key(0)]
 		public float latitude
 		{
-			get
-			{
-				return this._latitude;
-			}
+			get;set;
 		}
 
 		/// <summary>
 		/// Geographical device location latitude.
 		/// </summary>
 		/// <value>The longitude.</value>
+		[Key(1)]
 		public float longitude
 		{
-			get
-			{
-				return this._longitude;
-			}
+			get;set;
 		}
 
 		/// <summary>
 		/// Geographical device location altitude.
 		/// </summary>
 		/// <value>The altitude.</value>
+		[Key(2)]
 		public float altitude
 		{
-			get
-			{
-				return this._altitude;
-			}
+			get;set;
 		}
 
 		/// <summary>
 		/// Horizontal accuracy of the location.
 		/// </summary>
 		/// <value>The horizontal accuracy.</value>
+		[Key(3)]
 		public float horizontalAccuracy
 		{
-			get
-			{
-				return this._horizontalAccuracy;
-			}
+			get;set;
 		}
 
 		/// <summary>
 		/// Vertical accuracy of the location.
 		/// </summary>
 		/// <value>The vertical accuracy.</value>
+		[Key(4)]
 		public float verticalAccuracy
 		{
-			get
-			{
-				return this._verticalAccuracy;
-			}
+			get;set;
 		}
 
 		/// <summary>
 		/// Timestamp (in seconds since 1970) when location was captured.
 		/// </summary>
 		/// <value>The timestamp.</value>
+		[Key(5)]
 		public double timestamp
 		{
-			get
-			{
-				return this._timestamp;
-			}
+			get;set;
 		}
 	}
 }

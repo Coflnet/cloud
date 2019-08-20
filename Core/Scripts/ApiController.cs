@@ -22,7 +22,7 @@ public class ApiController
 	public delegate void ApiCallBack(string response, System.Net.HttpStatusCode statusCode);
 
 	public static ApiController instance;
-	private static string playerPrefsKey = "apiRequests";
+	//private static string playerPrefsKey = "apiRequests";
 
 	private List<UploadObject> uploads;
 
@@ -365,7 +365,7 @@ public class ApiController
 
 	void OnApplicationQuit()
 	{
-		UploadSaveObject uploadSave = new UploadSaveObject(uploads.ToArray());
+		//UploadSaveObject uploadSave = new UploadSaveObject(uploads.ToArray());
 		//SecurePlayerPrefs.SetString(playerPrefsKey, JsonUtility.ToJson(uploadSave));
 	}
 }

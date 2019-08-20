@@ -1,4 +1,5 @@
 ﻿
+using Coflent.Client;
 
 namespace Coflnet.Client
 {
@@ -36,6 +37,12 @@ namespace Coflnet.Client
 		{
 			if (ValuesController.HasKey("setupCompleted"))
 				return;
+
+			// get a device Id if we haven't yet
+			if(ConfigController.DeviceId == default(SourceReference))
+			{
+				DeviceService.Instance.Setup();
+			}
 
 			UnityEngine.Debug.Log("doing setup :)");
 

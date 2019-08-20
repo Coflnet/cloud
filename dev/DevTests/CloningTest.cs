@@ -80,6 +80,44 @@ public class CloningTest {
     }
 
 
+
+
+    [Test]
+    public void CloneAndSubscribeTest()
+    {
+        var aliceId = new SourceReference(2,3);
+        var bobId = new SourceReference(5,0);
+
+
+        DevCore.Init(aliceId,true);
+
+        var alice = DevCore.DevInstance.simulationInstances[aliceId].core;
+        var aliceServer = DevCore.DevInstance.simulationInstances[aliceId.FullServerId].core;
+        var bob = DevCore.DevInstance.AddServerCore(bobId).core;
+
+         var resource = new TestResource();
+        // register resource on bob
+        resource.AssignId(bob.ReferenceManager);
+        resource.specialNumber = 42;
+        // authorize access to the whole server
+        resource.GetAccess().Authorize(aliceId.FullServerId,AccessMode.WRITE);
+
+
+        // clone it
+        alice.CloneAndSubscribe(resource.Id);
+
+
+
+        // send (execute) command
+        bob.SendCommand<SimpleTestCommand,short>(resource.Id,0);
+
+        // assert that update was distributed
+        Assert.AreEqual(43,aliceServer.ReferenceManager.GetResource<TestResource>(resource.Id).specialNumber);
+        Assert.AreEqual(43,alice.ReferenceManager.GetResource<TestResource>(resource.Id).specialNumber);
+
+    }
+
+
     [DataContract]
     public class TestResource : Referenceable
     {
@@ -107,7 +145,9 @@ public class CloningTest {
 
         public override void Execute(MessageData data)
         {
-            foreach (var item in data.GetTargetAs<Referenceable>().Access.resourceAccess)
+            var res = data.GetTargetAs<Referenceable>();
+            var access = res.GetAccess();
+            foreach (var item in access.GetSpecialCases())
             {
                 Debug.Log($"{item.Key} has {item.Value} and {data.GetTargetAs<Referenceable>().Access.generalAccess}");   
             }
@@ -116,7 +156,7 @@ public class CloningTest {
 
         public override CommandSettings GetSettings()
         {
-            return new CommandSettings(ReadPermission.Instance);
+            return new CommandSettings(false,true,false,false,WritePermission.Instance);
         }
     }
 

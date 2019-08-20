@@ -54,7 +54,7 @@ namespace Coflnet.Client
 			get
 			{
 				return new MessageReference(
-					ConfigController.UserSettings.userId,
+					ConfigController.ActiveUserId,
 					ThreadSaveIdGenerator.NextId);
 			}
 		}

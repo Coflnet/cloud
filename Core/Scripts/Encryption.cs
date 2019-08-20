@@ -204,7 +204,7 @@ namespace Coflnet
 			if (nonce == null)
 			{
 				nonce = GetNonce(ciphertext);
-				byte[] cipherText = GetCipherText(ciphertext);
+				ciphertext = GetCipherText(ciphertext);
 			}
 
 			message = new byte[ciphertext.Length];
