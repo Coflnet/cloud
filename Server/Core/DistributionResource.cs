@@ -20,7 +20,7 @@ namespace Coflnet {
 				throw new System.NotImplementedException ();
 			}
 
-			public override CommandSettings GetSettings () {
+			protected override CommandSettings GetSettings () {
 				return new CommandSettings ();
 			}
 

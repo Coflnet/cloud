@@ -85,22 +85,17 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The URL.</returns>
 		/// <param name="path">Path.</param>
-		public static string GetUrl(string path, WebProtocol protocol = WebProtocol.https)
+		public static string GetUrl(string path, WebProtocol protocol = WebProtocol.https, long serverId = 0)
 		{
 			var protocolName = protocol.ToString();// Enum.GetName(typeof(WebProtocol), protocol);
-			return $"{protocolName}://{GetUrl((ushort)protocol)}/{path.TrimStart('/')}";
+			return $"{protocolName}://{GetUrl((ushort)protocol,serverId)}/{path.TrimStart('/')}";
 		}
 
-		public static string GetUrl(UInt16 port)
+		public static string GetUrl(UInt16 port,long serverId =0)
 		{
-			long serverId;
-			if (UserSettings == null)
+			if(serverId== 0)
 			{
-				serverId = ApplicationSettings.id.ServerId;
-			}
-			else
-			{
-				serverId = UserSettings.managingServers[0];
+				serverId = GetManagingServerId();
 			}
 
 			// serverId 1,1,* is reserved for development 
@@ -114,6 +109,18 @@ namespace Coflnet
 				BitConverter.GetBytes(serverId));
 
 			return $"{serverName}.coflnet.com:{port}";
+		}
+
+		private static long GetManagingServerId()
+		{
+			if (UserSettings == null)
+			{
+				return ApplicationSettings.id.ServerId;
+			}
+			else
+			{
+				return UserSettings.managingServers[0];
+			}
 		}
 
 		public static void Save()

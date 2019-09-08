@@ -8,10 +8,8 @@ namespace Coflnet
 	/// Single instance of a computer running the software
 	/// </summary>
 	[MessagePackObject]
-	public class CoflnetServer : Referenceable
+	public class CoflnetServer : ReceiveableResource
 	{
-		[Key(0)]
-		private long pId;
 		[IgnoreMember]
 		private string ip;
 		[IgnoreMember]
@@ -21,11 +19,6 @@ namespace Coflnet
 		/// </summary>
 		[IgnoreMember]
 		private long pingTimeMS;
-		/// <summary>
-		/// The servers public key
-		/// </summary>
-		[IgnoreMember]
-		private byte[] publicKey;
 		/// <summary>
 		/// Connection to this server
 		/// </summary>
@@ -112,7 +105,7 @@ namespace Coflnet
 		{
 			get
 			{
-				return pId.ToString();
+				return this.Id.ServerId.ToString();
 			}
 		}
 
@@ -125,7 +118,7 @@ namespace Coflnet
 		{
 			get
 			{
-				return pId;
+				return this.Id.ServerId;
 			}
 		}
 
@@ -197,6 +190,21 @@ namespace Coflnet
 			}
 		}
 
+		public ICommandTransmit GetOrCreateConnection()
+		{
+			if(Connection == null)
+			{	
+				var url = ConfigController.GetUrl("socket", ConfigController.WebProtocol.wss,this.Id.ServerId);
+				// create a new connection
+				Connection = new ClientSocket(new WebSocketSharp.WebSocket(url));
+				Connection.AddCallback(m=>CoflnetCore.Instance.ReceiveCommand(m));
+				
+			}
+
+			return Connection;
+
+		}
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:CoflnetServer"/> class.
 		/// 
@@ -204,22 +212,20 @@ namespace Coflnet
 		/// <param name="publicId">Public identifier of this server.</param>
 		public CoflnetServer(long publicId)
 		{
-			this.pId = publicId;
+			this.Id = new SourceReference(publicId,0);
 			this.pingTimeMS = long.MaxValue;
 			// TODO: try to load the server info from the master
 		}
 
-		public CoflnetServer(long publicId, string ip, long lastPong, byte[] publicKey)
+		public CoflnetServer(long publicId, string ip, long lastPong, byte[] publicKey) : this(publicId)
 		{
-			this.pId = publicId;
 			this.ip = ip;
 			this.lastPong = lastPong;
 			this.publicKey = publicKey;
 		}
 
-		public CoflnetServer(long pId, string ip, byte[] publicKey, List<ServerRole> roles, ServerState state)
+		public CoflnetServer(long pId, string ip, byte[] publicKey, List<ServerRole> roles, ServerState state): this(pId)
 		{
-			this.pId = pId;
 			this.ip = ip;
 			this.publicKey = publicKey;
 			this.roles = roles;

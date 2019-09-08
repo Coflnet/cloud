@@ -92,6 +92,7 @@ namespace Coflnet
 				UnityEngine.Debug.Log($"{requestingReference} is requesting {mode}");
 
 			//is there a special case?
+			// this allows to give everyone except a few specific Resources access
 			if (resourceAccess != null) {
 				if(resourceAccess.ContainsKey (requestingReference))
 					return resourceAccess[requestingReference].CompareTo (mode) >= 0;
@@ -115,8 +116,6 @@ namespace Coflnet
 			// check for same server
 			if (((((int)generalAccess))  & (int) mode) > 0)
 				return Owner.ServerId == requestingReference.ServerId;
-
-
 
 			// requestingReference doesn't have access
 			return false;

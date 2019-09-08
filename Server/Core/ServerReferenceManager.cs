@@ -41,7 +41,7 @@ namespace Coflnet.Server
 			var resource = reference.Resource;
 
 			if (resource != null) {
-				var command = resource.GetCommandController ().GetCommand (data.t);
+				var command = resource.GetCommandController ().GetCommand (data.type);
 				if(IAmTheManager)
 				{
 					// I can do everything
@@ -66,7 +66,7 @@ namespace Coflnet.Server
 						});
 					}
 
-					// confirm execution escept it is a confirm itself
+					// confirm execution except it is a confirm itself
 					if(ReceiveConfirm.CommandSlug != command.Slug)
 					{
 						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
@@ -97,16 +97,11 @@ namespace Coflnet.Server
 
 
 			if(!IAmTheManager && (!isTheSenderTheManager)){
-				UnityEngine.Debug.Log ($"distributing {data.t} to {data.rId}, IAmTheManager: {IAmTheManager}, isTheSenderTheManager: {isTheSenderTheManager}, mainManagingNode {mainManagingNode}, CurrentServerId {CurrentServerId}, ");
+				UnityEngine.Debug.Log ($"distributing {data.type} to {data.rId}, IAmTheManager: {IAmTheManager}, isTheSenderTheManager: {isTheSenderTheManager}, mainManagingNode {mainManagingNode}, CurrentServerId {CurrentServerId}, ");
 				// This message hasn't been on the manager yet, send it to him
 				// this occurs if I am the senders manager
 				coreInstance.SendCommand(data);
 			}
-
-
-			/// IMPORTANT
-			/// this could cause a loop if we are one of the sibblings managing nodes and are 
-			/// distributing this to the managing nodes and it will distribute it back
 		}
 
 
@@ -173,7 +168,7 @@ namespace Coflnet.Server
 		/// Special settings and Permissions for this <see cref="Command"/>
 		/// </summary>
 		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings()
+		protected override CommandSettings GetSettings()
 		{
 			return new CommandSettings( );
 		}

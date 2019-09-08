@@ -1,12 +1,20 @@
 ﻿using Coflnet;
+using MessagePack;
 
 namespace Coflnet {
 	/// <summary>
 	/// Receiveable resource.
 	/// Represents a <see cref="Referenceable"/> that is capeable of receiving commands on its own
 	/// </summary>
+	[MessagePackObject]
 	public abstract class ReceiveableResource : Referenceable {
 		protected static CommandController persistenceCommands;
+
+		/// <summary>
+		/// Public Signing key of the resource
+		/// </summary>
+		[Key("pk")]
+		public byte[] publicKey;
 
 		static ReceiveableResource () {
 			persistenceCommands = new CommandController ();
@@ -18,7 +26,6 @@ namespace Coflnet {
 			// each incoming command will be forwarded to the resource
 			try {
 				var command = base.ExecuteCommand (data);
-				UnityEngine.Debug.Log ($"ohh man");
 				if (command.Settings.Distribute) {
 					UnityEngine.Debug.Log ($"sending command ");
 					CoflnetCore.Instance.SendCommand (data);
@@ -26,6 +33,11 @@ namespace Coflnet {
 				return command;
 			} catch (CommandUnknownException e) {
 				UnityEngine.Debug.Log ($"didn't find Command {e.Slug} ");
+				
+				// this command is unkown to the us, if we are not the target persist it and send it later
+				if(data.rId != data.CoreInstance.Id)
+					MessageDataPersistence.Instance.SaveMessage(data);
+
 			}
 			return null;
 		}
@@ -41,7 +53,7 @@ namespace Coflnet {
 				}
 			}
 
-			public override CommandSettings GetSettings () {
+			protected override CommandSettings GetSettings () {
 				return new CommandSettings (IsSelfPermission.Instance);
 			}
 

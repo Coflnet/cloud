@@ -154,7 +154,7 @@ public class CloningTest {
             data.GetTargetAs<TestResource>().specialNumber++;
         }
 
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings(false,true,false,false,WritePermission.Instance);
         }

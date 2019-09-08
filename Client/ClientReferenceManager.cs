@@ -36,7 +36,7 @@ namespace Coflnet.Client {
 			var command = reference
 						.Resource
 						.GetCommandController ()
-						.GetCommand (data.t);
+						.GetCommand (data.type);
 
 			if(command.Settings.LocalPropagation)
 			{

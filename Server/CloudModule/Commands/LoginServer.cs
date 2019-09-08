@@ -18,7 +18,7 @@ namespace Coflnet.Server {
 			}
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings ();
 		}
 
@@ -59,14 +59,14 @@ namespace Coflnet.Server {
 				throw new LoginFailedException ("The token wasn't made for this server");
 			}
 
-			return (CoflnetEncryption.SignVertifyDetached (signature, TokenContent, publicKey));
+			return (LibsodiumEncryption.SignVertifyDetached (signature, TokenContent, publicKey));
 		}
 
 		public void GenerateAndSetSignature (KeyPair keys) {
 			if (keys == null || keys.secretKey == null) {
 				throw new NullReferenceException ($"{nameof(keys)} has to be set");
 			}
-			signature = CoflnetEncryption.SignByteDetached (TokenContent, keys);
+			signature = LibsodiumEncryption.SignByteDetached (TokenContent, keys);
 		}
 
 		private byte[] TokenContent {

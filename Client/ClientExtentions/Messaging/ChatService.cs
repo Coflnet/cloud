@@ -32,11 +32,15 @@ namespace Coflnet.Client.Messaging
 		{
 			this.ChatManager = chatManager;
 			this.MessageManager = messageManager;
+
+			DataController.Instance.RegisterSaveCallback(Save);
 		}
 
 		static ChatService()
 		{
 			Instance = new ChatService();
+
+
 		}
 
 		public event Action<ChatMessage> OnReceiveMessage;
@@ -148,7 +152,7 @@ namespace Coflnet.Client.Messaging
 		/// Saves all chats and messages to disc.
 		/// Should be executed when application is closed.
 		/// </summary>
-		public void Save()
+		public void Save(DataController dc)
 		{
 			ChatManager.SaveChats();
 			MessageManager.SaveMessages();

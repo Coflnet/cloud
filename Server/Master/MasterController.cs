@@ -19,7 +19,7 @@ namespace Coflnet.Server.Master {
 
 			}
 
-			public override CommandSettings GetSettings () {
+			protected override CommandSettings GetSettings () {
 				return new CommandSettings ();
 			}
 

@@ -87,7 +87,7 @@ public class CreationTests {
             return new TestResource();
         }
 
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings();
         }
@@ -103,7 +103,7 @@ public class CreationTests {
             return new TestResource(){value=options.Value};
         }
 
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings();
         }

@@ -36,7 +36,7 @@ public class CoreTests {
 				data.GetResource<TestResource> ().value = 5;
 			}
 
-			public override CommandSettings GetSettings () {
+			protected override CommandSettings GetSettings () {
 				return new CommandSettings ();
 			}
 
@@ -224,7 +224,7 @@ public class CoreTests {
 		MessageData response = null;
 		ClientSocket.Instance.Reconnect ();
 		ClientSocket.Instance.AddCallback (data => {
-			UnityEngine.Debug.Log ("received command : " + data.t);
+			UnityEngine.Debug.Log ("received command : " + data.type);
 			response = data;
 		});
 		ConfigController.ActiveUserId = SourceReference.Default;

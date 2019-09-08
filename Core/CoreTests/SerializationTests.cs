@@ -23,7 +23,7 @@ public class SerializationTests {
 			throw new TestException ();
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings ();
 		}
 

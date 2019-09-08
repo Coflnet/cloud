@@ -13,7 +13,7 @@ namespace Coflnet.Client
 				throw new System.NotImplementedException();
 			}
 
-			public override CommandSettings GetSettings()
+			protected override CommandSettings GetSettings()
 			{
 				return new CommandSettings(true);
 			}
@@ -35,7 +35,7 @@ namespace Coflnet.Client
 				throw new System.NotImplementedException();
 			}
 
-			public override CommandSettings GetSettings()
+			protected override CommandSettings GetSettings()
 			{
 				return new CommandSettings();
 			}
@@ -58,7 +58,7 @@ namespace Coflnet.Client
 				throw new System.NotImplementedException();
 			}
 
-			public override CommandSettings GetSettings()
+			protected override CommandSettings GetSettings()
 			{
 				throw new System.NotImplementedException();
 			}

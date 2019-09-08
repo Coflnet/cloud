@@ -160,7 +160,7 @@ namespace Coflnet.Client.Messaging
 			return chat;
         }
 
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings();
         }
@@ -199,7 +199,7 @@ namespace Coflnet.Client.Messaging
 			}
         }
 
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings(true,false,false,IsChatMember.Instance);
         }
@@ -221,7 +221,7 @@ namespace Coflnet.Client.Messaging
 		/// Special settings and Permissions for this <see cref="Command"/>
 		/// </summary>
 		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings()
+		protected override CommandSettings GetSettings()
 		{
 			return new CommandSettings( );
 		}

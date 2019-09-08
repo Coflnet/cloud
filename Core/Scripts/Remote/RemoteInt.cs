@@ -74,8 +74,7 @@ namespace Coflnet.Core
 		public static RemoteInt operator --(RemoteInt a)
 		{
 			a.Decrement();
-			// the core has updated the value by now
-			return a;
+			return new RemoteInt(a,a.Value--);
 		}
 
 
@@ -88,8 +87,7 @@ namespace Coflnet.Core
 		public static RemoteInt operator ++(RemoteInt a)
 		{
 			a.Increment();
-			// the core has updated the value by now
-			return a;
+			return new RemoteInt(a,a.Value++);
 		}
 	}
 

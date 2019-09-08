@@ -79,14 +79,14 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Executes the command found in the <see cref="MessageData.t"/>
+		/// Executes the command found in the <see cref="MessageData.type"/>
 		/// Returns the <see cref="Command"/> when done
 		/// </summary>
 		/// <returns>The command.</returns>
 		/// <param name="data">Data.</param>
 		public virtual Command ExecuteCommand (MessageData data) {
 			var controller = GetCommandController ();
-			var command = controller.GetCommand (data.t);
+			var command = controller.GetCommand (data.type);
 
 			controller.ExecuteCommand (command, data, this);
 

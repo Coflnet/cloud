@@ -4,8 +4,20 @@ using System.Collections.Generic;
 
 namespace Coflnet.Core
 {
-    public class RemoteDictionary<TKey, TValue> : RemoteObject<Dictionary<TKey, TValue>>, ICollection<KeyValuePair<TKey, TValue>>, IEnumerable<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
+    public class RemoteDictionary<TKey, TValue> : RemoteObject<IDictionary<TKey, TValue>>, ICollection<KeyValuePair<TKey, TValue>>, IEnumerable<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
     {
+        public RemoteDictionary()
+        {
+        }
+
+        public RemoteDictionary(RemoteObject<IDictionary<TKey, TValue>> remoteObject) : base(remoteObject)
+        {
+        }
+
+        public RemoteDictionary(string nameOfAttribute, Referenceable parent) : base(nameOfAttribute, parent)
+        {
+        }
+
         public TValue this[TKey key] 
         { 
             get 
@@ -43,8 +55,8 @@ namespace Coflnet.Core
 
         public bool Contains(KeyValuePair<TKey, TValue> item)
         {
-            //return Value.Contains(item);
-            throw new NotImplementedException();
+            return Value.Contains(item);
+            //throw new NotImplementedException();
         }
 
         public bool ContainsKey(TKey item)
@@ -55,9 +67,9 @@ namespace Coflnet.Core
         public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
 
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
 
-           // Value.CopyTo(array,arrayIndex);
+            Value.CopyTo(array,arrayIndex);
         }
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
@@ -84,6 +96,66 @@ namespace Coflnet.Core
         IEnumerator IEnumerable.GetEnumerator()
         {
             return Value.GetEnumerator();
+        }
+
+
+
+        public static new void AddCommands(CommandController controller,string nameOfAttribute, Func<MessageData,IDictionary<TKey, TValue>> getter,Action<MessageData,IDictionary<TKey, TValue>> setter)
+        {
+            RemoteObject<IDictionary<TKey, TValue>>.AddCommands(controller,nameOfAttribute,getter,setter);
+
+        }
+
+
+    }
+
+
+    public class RemoteCollectionClearCommand<TContent> : RemoteChangeCommandBase<ICollection<TContent>>
+    {
+        /// <summary>
+        /// Creates a new Instance of the <see cref="RemoteCollectionClearCommand"/> class.
+        /// </summary>
+        /// <param name="nameOfAttribute">nameof() the attribute the getter will return</param>
+        /// <param name="getter">A function to get the collection</param>
+        /// <param name="applyLocal">wherether or not this command should be applied locally</param>
+        public RemoteCollectionClearCommand(string nameOfAttribute, Func<MessageData, ICollection<TContent>> getter, bool applyLocal = false) 
+        : base("clear"+nameOfAttribute, getter, applyLocal)
+        {
+        }
+
+
+        /// <summary>
+        /// Execute the command logic with specified data.
+        /// </summary>
+        /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+        public override void Execute(MessageData data)
+        {
+            getter.Invoke(data).Clear();
+        }
+    }
+
+
+    public class RemoteCollectionAddCommand<TContent> : RemoteChangeCommandBase<ICollection<TContent>>
+    {
+        /// <summary>
+        /// Creates a new Instance of the <see cref="RemoteCollectionClearCommand"/> class.
+        /// </summary>
+        /// <param name="nameOfAttribute">nameof() the attribute the getter will return</param>
+        /// <param name="getter">A function to get the collection</param>
+        /// <param name="applyLocal">wherether or not this command should be applied locally</param>
+        public RemoteCollectionAddCommand(string nameOfAttribute, Func<MessageData, ICollection<TContent>> getter, bool applyLocal = false) 
+        : base("add"+nameOfAttribute, getter, applyLocal)
+        {
+        }
+
+
+        /// <summary>
+        /// Execute the command logic with specified data.
+        /// </summary>
+        /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
+        public override void Execute(MessageData data)
+        {
+            getter.Invoke(data).Add(data.GetAs<TContent>());
         }
     }
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Coflnet;
+using Coflnet.Core.Crypto;
 using MessagePack;
 
 public class EncryptionController {
@@ -17,7 +18,7 @@ public class EncryptionController {
 	 * [] backup chats
 	 */
 
-	public static EncryptionController instance;
+	public static EncryptionController Instance;
 
 	private Dictionary<SourceReference, Encrypt> encryptionInstances;
 	private Dictionary<SourceReference, EndToEndEncrypt> endToEndEncryptInstances;
@@ -35,6 +36,7 @@ public class EncryptionController {
 
 	}
 
+
 	public EncryptionController () {
 
 		encryptionInstances = new Dictionary<SourceReference, Encrypt> ();
@@ -43,11 +45,11 @@ public class EncryptionController {
 	}
 
 	static EncryptionController () {
-		instance = new EncryptionController ();
+		Instance = new EncryptionController ();
 
-		var cc = CoflnetCore.Instance.GetCommandController ();
-		cc.RegisterCommand (new LegacyCommand ("sessionSetup", instance.ReceiveSessionSetup));
-		cc.RegisterCommand (new LegacyCommand ("resendSetup", instance.RequestResendSetup));
+		var cc = CoflnetCore.CoreCommands;
+		cc.RegisterCommand (new LegacyCommand ("sessionSetup", Instance.ReceiveSessionSetup));
+		cc.RegisterCommand (new LegacyCommand ("resendSetup", Instance.RequestResendSetup));
 		cc.RegisterCommand<ReceivedSetup> ();
 
 	}
@@ -93,6 +95,13 @@ public class EncryptionController {
 			return new EndToEndEncrypt (partner);
 		}
 	}
+
+
+	/// <summary>
+	/// The Active secure enough to use, hopefully unbrocken Signgin Algrorytm to use by the application
+	/// </summary>
+	/// <returns></returns>
+	public SigningAlgorythm SigningAlgorythm => new LibsodiumSignature();
 
 	/// <summary>
 	/// Saves the end to end encrypt.
@@ -196,7 +205,7 @@ public class EncryptionController {
 
 	public void ReceiveSessionSetup (SourceReference from, ChatSetupHeader header) {
 		var partner = GetEncrypt (from);
-		var p2 = new CoflnetEncryption ();
+		var p2 = new LibsodiumEncryption ();
 
 		if (header == null)
 			throw new NullReferenceException ("Error:/ message doesn't contain setup headers and session keys are missing");
@@ -217,7 +226,7 @@ public class EncryptionController {
 
 	public class SessionSetup : Command {
 		public override void Execute (MessageData data) {
-			var encrypt = instance.GetEndToEndEncrypt (data.sId);
+			var encrypt = Instance.GetEndToEndEncrypt (data.sId);
 			var setup = data.GetAs<ChatSetupHeader> ();
 			var ephermeralKeyPair = KeyPairManager.Instance.GetKeyPair (setup.publicOneTimeKey);
 
@@ -231,7 +240,7 @@ public class EncryptionController {
 			}
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (false, false);
 		}
 
@@ -245,10 +254,10 @@ public class EncryptionController {
 
 	public class ResendSetup : Command {
 		public override void Execute (MessageData data) {
-			instance.SendSetup (data.sId);
+			Instance.SendSetup (data.sId);
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (false, false);
 		}
 
@@ -268,7 +277,7 @@ public class EncryptionController {
 
 	public class ReceivedSetup : Command {
 		public override void Execute (MessageData data) {
-			if (new SourceReference (data.Data) != instance.Me) {
+			if (new SourceReference (data.Data) != Instance.Me) {
 				Track.instance.SendTrackingRequest ("session setup failed userId info is: " + data.Data);
 
 				// this is unexpected
@@ -279,10 +288,10 @@ public class EncryptionController {
 				// To avoid destroying current session none of them will happen
 			}
 
-			instance.GetEndToEndEncrypt (data.sId).DestroyTempKeys ();
+			Instance.GetEndToEndEncrypt (data.sId).DestroyTempKeys ();
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (false, true);
 		}
 
@@ -499,11 +508,11 @@ public class EncryptionController {
 
 	public void LoadKeysAsync () {
 		DataController.Instance.LoadObjectAsync<UserKeys> ("ownKeys", data => {
-			instance.ownKeys = data;
+			Instance.ownKeys = data;
 			EndToEndEncrypt.SetOwnKeys (data, null);
 		});
 		DataController.Instance.LoadObjectAsync<UserKeys> ("oldOwnKeys", data => {
-			instance.oldOwnKeys = data;
+			Instance.oldOwnKeys = data;
 		});
 	}
 
@@ -565,7 +574,7 @@ public class EncryptionController {
 			byte[] publicIdentKey = args.publicIdentKey;
 			byte[] publicPreKey = EndToEndEncrypt.SignByteOpen (args.publicPreKey, publicIdentKey);
 
-			var encrypt = instance.GetEndToEndEncrypt (args.id);
+			var encrypt = Instance.GetEndToEndEncrypt (args.id);
 
 			// validate identity
 			if (encrypt.PublicIdentKey != null && !encrypt.PublicIdentKey.SequenceEqual (publicIdentKey)) {
@@ -574,14 +583,14 @@ public class EncryptionController {
 
 			encrypt.DeriveKeysClient (publicIdentKey, publicPreKey, args.oneTimeKey);
 
-			instance.SaveEndToEndEncrypt (encrypt);
+			Instance.SaveEndToEndEncrypt (encrypt);
 
 			// send the setup headers
-			instance.SendSetup (args.id);
+			Instance.SendSetup (args.id);
 
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings ();
 		}
 

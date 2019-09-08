@@ -3,6 +3,10 @@ using System.Runtime.Serialization;
 
 namespace Coflnet
 {
+	/// <summary>
+	/// Strong type for remote objects based on <see cref="SoureReference"/> as <see cref="ReferenceId"/>
+	/// </summary>
+	/// <typeparam name="T">The type this Reference represents</typeparam>
     [DataContract (Name = "ref", Namespace = "")]
 	public class Reference<T> where T : Referenceable {
 		/// <summary>
@@ -17,7 +21,7 @@ namespace Coflnet
 		/// Executes a command on the server containing the resource referenced by this object
 		/// </summary>
 		/// <param name="data">Command data to send</param>
-		public void ExecuteForResource (MessageData data) {
+		public virtual void ExecuteForResource (MessageData data) {
 			ReferenceManager.Instance.ExecuteForReference (data);
 		}
 
@@ -91,5 +95,55 @@ namespace Coflnet
             return reference != null &&
                    EqualityComparer<SourceReference>.Default.Equals(ReferenceId, reference.ReferenceId);
         }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1388343608;
+            hashCode = hashCode * -1521134295 + EqualityComparer<SourceReference>.Default.GetHashCode(ReferenceId);
+            return hashCode;
+        }
     }
+
+	[DataContract(Name="sref",Namespace="")]
+	public class SecureReference<T> : Reference<T> where T:SecuredResource
+	{
+		[DataMember(Name="kp")]
+		public SigningKeyPair KeyPair;
+
+        public SecureReference(SigningKeyPair keyPair)
+        {
+            KeyPair = keyPair;
+        }
+
+		public SecureReference()
+        {
+        }
+
+		/// <summary>
+		/// Executes a command on the referenced <see cref="SecuredResource"/> 
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <typeparam name="TCommand"></typeparam>
+        public virtual void ExecuteForResource<TCommand>(SourceReference sender = default(SourceReference)) where TCommand:Command
+        {
+			Token token;
+			if(KeyPair.secretKey == null)
+			{
+				token = TokenManager.Instance.GetToken(ReferenceId);
+			} else 
+			{
+				// we can generate a new token
+				token = TokenManager.Instance.GenerateNewToken(ReferenceId, sender, KeyPair);
+			}
+
+
+			CoflnetCore.Instance.SendCommand<TCommand,Token>(
+                ReferenceId,
+                token,
+                0,
+                sender);
+        }
+    }
+
+
 }

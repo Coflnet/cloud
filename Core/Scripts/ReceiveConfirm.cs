@@ -18,7 +18,7 @@ namespace Coflnet {
 			MessageDataPersistence.Instance.Remove (data.sId, dataParams.sender, dataParams.messageId);
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings ();
 		}
 

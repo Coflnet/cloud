@@ -34,7 +34,7 @@ namespace Coflnet.Client {
 			ClientSocket.Instance.AddCallback (ClientInstance.OnMessage);
 		}
 
-		public ClientCore () : this (new CommandController (globalCommands), ClientSocket.Instance) { }
+		public ClientCore () : this (new CommandController (CoreCommands), ClientSocket.Instance) { }
 
 		public ClientCore (CommandController commandController, ClientSocket socket) : this(commandController,socket,ReferenceManager.Instance) {
 		}
@@ -107,6 +107,7 @@ namespace Coflnet.Client {
 		public static void Stop () {
 			Save ();
 			ClientInstance.socket.Disconnect ();
+			Instance.InvokeOnExit();
 		}
 
 		public static void Save () {
@@ -130,7 +131,7 @@ namespace Coflnet.Client {
 		}
 
 		/// <summary>
-		/// Executes the command found in the <see cref="MessageData.t"/>
+		/// Executes the command found in the <see cref="MessageData.type"/>
 		/// Returns the <see cref="Command"/> when done
 		/// </summary>
 		/// <returns>The command.</returns>
@@ -140,7 +141,7 @@ namespace Coflnet.Client {
 			// special case: command targets user itself 
 
 			var controller = GetCommandController ();
-			var command = controller.GetCommand (data.t);
+			var command = controller.GetCommand (data.type);
 
 			controller.ExecuteCommand (command, data, this);
 

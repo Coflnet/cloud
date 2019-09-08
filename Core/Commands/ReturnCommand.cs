@@ -16,7 +16,7 @@ namespace Coflnet
 		{
 			var returnData = ExecuteWithReturn(data);
 			// set headers
-			returnData.t = "response";
+			returnData.type = "response";
 			returnData.rId = data.sId;
 			returnData.sId = data.rId;
 
@@ -30,7 +30,7 @@ namespace Coflnet
 
 		public abstract MessageData ExecuteWithReturn(MessageData data);
 
-		public override CommandSettings GetSettings()
+		protected override CommandSettings GetSettings()
 		{
 			return new CommandSettings(true,true,false,false);
 		}
@@ -64,7 +64,7 @@ namespace Coflnet
 		/// Special settings and Permissions for this <see cref="Command"/>
 		/// </summary>
 		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings()
+		protected override CommandSettings GetSettings()
 		{
 			return new CommandSettings();
 		}
@@ -143,7 +143,7 @@ namespace Coflnet
 			data.CoreInstance.ReferenceManager.UpdateIdAndAddRedirect(pair.Key,pair.Value);
         }
 
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings();
         }

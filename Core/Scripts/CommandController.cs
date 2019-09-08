@@ -133,9 +133,9 @@ namespace Coflnet {
 		/// <param name="target">Target.</param>
 		public void ExecuteCommand (Command command, MessageData data, Referenceable target = null) {
 			// test Permissions
-			var settings = command.GetSettings ();
+			var settings = command.Settings;
 			if (settings.Permissions != null) {
-				foreach (var item in command.GetSettings ().Permissions) {
+				foreach (var item in settings.Permissions) {
 					if (!item.CheckPermission (data, target)) {
 						UnityEngine.Debug.Log (MessagePackSerializer.ToJson (data));
 						UnityEngine.Debug.Log ("concludes to : " + item.CheckPermission (data, target));
@@ -152,7 +152,7 @@ namespace Coflnet {
 		/// </summary>
 		/// <param name="data">Decoded object sent from the server</param>
 		public void ExecuteCommand (MessageData data, Referenceable target = null) {
-			var command = GetCommand (data.t);
+			var command = GetCommand (data.type);
 			ExecuteCommand (command, data, target);
 		}
 
@@ -182,7 +182,7 @@ namespace Coflnet {
 		/// <param name="data">The data from the server which to execute the command with</param>
 		public static void ExecuteCommandInCurrentThread (Command command, MessageData data) {
 			if (command.Settings.Encrypted)
-				EncryptionController.instance.ReceiveEncryptedCommand (command, data);
+				EncryptionController.Instance.ReceiveEncryptedCommand (command, data);
 			else
 				command.Execute (data);
 		}
@@ -252,7 +252,7 @@ namespace Coflnet {
 		/// Use the attribute Settings to get the caches settings.
 		/// </summary>
 		/// <returns>The settings.</returns>
-		public abstract CommandSettings GetSettings ();
+		protected abstract CommandSettings GetSettings ();
 
 		/// <summary>
 		/// Sends a command to the server
@@ -417,7 +417,7 @@ namespace Coflnet {
 	}
 
 	public abstract class ServerCommand : Command {
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return GetServerSettings ();
 		}
 
@@ -508,7 +508,7 @@ namespace Coflnet {
 	}
 
 	public class RegisterDevice : CreationCommand {
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			// everyone can register devices
 			return new CommandSettings ();
 		}
@@ -552,7 +552,7 @@ namespace Coflnet {
 			}
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			throw new NotImplementedException ();
 		}
 
@@ -684,7 +684,7 @@ namespace Coflnet {
 			}
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (oldCommand.IsThreadAble (), oldCommand.IsEncrypted ());
 		}
 

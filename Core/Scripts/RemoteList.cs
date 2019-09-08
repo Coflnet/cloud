@@ -35,18 +35,13 @@ namespace Coflnet
 		}
 
 
-		public void RemoteRemoveAt(int index)
-		{
-			Send("RemoveAt",index);
-		}
-
-		public void RemoteRemoveRange(int index,int count)
+		public void RemoveRange(int index,int count)
 		{
 			Send("RemoveRange",ValueTuple.Create<int,int>(index,count));
 		}
 
 
-		public void RemoteAddRange(T[] elements)
+		public void AddRange(T[] elements)
 		{
 			Send<T[]>("AddRange",elements);
 		}
@@ -163,17 +158,19 @@ namespace Coflnet
 		/// <param name="prefix">The prefix for the commands, usually the attribute name</param>
 		///  <param name="ListGetter">A function that returns the actual list to operate on, given the target <see cref="Referenceable"/> </param>
 		/// <param name="Converter">A function that converts the data given in the <see cref="MessageData"/> content to the List type</param>
+		/// <param name="localPropagation">Set to true if commands don't have to pass the managing server first to be applied locally</param>
 		/// <typeparam name="R">The target  <see cref="Referenceable"/> type</typeparam>
 		/// <typeparam name="T">The type of the list elements</typeparam>
-		public static void AddCommands(CommandController controller,string prefix, Func<MessageData,List<T>> ListGetter, Func<MessageData,T> Converter = null)
+		public static void AddCommands(CommandController controller,string prefix, Func<MessageData,List<T>> ListGetter, Func<MessageData,T> Converter = null,bool localPropagation = false)
 		{
+			controller.RegisterCommand(new GetCommand(prefix,ListGetter));
 			// commands have no plural s
 			prefix = prefix.Trim('s');
 
-			controller.RegisterCommand(new RemoteListAddCommand<T>(prefix,ListGetter,Converter));
+			controller.RegisterCommand(new RemoteCollectionAddCommand<T>(prefix,ListGetter,localPropagation));
 			controller.RegisterCommand(new RemoteListRemoveCommand<T>(prefix,ListGetter,Converter));
 			controller.RegisterCommand(new RemoteListRemoveAtCommand<T>(prefix,ListGetter,Converter));
-			controller.RegisterCommand(new RemoteListClearCommand<T>(prefix,ListGetter,Converter));
+			controller.RegisterCommand(new RemoteCollectionClearCommand<T>(prefix,ListGetter,localPropagation));
 			controller.RegisterCommand(new RemoteListAddRangeCommand<T>(prefix,ListGetter,null));
 			controller.RegisterCommand(new RemoteListRemoveRangeCommand<T>(prefix,ListGetter,Converter));
 			controller.RegisterCommand(new RemoteListInsertRangeCommand<T>(prefix,ListGetter,Converter));
@@ -257,7 +254,7 @@ public class ListAddCommand<T> : Command
 	/// Special settings and Permissions for this <see cref="Command"/>
 	/// </summary>
 	/// <returns>The settings.</returns>
-	public override CommandSettings GetSettings()
+	protected override CommandSettings GetSettings()
 	{
 		return new CommandSettings(IsOwnerPermission.Instance );
 	}
@@ -297,7 +294,7 @@ public class RemoteListCommand : Command
 	/// Special settings and Permissions for this <see cref="Command"/>
 	/// </summary>
 	/// <returns>The settings.</returns>
-	public override CommandSettings GetSettings()
+	protected override CommandSettings GetSettings()
 	{
 		return new CommandSettings(true,true,false,false,WritePermission.Instance);
 	}
@@ -308,7 +305,48 @@ public class RemoteListCommand : Command
 	public override string Slug => "ListUpdate";
 }
 
+public abstract class RemoteChangeCommandBase<T> : Command
+{
+	protected Func<MessageData,T> getter;
 
+	protected bool applyLocal;
+
+
+	/// <summary>
+	/// Creates a new Command instance
+	/// </summary>
+	/// <param name="nameOfAttribute">nameOf() attribute this command coresponds to and the getter returns</param>
+	/// <param name="getter">Function that given the Incoming <see cref="MessageData"/> returns the atrribute</param>
+	/// <param name="applyLocal">If <see cref="true"/> change will be applied locally bevore being sent to server</param>
+	public RemoteChangeCommandBase(string nameOfAttribute,Func<MessageData,T> getter,bool applyLocal = false)
+	{
+		this.getter =getter;
+		this.Slug = nameOfAttribute;
+		this.applyLocal = applyLocal;
+	}
+
+	/// <summary>
+	/// Special settings and Permissions for this <see cref="Command"/>
+	/// </summary>
+	/// <returns>The settings.</returns>
+	protected override CommandSettings GetSettings()
+	{
+		// it isn't thread save
+		// it should be distributed
+		// not encrypted
+		// may or may not be applied local
+		return new CommandSettings(true,true,false,applyLocal,WritePermission.Instance);
+	}
+
+
+	/// <summary>
+	/// The globally unique slug (short human readable id) for this command.
+	/// </summary>
+	/// <returns>The slug .</returns>
+	public override string Slug {
+		get;
+	}
+}
 
 public abstract class RemoteListCommandBase<T> : Command
 {
@@ -335,7 +373,7 @@ public abstract class RemoteListCommandBase<T> : Command
 	/// Special settings and Permissions for this <see cref="Command"/>
 	/// </summary>
 	/// <returns>The settings.</returns>
-	public override CommandSettings GetSettings()
+	protected override CommandSettings GetSettings()
 	{
 		return new CommandSettings(true,true,false,false,WritePermission.Instance);
 	}
@@ -386,23 +424,6 @@ public class RemoteListRemoveCommand<T> : RemoteListCommandBase<T>
 	}
 }
 
-
-public class RemoteListClearCommand<T> : RemoteListCommandBase<T>
-{
-    public RemoteListClearCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T> Converter) 
-	: base("Clear" + Slug, ListGetter, Converter)
-    {
-    }
-
-    /// <summary>
-    /// Execute the command logic with specified data.
-    /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
-	{
-		ListGetter.Invoke(data).Clear();
-	}
-}
 
 public class RemoteListAddRangeCommand<T> : RemoteListCommandBase<T>
 {

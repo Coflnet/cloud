@@ -108,8 +108,13 @@ namespace Coflnet
 		/// <typeparam name="T">Type to deserialize to.</typeparam>
 		public T LoadObject<T>(string relativePath, Func<T> createNew = null)
 		{
-			if(!FileController.Exists(relativePath)&&createNew != null){
-				return createNew();
+			if(!FileController.Exists(relativePath)){
+				if(createNew != null)
+					return createNew();
+				else
+				{
+					return (T)Activator.CreateInstance(typeof(T));
+				}
 			}
 			return MessagePackSerializer.Deserialize<T>(LoadData(relativePath));
 		}
@@ -165,7 +170,7 @@ namespace Coflnet
 		/// <param name="phrase">Phrase.</param>
 		public void DeriveEncryptionKeyFromPassphrase(string phrase)
 		{
-			SetEncryptionKey(CoflnetEncryption.Hash(System.Text.Encoding.UTF8.GetBytes(phrase)));
+			SetEncryptionKey(LibsodiumEncryption.Hash(System.Text.Encoding.UTF8.GetBytes(phrase)));
 		}
 
 		/// <summary>
@@ -196,6 +201,15 @@ namespace Coflnet
 						FileController.Move(tempName, path);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Registers a callback that will be executed whenever a save is necessary, eg on close 
+		/// </summary>
+		/// <param name="callback"></param>
+		public void RegisterSaveCallback(Action<DataController> callback)
+		{
+			CoflnetCore.Instance.OnApplicationExit += ()=>callback.Invoke(this);
 		}
 	}
 }

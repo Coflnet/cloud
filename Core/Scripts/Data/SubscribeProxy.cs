@@ -7,7 +7,7 @@ namespace Coflnet.Core
     /// Temporary proxy till cloning of resource is done
     /// </summary>
     [DataContract]
-    public class SubscribeProxy : Referenceable
+    public class SubscribeProxy : Referenceable,IProxyReferenceable
     {
         
 
@@ -40,7 +40,7 @@ namespace Coflnet.Core
                 data.GetTargetAs<Referenceable>().ExecuteCommand(data);
             }
 
-            public override CommandSettings GetSettings()
+            protected override CommandSettings GetSettings()
             {
                 return new CommandSettings(false,false,false);
             }

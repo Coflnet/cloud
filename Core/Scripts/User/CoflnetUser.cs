@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Coflnet.Core;
 using Coflnet.Core.User;
+using MessagePack;
 
 namespace Coflnet {
 	/// <summary>
@@ -46,8 +48,15 @@ namespace Coflnet {
 		/// <summary>
 		/// The name of the user.
 		/// </summary>
-		[IgnoreDataMember]
-		public string userName;
+		[DataMember]
+		public RemoteString UserName;
+
+
+		/// <summary>
+		/// References to App specific data. Eg settings or game Progress
+		/// </summary>
+		public RemoteDictionary<SourceReference,Reference<ApplicationData>> appData;
+
 		/// <summary>
 		/// The first name of the user.
 		/// </summary>
@@ -263,7 +272,6 @@ namespace Coflnet {
 			commandController = new CommandController (persistenceCommands);
 			commandController.RegisterCommand<GetUserKeyValue> ();
 			commandController.RegisterCommand<SetUserKeyValue> ();
-			commandController.RegisterCommand<UpdateUserNameCommand>();
 		}
 
 		/// <summary>
@@ -285,15 +293,7 @@ namespace Coflnet {
 
 		#region getter
 
-		[IgnoreDataMember]
-		public string UserName {
-			get {
-				return userName;
-			}
-			protected set {
-				userName = value;
-			}
-		}
+
 
 		[DataMember]
 		public string FirstName {
@@ -494,7 +494,7 @@ namespace Coflnet {
 					args);
 			}
 
-			public override CommandSettings GetSettings () {
+			protected override CommandSettings GetSettings () {
 				return new CommandSettings ();
 			}
 
@@ -522,7 +522,7 @@ namespace Coflnet {
 			return returnData;
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings ();
 		}
 
@@ -564,7 +564,7 @@ namespace Coflnet {
 	/// </summary>
 	public abstract class ValueSetter : Command {
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (false, true, false, true, WritePermission.Instance);
 		}
 	}
@@ -593,15 +593,74 @@ namespace Coflnet {
 	}
 
 	/// <summary>
-	/// Get basic info about the user in one object
+	/// Application specific data for some user
 	/// </summary>
-	public class GetBasicInfo : Command {
+	[MessagePackObject]
+    public class ApplicationData : Referenceable,IMessagePackSerializationCallbackReceiver
+    {
+		private static CommandController commands = new CommandController();
+
+		[Key("aId")]
+		public SourceReference ApplicationId;
+
+		[Key("kv")]
+		public RemoteDictionary<string,string> KeyValues;
+
+
+		/// <summary>
+		/// Creates a new Instance of the <see cref="ApplicationData"/> class.
+		/// </summary>
+		/// <param name="applicationId">The application this data coresponds to</param>
+		public ApplicationData(SourceReference applicationId)
+		{
+			this.ApplicationId = applicationId;
+			KeyValues = new RemoteDictionary<string, string>();
+			OnAfterDeserialize();
+		}
+
+		/// <summary>
+		/// Creates a new Instance of the <see cref="ApplicationData"/> class.
+		/// This constructor doesn't initialize any of the values and is meant for deserialization only.
+		/// If you use it, call <see cref="ApplicationData.OnAfterDeserialize()"/> afterwards.
+		/// </summary>
+		public ApplicationData()
+		{}
+
+		static ApplicationData()
+		{
+			RemoteDictionary<string,string>.AddCommands(commands,nameof(KeyValues),
+					m=>m.GetTargetAs<ApplicationData>().KeyValues,
+					(m,newD)=>{m.GetTargetAs<ApplicationData>().KeyValues.Value = newD;});
+		}
+
+        public override CommandController GetCommandController()
+        {
+            return commands;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            return;
+        }
+
+        public void OnAfterDeserialize()
+        {
+            KeyValues.SetDetails(nameof(KeyValues),this);
+        }
+    }
+
+
+    /// <summary>
+    /// Get basic info about the user in one object
+    /// </summary>
+    public class GetBasicInfo : Command {
 		public override void Execute (MessageData data) {
 			var result = new PublicUserInfo ();
 			var user = ReferenceManager.Instance.GetResource<CoflnetUser> (data.rId);
 
-			result.userName = user.userName;
-			result.userId = user.Id;
+			result.userName = user.UserName;
+			result.GetAccess().Owner = user.Id;
+			
 			if (user.PrivacySettings["share-profile-picture"]) {
 				result.profilePicture = user.ProfileImage;
 			}
@@ -609,7 +668,7 @@ namespace Coflnet {
 			data.SendBack (MessageData.CreateMessageData<BasicInfoResponse, PublicUserInfo> (data.sId, result));
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (IsAuthenticatedPermission.Instance, IsNotBockedPermission.Instance);
 		}
 
@@ -627,7 +686,7 @@ namespace Coflnet {
 			throw new NotImplementedException ();
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			throw new NotImplementedException ();
 		}
 

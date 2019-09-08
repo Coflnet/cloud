@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using Coflnet.Core.Commands;
+using MessagePack;
 
 namespace Coflnet
 {
@@ -194,10 +196,39 @@ namespace Coflnet
 				this.AddReference(resource);
 				afterReceive?.Invoke(resource);
 			});
-
-			
 		}
 
+
+		/// <summary>
+		/// Copies a resource to a new id
+		/// </summary>
+		/// <param name="originId">The idof the object to copy</param>
+		/// <param name="newId">The id to assign the new object</param>
+		public Referenceable CopyResource(SourceReference originId, SourceReference newId)
+		{
+			return CopyResource(GetResource<Referenceable>(originId),newId);
+		}
+
+
+		/// <summary>
+		/// Copies a resource to a new id
+		/// </summary>
+		/// <param name="originId">The idof the object to copy</param>
+		/// <param name="newId">The id to assign the new object</param>
+		public Referenceable CopyResource(Referenceable originId, SourceReference newId = default(SourceReference))
+		{
+			MemoryStream s = new MemoryStream();
+			MessagePackSerializer.Typeless.Serialize(s,originId);
+			var newObject = MessagePackSerializer.Typeless.Deserialize(s) as Referenceable;
+
+			if(newId == default(SourceReference))
+			{
+				newId = SourceReference.NextLocalId;
+			}
+			newObject.Id = newId;
+			AddReference(newObject);
+			return newObject;
+		}
 
 
 
@@ -272,10 +303,12 @@ namespace Coflnet
 			InnerReference<Referenceable> reference;
 			TryGetReference (id, out reference);
 
+			// make sure it exists so <see cref="GetResource<T>(id)"/> won't fail
 			if (reference == null || reference.Resource == null) {
 				data = null;
 				return false;
 			}
+
 
 			data = GetResource<T> (id);
 			return true;
@@ -447,10 +480,9 @@ namespace Coflnet
 
 
 			var resource = reference.Resource;
-			bool acknowledge = false;
 
 			if (resource != null) {
-				var command = resource.GetCommandController ().GetCommand (data.t);
+				var command = resource.GetCommandController ().GetCommand (data.type);
 				if(IAmTheManager)
 				{
 					// I can do everything
@@ -517,7 +549,7 @@ namespace Coflnet
 
 
 			if(!IAmTheManager && (!isTheSenderTheManager) && !data.rId.IsLocal){
-				UnityEngine.Debug.Log ($"distributing {data.t} to {data.rId}, IAmTheManager: {IAmTheManager}, isTheSenderTheManager: {isTheSenderTheManager}, mainManagingNode {mainManagingNode}, CurrentServerId {CurrentServerId}, ");
+				UnityEngine.Debug.Log ($"distributing {data.type} to {data.rId}, IAmTheManager: {IAmTheManager}, isTheSenderTheManager: {isTheSenderTheManager}, mainManagingNode {mainManagingNode}, CurrentServerId {CurrentServerId}, ");
 				// This message hasn't been on the manager yet, send it to him
 				reference.ExecuteForResource(data);
 			}
@@ -553,7 +585,7 @@ namespace Coflnet
 
 			// this is here to go around the Permission checking
 			var controller = reference.Resource.GetCommandController();
-			controller.GetCommand(data.t).Execute(data);
+			controller.GetCommand(data.type).Execute(data);
 
 			// distribute it to other local subscribers 
 			// this allows for a exponential fade out from the Resources managing node reducing load
@@ -598,7 +630,7 @@ namespace Coflnet
 		protected bool ExecuteForReference(Referenceable resource,MessageData data,SourceReference sender)
 		{
 			//UnityEngine.Debug.Log ($" on {this.coreInstance.Id} ({coreInstance.GetType().Name}) executing {data} ");
-			var command = resource.GetCommandController ().GetCommand (data.t);
+			var command = resource.GetCommandController ().GetCommand (data.type);
 
 			// only execute changing commands command if we are the managing server 
 			// or the managing server instructed us to do so

@@ -76,7 +76,7 @@ namespace Coflnet
 			byte[] bytes;
 			if (commandInstance.Settings.Encrypted)
 			{
-				bytes = EncryptionController.instance.EncryptForResource(to, data);
+				bytes = EncryptionController.Instance.EncryptForResource(to, data);
 			}
 			else
 			{

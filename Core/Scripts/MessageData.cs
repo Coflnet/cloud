@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using Coflnet.Core.Crypto;
+using MessagePack;
 using System;
 using System.Runtime.Serialization;
 using System.Text;
@@ -39,7 +40,13 @@ namespace Coflnet
 		/// Type aka slug of a command
 		/// </summary>
 		[Key("t")]
-		public string t;
+		public string type;
+
+		/// <summary>
+		/// senders signature of the message content Ed25519(m|t|s|r|i)
+		/// </summary>
+		[Key("x")]
+		public Signature signature;
 
 		protected dynamic deserialized;
 
@@ -159,10 +166,10 @@ namespace Coflnet
 			else
 				this.mId = m_id;
 			this.message = m;
-			this.t = type;
+			this.type = type;
 		}
 
-		public MessageData(MessageData data) : this(data.rId, data.mId, data.message, data.t)
+		public MessageData(MessageData data) : this(data.rId, data.mId, data.message, data.type)
 		{
 			this.sId = data.sId;
 		}
@@ -194,7 +201,7 @@ namespace Coflnet
 
 		public MessageData(string type, byte[] data)
 		{
-			this.t = type;
+			this.type = type;
 			this.message = data;
 		}
 
@@ -202,7 +209,7 @@ namespace Coflnet
 		{
 			this.rId = rId;
 			this.message = message;
-			this.t = t;
+			this.type = t;
 		}
 
 		#endregion
@@ -285,7 +292,7 @@ namespace Coflnet
 
 		public void SetCommand<C>() where C : Command, new()
 		{
-			this.t = (new C()).Slug;
+			this.type = (new C()).Slug;
 		}
 
 
@@ -308,7 +315,7 @@ namespace Coflnet
 
 		public override string ToString()
 		{
-			return string.Format("[MessageData: sId={0}, rId={1}, mId={2}, t={3}, Data={4}]", sId, rId, mId, t, Data);
+			return string.Format("[MessageData: sId={0}, rId={1}, mId={2}, t={3}, Data={4}]", sId, rId, mId, type, Data);
 		}
 
 		/// <summary>
@@ -335,7 +342,55 @@ namespace Coflnet
 		{
 			return CoreInstance.ReferenceManager.GetResource<T>(rId);
 		}
-	}
+
+		/// <summary>
+		/// Signs the message contents with the given keyPairs private key
+		/// </summary>
+		/// <param name="singKeyPair">The keypair containing the private key of the advertised <see cref="sId"/></param>
+		public void Sign(KeyPair singKeyPair)
+		{
+			this.signature = new Signature()
+				{algorythm=EncryptionController.Instance.SigningAlgorythm};
+			this.signature.GenerateSignature(SignableContent,singKeyPair);
+		}
+
+		/// <summary>
+		/// Validates that this message was signed by the private part of the given publicKey
+		/// </summary>
+		/// <param name="publicKey">The public key of the sending resource</param>
+		public bool ValidateSignature(byte[] publicKey)
+		{
+			if(signature == null)
+			{
+				throw new SignatureInvalidException("No signature was set");
+			}
+			return this.signature.ValidateSignature(SignableContent,publicKey);
+		}
+
+
+		[IgnoreMember]
+		public byte[] SignableContent
+		{
+			get 
+			{
+				return IEncryption.ConcatBytes(
+					message,
+					Encoding.UTF8.GetBytes(type),
+					sId.AsByte,
+					rId.AsByte,
+					BitConverter.GetBytes(mId));
+			}
+		}
+
+
+        public class SignatureInvalidException : CoflnetException
+        {
+            public SignatureInvalidException(string message = "The signature set is invalid", string userMessage = null, string info = null, long msgId = -1) 
+			: base("signature_invalid", message, userMessage, 401, info, msgId)
+            {
+            }
+        }
+    }
 }
 
 

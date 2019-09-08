@@ -18,7 +18,7 @@ namespace Coflnet.Core.DeviceCommands
 		/// Special settings and Permissions for this <see cref="Command"/>
 		/// </summary>
 		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings()
+		protected override CommandSettings GetSettings()
 		{
 			return new CommandSettings(false,true,false,true,IsManagingServerOrSelfPermission.Instance );
 		}

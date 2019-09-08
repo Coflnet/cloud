@@ -11,13 +11,13 @@ namespace Coflnet.Core.User
 		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
 		public override void Execute(MessageData data)
 		{
-			data.GetTargetAs<CoflnetUser>().userName = data.GetAs<string>();
+			data.GetTargetAs<CoflnetUser>().UserName.Set( data.GetAs<string>());
 		}
 		/// <summary>
 		/// Special settings and Permissions for this <see cref="Command"/>
 		/// </summary>
 		/// <returns>The settings.</returns>
-		public override CommandSettings GetSettings()
+		protected override CommandSettings GetSettings()
 		{
 			return new CommandSettings( );
 		}

@@ -56,36 +56,37 @@ namespace Coflnet
 
 				UnityEngine.Debug.Log("socket error: " + e.Message);
 			};
-			socket.OnMessage += (object sender, MessageEventArgs e) =>
+			socket.OnMessage += OnMessage;
+		}
+
+		public void OnMessage(object sender, MessageEventArgs e)
+		{
+			try
 			{
-				try
+				var data = MessagePackSerializer.Deserialize<MessageData>(e.RawData);
+				if (data.type == "error")
 				{
-					var data = MessagePackSerializer.Deserialize<MessageData>(e.RawData);
-					if (data.t == "error")
-					{
-						// errors contain aditional attributes 
-						var error = MessagePackSerializer.Deserialize<CoflnetExceptionTransmit>(e.RawData);
-						OnError.Invoke(new CoflnetException(error));
-						return;
-					}
-
-					onMessage?.Invoke(data);
-
-					// confirm receival
-					SendCommand(
-						MessageData.CreateMessageData<ReceiveConfirm, ReceiveConfirmParams>(
-							ConnectedServerId,
-							new ReceiveConfirmParams(data.sId, data.mId)));
-				}
-				catch (System.Exception ex)
-				{
-					UnityEngine.Debug.Log("socket error " + ex.Message + " json: " + MessagePackSerializer.ToJson(e.RawData));
+					// errors contain aditional attributes 
+					var error = MessagePackSerializer.Deserialize<CoflnetExceptionTransmit>(e.RawData);
+					OnError.Invoke(new CoflnetException(error));
+					return;
 				}
 
+				onMessage?.Invoke(data);
 
-				UnityEngine.Debug.Log("socket response: " + MessagePackSerializer.ToJson(e.RawData));
+				// confirm receival
+				SendCommand(
+					MessageData.CreateMessageData<ReceiveConfirm, ReceiveConfirmParams>(
+						ConnectedServerId,
+						new ReceiveConfirmParams(data.sId, data.mId)));
+			}
+			catch (System.Exception ex)
+			{
+				UnityEngine.Debug.Log("socket error " + ex.Message + " json: " + MessagePackSerializer.ToJson(e.RawData));
+			}
 
-			};
+
+			UnityEngine.Debug.Log("socket response: " + MessagePackSerializer.ToJson(e.RawData));
 		}
 
 		private void OnOpen(System.EventArgs e)
@@ -98,20 +99,24 @@ namespace Coflnet
 		/// Sends a command to the connected server.
 		/// </summary>
 		/// <param name="data">Data.</param>
-		public void SendCommand(MessageData data)
+		public bool SendCommand(MessageData data)
 		{
-			SendCommand(data, true);
+			return SendCommand(data, true);
 		}
 
-		public void SendCommand(MessageData data, bool changeSender)
+		public bool SendCommand(MessageData data, bool changeSender)
 		{
 			if (changeSender)
 				// add the userId if present as sender
 				data.sId = ConfigController.ActiveUserId;
 
-			
+			if(!webSocket.IsConnected)
+			{
+				return false;
+			}
 
 			webSocket.Send(MessagePackSerializer.Serialize(data));
+			return true;
 		}
 
 		/// <summary>
@@ -158,12 +163,17 @@ namespace Coflnet
 	}
 
 	/// <summary>
-	/// Can transmit a command.
+	/// Can transmit commands.
 	/// </summary>
 	public interface ICommandTransmit
 	{
-		void SendCommand(MessageData data);
+		bool SendCommand(MessageData data);
 
+		/// <summary>
+		/// Bevore executing the callback the implementation has to make sure that 
+		/// the sender (<see cref="MessageData.sId"/>) is who he says
+		/// </summary>
+		/// <param name="callback"></param>
 		void AddCallback(ReceiveMessageData callback);
 
 	}

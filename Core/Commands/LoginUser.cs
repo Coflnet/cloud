@@ -7,7 +7,7 @@ namespace Coflnet {
 			throw new CommandExistsOnServer ();
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings ();
 		}
 
@@ -24,7 +24,7 @@ namespace Coflnet {
 			ConfigController.ActiveUserId = data.GetAs<SourceReference> ();
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (IsManagingServerPermission.Instance);
 		}
 

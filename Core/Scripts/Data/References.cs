@@ -123,6 +123,11 @@ namespace Coflnet
 			return $"{Convert.ToString(ServerId, 16)}.{Convert.ToString(ResourceId, 16)}";
 		}
 
+		/// <summary>
+		/// Returns the raw bytes of this <see cref="SourceReference"/>. 
+		/// 16 in total, long(8) <see cref="ServerId"/> and long(8) <see cref="ResourceId"/>
+		/// </summary>
+		/// <value></value>
 		[IgnoreMember]
 		public byte[] AsByte
 		{

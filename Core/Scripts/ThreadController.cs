@@ -95,7 +95,7 @@ namespace Coflnet
 		/// <param name="controller">Controller to search for the command.</param>
 		public void ExecuteCommand(MessageData data, CommandController controller)
 		{
-			ExecuteCommand(controller.GetCommand(data.t), data);
+			ExecuteCommand(controller.GetCommand(data.type), data);
 		}
 
 
@@ -307,7 +307,7 @@ namespace Coflnet
 				}
 				catch (Exception ex)
 				{
-					Track.instance.Error(item.data.t, JsonUtility.ToJson(item), ex.ToString());
+					Track.instance.Error(item.data.type, JsonUtility.ToJson(item), ex.ToString());
 				}
 			}
 			else

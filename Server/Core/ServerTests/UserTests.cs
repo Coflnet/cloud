@@ -59,7 +59,7 @@ public class CoflnetUserTests {
 			data.SendBack (MessageData.SerializeMessageData (5, "success"));
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (false, false, false, IsAuthenticatedPermission.Instance);
 		}
 
@@ -195,7 +195,7 @@ public class CoflnetUserTests {
 			MessageData.CreateMessageData<Coflnet.ReceiveableResource.GetMessages, int> (receiverUser.Id, 0));
 
 		yield return new WaitForSeconds (0.5f);
-		Debug.Log (response.t);
+		Debug.Log (response.type);
 		// message is delivered
 		Assert.AreEqual (response.GetAs<string> (), "hi");
 
@@ -211,7 +211,7 @@ public class CoflnetUserTests {
 			Debug.Log ("executed");
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings (false, true, true, true, IsNotBockedPermission.Instance);
 		}
 

@@ -23,7 +23,7 @@ public class MessageDeliveryTests {
         
         DevCore.DevInstance.AddClientCore(bob).OnMessage = m => {
             // received data is of type msg
-            Assert.AreEqual("msg",m.t);
+            Assert.AreEqual("msg",m.type);
             return false;
         };
 
@@ -40,7 +40,7 @@ public class MessageDeliveryTests {
         DevCore.Init(alice);
         DevCore.DevInstance.AddClientCore(bob).OnMessage = m => {
             // when bob receives the message make sure it is valid
-            Assert.AreEqual("msg",m.t);
+            Assert.AreEqual("msg",m.type);
             return false;
         };
 
@@ -57,7 +57,7 @@ public class MessageDeliveryTests {
         // add bob  and bobs server
         DevCore.DevInstance.AddServerCore(bobDeviceId.FullServerId);
         DevCore.DevInstance.AddClientCore(bobDeviceId,true).OnMessage = m => {
-            if(m.t == "UpdateUserName")
+            if(m.type == "UpdateUserName")
                 Assert.AreEqual("bob",m.GetAs<string>());
             return true;
         };

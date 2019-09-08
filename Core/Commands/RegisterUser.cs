@@ -27,7 +27,7 @@ namespace Coflnet {
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
 
-		public override CommandSettings GetSettings () {
+		protected override CommandSettings GetSettings () {
 			return new CommandSettings ();
 		}
 

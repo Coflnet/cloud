@@ -119,7 +119,7 @@ namespace Coflnet.Dev {
 		/// <param name="createDevice">If an instance of <see cref="CoflnetUser"/> should be created on  the server as well</param>
 		public SimulationInstance AddClientCore(SourceReference id, bool createDevice = false)
 		{
-			var newClientCore = new ClientCoreProxy(new CommandController(globalCommands),ClientSocket.Instance,new ClientReferenceManager($"res{simulationInstances.Count}"))
+			var newClientCore = new ClientCoreProxy(new CommandController(CoreCommands),ClientSocket.Instance,new ClientReferenceManager($"res{simulationInstances.Count}"))
 			{Id=id};
 
 			SetCoreForService(newClientCore);
@@ -205,12 +205,12 @@ namespace Coflnet.Dev {
 				data = devData;
 			
 
-			if(data.t == "registerUser" || data.t == "loginUser" || data.t == "response"){
+			if(data.type == "registerUser" || data.type == "loginUser" || data.type == "response"){
 
 				devData.sender = lastAddedClient;
 			}
 
-			if (data.t == "registeredUser" || data.t == "loginUserResponse" || data.t =="response") {
+			if (data.type == "registeredUser" || data.type == "loginUserResponse" || data.type =="response") {
 				data.rId = ConfigController.ActiveUserId;
 				
 				//
@@ -248,7 +248,7 @@ namespace Coflnet.Dev {
 				(data as DevMessageData).sender.core.ReferenceManager.ExecuteForReference(data);
 			}
 			else{
-				throw new Exception ($"the target {data.rId} is not registered in the development enviroment {data.t}");
+				throw new Exception ($"the target {data.rId} is not registered in the development enviroment {data.type}");
 			}
 
 

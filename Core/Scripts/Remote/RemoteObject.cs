@@ -47,6 +47,10 @@ namespace Coflnet.Core
 			this.parentAttributeName = remoteObject.parentAttributeName;
 		}
 
+		public RemoteObject(string nameOfAttribute, Referenceable parent)
+		{
+			this.SetDetails(nameOfAttribute,parent);
+		}
 
 
         /// <summary>
@@ -80,7 +84,7 @@ namespace Coflnet.Core
 		public void GetUpdate(Action onAfterUpdate = null )
 		{
 			var data = new MessageData(parent.Id);
-			data.t = $"get{parentAttributeName}";
+			data.type = $"get{parentAttributeName}";
 			CoflnetCore.Instance.SendGetCommand(data,m=>{
 				Value = m.GetAs<T>();
 				onAfterUpdate?.Invoke();
@@ -118,7 +122,7 @@ namespace Coflnet.Core
 			// don't serialize it if it is the default value
 			if( !EqualityComparer<T>.Default.Equals(Value, default(T)))
 				data.SerializeAndSet(content);
-			data.t = $"{commandName}{parentAttributeName}";
+			data.type = $"{commandName}{parentAttributeName}";
 			CoflnetCore.Instance.SendCommand(data);
 		}
 
@@ -148,6 +152,20 @@ namespace Coflnet.Core
 		/// </summary>
 		/// <param name="remObject">The RemoteObjet to convert</param>
         public static implicit operator T(RemoteObject<T> remObject) => remObject.Value;
+
+
+		/// <summary>
+		/// Adds the get and set commands to the object for a specific attribute.
+		/// </summary>
+		/// <param name="controller"></param>
+		/// <param name="nameOfAttribute"></param>
+		/// <param name="getter"></param>
+		/// <param name="setter"></param>
+		public static void AddCommands(CommandController controller,string nameOfAttribute, Func<MessageData,T> getter,Action<MessageData,T> setter)
+		{
+			controller.RegisterCommand(new SetCommand(nameOfAttribute,setter));
+			controller.RegisterCommand(new GetCommand(nameOfAttribute,getter));
+		}
 
 
 		
@@ -187,7 +205,7 @@ namespace Coflnet.Core
 			/// Special settings and Permissions for this <see cref="Command"/>
 			/// </summary>
 			/// <returns>The settings.</returns>
-			public override CommandSettings GetSettings()
+			protected override CommandSettings GetSettings()
 			{
 				return new CommandSettings(false,true,false,true,WritePermission.Instance);
 			}
@@ -224,9 +242,9 @@ namespace Coflnet.Core
 			/// Special settings and Permissions for this <see cref="Command"/>
 			/// </summary>
 			/// <returns>The settings.</returns>
-			public override CommandSettings GetSettings()
+			protected override CommandSettings GetSettings()
 			{
-				return new CommandSettings(false,true,false,true,WritePermission.Instance);
+				return new CommandSettings(false,true,false,true,ReadPermission.Instance);
 			}
 
             public override MessageData ExecuteWithReturn(MessageData data)
@@ -240,6 +258,15 @@ namespace Coflnet.Core
             /// <returns>The slug .</returns>
             public override string Slug => "get"+nameOfAttribute;
 		}
+		
+	}
+
+
+	/// <summary>
+	/// String that can be updated over the network
+	/// </summary>
+	public class RemoteString : RemoteObject<String>
+	{
 		
 	}
 

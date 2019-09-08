@@ -12,6 +12,19 @@ namespace Coflnet
 	public abstract class CoflnetCore : Referenceable
 	{
 		private static CoflnetCore _instance;
+		private static CommandController _coreCommands= new CommandController(Referenceable.globalCommands);
+
+		/// <summary>
+		/// Commands all cores share. Exists because core instance might not exist yet.
+		/// </summary>
+		/// <returns></returns>
+		public static CommandController CoreCommands 
+		{
+			get
+			{
+				return _coreCommands;
+			}
+		}
 
 
 		/// <summary>
@@ -25,6 +38,15 @@ namespace Coflnet
 		/// </summary>
 		/// <value></value>
 		public ReferenceManager ReferenceManager{get;set;}
+
+
+		/// <summary>
+		/// Invokes the <see cref="OnApplicationExit"/> event
+		/// </summary>
+		public void InvokeOnExit()
+		{
+			OnApplicationExit?.Invoke();
+		}
 
 
 		/// <summary>
@@ -57,6 +79,19 @@ namespace Coflnet
 		/// <param name="sender">The vertified sender of the command, controls if the command is executed right away or only sent to the managing server</param>
 		public void ReceiveCommand(MessageData data, SourceReference sender = default(SourceReference))
 		{
+			// validate the sender if possible
+			ReceiveableResource resource;
+			this.ReferenceManager.TryGetResource(data.sId,out resource);
+
+			if(resource != null && resource.publicKey != null)
+			{
+				if(!data.ValidateSignature(resource.publicKey))
+				{
+					throw new CoflnetException("invalid_signature",$"The signature of the message `{data.sId}:{data.mId}` could not be vertified");
+				}
+			}
+			
+
 			this.ReferenceManager.ExecuteForReference(data,sender);
 
 			//SendCommand<ReceiveConfirm,ReceiveConfirmParams>(data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
@@ -136,7 +171,7 @@ namespace Coflnet
 		/// <typeparam name="T"></typeparam>
 		public void SendGetCommand(MessageData data, Command.CommandMethod callback) 
 		{
-			if(String.IsNullOrEmpty(data.t))
+			if(String.IsNullOrEmpty(data.type))
 			{
 				throw new ArgumentException("Command identifier has not been set");
 			}
@@ -154,18 +189,50 @@ namespace Coflnet
 
 
 		/// <summary>
-		/// Clones and subscribes to updates for a resource
+		/// Executes a command, will  attempt to apply it localy bevore sending it to the managing node
+		/// </summary>
+		/// <param name="receipient"></param>
+		/// <param name="data"></param>
+		/// <param name="id"></param>
+		/// <param name="sender"></param>
+		/// <typeparam name="C"></typeparam>
+		/// <typeparam name="T"></typeparam>
+
+		public void ExecuteCommand<C,T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) where C :Command
+		{
+
+			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
+
+ 			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.Slug, id);
+
+			messageData.rId = receipient;
+			messageData.sId = sender;
+
+
+			ReferenceManager.Instance.ExecuteForReference(messageData);
+		}
+
+
+		/// <summary>
+		/// Clones and subscribes to updates for a resource, returns the local resource if it were already cloned
 		/// </summary>
 		/// <param name="resourceId">Id of the resource to clone</param>
 		/// <param name="afterClone">Callback invoked when cloning is done</param>
 		public virtual void CloneAndSubscribe(SourceReference resourceId, Action<Referenceable> afterClone = null)
 		{
+			// if it already exists we are done here
+			if(ReferenceManager.Exists(resourceId))
+			{
+				afterClone?.Invoke(ReferenceManager.GetResource<Referenceable>(resourceId));
+				return;
+			}
+
 			// create temporary proxy to receive commands bevore cloning is finished
 			ReferenceManager.AddReference(new SubscribeProxy(resourceId));
 
 			UnityEngine.Debug.Log($"Subscribing to {resourceId} from {Id}");
 
-			// this is different on clinet sides
+			// this is different on client sides
 			SendCommand<SubscribeCommand>(resourceId,0,Id);
 
 

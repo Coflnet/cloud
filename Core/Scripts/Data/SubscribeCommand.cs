@@ -12,7 +12,7 @@ namespace Coflnet.Core.Commands
             data.GetTargetAs<Referenceable>().GetAccess().Subscribe(data.sId);
         }
 
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings(ReadPermission.Instance);
         }
@@ -42,7 +42,7 @@ namespace Coflnet.Core.Commands
         /// Special settings and Permissions for this <see cref="Command"/>
         /// </summary>
         /// <returns>The settings.</returns>
-        public override CommandSettings GetSettings()
+        protected override CommandSettings GetSettings()
         {
             return new CommandSettings( );
         }
