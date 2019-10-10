@@ -11,12 +11,15 @@ namespace Coflnet {
 	/// Handles Command (function) to slug (string) mapping.
 	/// Needed in order to serialize commands.
 	/// </summary>
-	public class CommandController {
+	public class CommandController : ClassBasedDictionary<string,Command>{
 		/// <summary>
 		/// Contains all available commands that have been registered
 		/// </summary>
-		protected Dictionary<string, Command> commands;
-		protected Dictionary<Type, string> commandIdentifiers;
+		protected Dictionary<string, Command> commands 
+		{
+			get {return Items;}
+			set {Items=value;}
+		}
 		/// <summary>
 		/// This commandController will be searched for commands
 		/// if a slug was not found in the current one
@@ -48,7 +51,6 @@ namespace Coflnet {
 
 		public void RemoveAllCommands () {
 			commands?.Clear ();
-			commandIdentifiers?.Clear ();
 		}
 
 		/// <summary>
@@ -137,6 +139,12 @@ namespace Coflnet {
 			if (settings.Permissions != null) {
 				foreach (var item in settings.Permissions) {
 					if (!item.CheckPermission (data, target)) {
+
+						// the token may allow it
+						//data.headers.Token.
+						TokenManager.Instance.Validate(data.headers.Token,target)
+						
+
 						UnityEngine.Debug.Log (MessagePackSerializer.ToJson (data));
 						UnityEngine.Debug.Log ("concludes to : " + item.CheckPermission (data, target));
 						throw new PermissionNotMetException(item.Slug,data.rId,data.sId,command.Slug,data.mId);
@@ -187,6 +195,55 @@ namespace Coflnet {
 				command.Execute (data);
 		}
 
+	}
+
+	public class ClassBasedDictionary<TKey,TVal> 
+	{
+		protected Dictionary<TKey,TVal> Items = new Dictionary<TKey, TVal>();
+
+
+		/// <summary>
+		/// Overwrites the Item under the given key with an instance of the Generic argument.
+		/// </summary>
+		/// <param name="key">The key wich to overwrite</param>
+		/// <typeparam name="T">The type of <see cref="TVal"/> to overwrite the key with</typeparam>
+		public void Overwrite<T>(TKey key) where T : TVal, new()
+		{
+			Items[key] = (T) Activator.CreateInstance (typeof (T));
+		}
+
+		/// <summary>
+		/// Generates and adds a item under key
+		/// </summary>
+		/// <param name="key">The key to add the value for</param>
+		/// <typeparam name="T">The type of the class to instantiate and add</typeparam>
+		public void Add<T>(TKey key) where T : TVal, new()
+		{
+			Items.Add(key,(T) Activator.CreateInstance (typeof (T)));
+		}
+
+		public void Add<T>() where T:TVal,IHasSlug<TKey>,new()
+		{
+			var instance = (T) Activator.CreateInstance (typeof (T));
+			Items.Add(instance.Slug,instance);
+		}
+
+		public TVal this[TKey key]
+		{
+			get { return Items[key]; }
+			protected set { Items[key] = value; }
+		}
+	}
+
+
+	public interface IHasSlug<T>
+	{
+		T Slug {get;}
+	}
+
+	public interface IHasSlug : IHasSlug<string>
+	{
+		
 	}
 
 	public class CommandUnknownException : CoflnetException {
@@ -240,7 +297,7 @@ namespace Coflnet {
 		/// <param name="data">Data.</param>
 		public abstract void Execute (MessageData data);
 		/// <summary>
-		/// Should return an unique identifier for this command.
+		/// Returns an unique identifier for this command.
 		/// Usually the namespace + the class name if not too long.
 		/// try to stay under 16 characters
 		/// </summary>
@@ -519,6 +576,21 @@ namespace Coflnet {
         }
 
         public override string Slug => "registerDevice";
+	}
+
+
+	public class RegisterInstallation : CreationCommand {
+		protected override CommandSettings GetSettings () {
+			// everyone can register devices
+			return new CommandSettings ();
+		}
+
+        public override Referenceable CreateResource(MessageData data)
+        {
+            return new Installation ();
+        }
+
+		public override string Slug => "createInstall";
 	}
 
 
