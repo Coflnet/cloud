@@ -6,7 +6,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
 		public override MessageData ExecuteWithReturn (MessageData data) {
-			data.message = data.CoreInstance.ReferenceManager.SerializeWithoutAccess (data.rId);
+			data.message = data.CoreInstance.ReferenceManager.SerializeWithoutLocalInfo (data.rId);
 			
 			UnityEngine.Debug.Log("returning resource");
 			

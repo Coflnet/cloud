@@ -331,6 +331,8 @@ namespace Coflnet.Dev {
 
         public CoflnetEncoder Encoder => CoflnetEncoder.Instance;
 
+        public Dictionary<SourceReference, Token> Tokens{get;set;}
+
         public void SendBack(MessageData data)
         {
 			var temp = data.rId;

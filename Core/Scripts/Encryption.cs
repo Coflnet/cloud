@@ -145,13 +145,17 @@ namespace Coflnet
 			int length = 0;
 			foreach (var item in arrays)
 			{
-				length += item.Length;
+				if(item != null)
+					length += item.Length;
 			}
 			byte[] newArray = new byte[length];
 
 			int startIndex = 0;
 			foreach (var item in arrays)
 			{
+				if(item == null)
+					continue;
+					
 				for (int i = 0; i < item.Length; i++)
 				{
 					newArray[startIndex] = item[i];

@@ -122,16 +122,17 @@ public class CloningTest {
     public class TestResource : Referenceable
     {
         [IgnoreDataMember]
-        CommandController commands = new CommandController(globalCommands);
+        static CommandController commands = new CommandController(globalCommands);
 
         [DataMember]
         public int specialNumber;
 
-
-        public TestResource()
+        static TestResource()
         {
             commands.RegisterCommand<SimpleTestCommand>();
         }
+
+
 
         public override CommandController GetCommandController()
         {

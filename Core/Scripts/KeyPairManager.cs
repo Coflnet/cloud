@@ -83,6 +83,10 @@ namespace Coflnet
 		/// <returns>The <see cref="SigningKeyPair"/> for the <see cref="owner"/></returns>
 		public SigningKeyPair GetSigningKeyPair(SourceReference owner)
 		{
+			if(!signingKeyPairs.ContainsKey(owner))
+			{
+				throw new KeyNotFoundException($"No keyPair was found for `{owner}`");
+			}
 			return signingKeyPairs[owner];
 		}
 
@@ -101,7 +105,18 @@ namespace Coflnet
 			FileController.SaveAs("coflnet_keyPairs", keys);
 			FileController.SaveAs("signingKeys", signingKeyPairs);
 		}
-	}
+
+		/// <summary>
+		/// Finds the public Key for a resource and returns it if found
+		/// </summary>
+		/// <param name="issuer">The owner of the KeyPair</param>
+		/// <param name="algorythm">The Algorythm to search for. Each algorythm may need different keys</param>
+		/// <returns></returns>
+        public SigningKeyPair GetSigningPublicKey(SourceReference issuer,SigningAlgorythm algorythm = null)
+        {
+            return GetSigningKeyPair(issuer);
+        }
+    }
 
 	[MessagePackObject]
 	public class KeyWithTime

@@ -78,7 +78,9 @@ namespace Coflnet.Client {
 			// add commands behind the device
 			if(this.ReferenceManager.Exists(this.Id))
 			{
+				// only add it if it is a device (not null)
 				ReferenceManager.GetResource<Device>(this.Id)
+					?
 					.GetCommandController()
 					.AddBackfall(GetCommandController());
 			} else 

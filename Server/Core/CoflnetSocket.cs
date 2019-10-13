@@ -176,38 +176,15 @@ public interface IClientConnection
 	/// <value>The authenticated identifiers.</value>
 	List<SourceReference> AuthenticatedIds { get; set; }
 
+	/// <summary>
+	/// Additional Tokens for accessing protected resources with specific scopes
+	/// </summary>
+	/// <value>The tokens</value>
+	Dictionary<SourceReference,Token> Tokens {get;set;}
+
 	CoflnetEncoder Encoder { get; }
 
 	void SendBack(MessageData data);
-}
-
-
-/// <summary>
-/// Coflnet encoder extention methods.
-/// </summary>
-public static class CoflnetEncoderExtention
-{
-	public static T Deserialize<T>(this CoflnetEncoder encoder, MessageEventArgs args)
-	{
-		return encoder.Deserialize<T>(args.RawData);
-	}
-
-	public static ServerMessageData Deserialize(this CoflnetEncoder encoder, MessageEventArgs args)
-	{
-		return encoder.Deserialize<ServerMessageData>(args.RawData);
-	}
-
-	/// <summary>
-	/// Send the specified data after encoding with the given socket.
-	/// </summary>
-	/// <param name="encoder">Encoder.</param>
-	/// <param name="data">Data.</param>
-	/// <param name="socket">Socket.</param>
-	/// <typeparam name="T">The 1st type parameter.</typeparam>
-	public static void Send<T>(this CoflnetEncoder encoder, T data, CoflnetWebsocketServer socket)
-	{
-		socket.SendBack(encoder.Serialize<T>(data));
-	}
 }
 
 
@@ -216,7 +193,7 @@ public static class CoflnetEncoderExtention
 /// <summary>
 /// Coflnet json encoder used to send back json.
 /// </summary>
-public class CoflnetJsonEncoder : CoflnetEncoder
+public partial class CoflnetJsonEncoder : CoflnetEncoder
 {
 	public static new CoflnetJsonEncoder Instance { get; }
 
@@ -224,22 +201,27 @@ public class CoflnetJsonEncoder : CoflnetEncoder
 	{
 		Instance = new CoflnetJsonEncoder();
 	}
-	/*
-	public override T Deserialize<T>(MessageEventArgs args)
-	{
-		var bytes = MessagePackSerializer.FromJson(args.Data);
-		return CoflnetEncoder.Instance.Deserialize<T>(bytes);
-	}
+
+    public CoflnetJsonEncoder()
+    {
+    }
+
+    /*
+public override T Deserialize<T>(MessageEventArgs args)
+{
+    var bytes = MessagePackSerializer.FromJson(args.Data);
+    return CoflnetEncoder.Instance.Deserialize<T>(bytes);
+}
 
 
-	public override ServerMessageData Deserialize(MessageEventArgs args)
-	{
-		var bytes = MessagePackSerializer.FromJson(args.Data);
-		return (ServerMessageData)CoflnetEncoder.Instance.Deserialize<DevMessageData>(bytes);
-	}
+public override ServerMessageData Deserialize(MessageEventArgs args)
+{
+    var bytes = MessagePackSerializer.FromJson(args.Data);
+    return (ServerMessageData)CoflnetEncoder.Instance.Deserialize<DevMessageData>(bytes);
+}
 */
 
-	public override T Deserialize<T>(byte[] args)
+    public override T Deserialize<T>(byte[] args)
 	{
 		var bytes = MessagePackSerializer.FromJson(Encoding.UTF8.GetString(args));
 		Debug.Log(JsonUtility.ToJson(new ByteContainer(bytes)));
@@ -259,56 +241,6 @@ public class CoflnetJsonEncoder : CoflnetEncoder
 	public override byte[] Serialize<T>(T target)
 	{
 		return Encoding.UTF8.GetBytes(MessagePackSerializer.ToJson<T>(target));
-	}
-	/*
-	public override void Send<T>(T data, CoflnetWebsocketServer socket)
-	{
-		socket.SendBack(MessagePackSerializer.ToJson<T>(data));
-	}
-*/
-	[MessagePackObject]
-	public class DevMessageData : ServerMessageData
-	{
-		byte[] ausgelagert;
-
-		[Key("d")]
-		public string data
-		{
-			get
-			{
-				return System.Convert.ToBase64String(message);
-			}
-			set
-			{
-				ausgelagert = Convert.FromBase64String(value);
-			}
-		}
-
-		public override T GetAs<T>()
-		{
-			return Connection.Encoder.Deserialize<T>(this.ausgelagert);
-		}
-
-
-		public override string Data
-		{
-			get
-			{
-				return Encoding.UTF8.GetString(this.ausgelagert);
-
-			}
-		}
-
-
-		public DevMessageData()
-		{
-		}
-
-		public DevMessageData(MessageData data) : base(data)
-		{
-		}
-
-
 	}
 }
 
@@ -642,20 +574,14 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		}
 	}
 
-	public void SendBack(MessageData data)
+    public Dictionary<SourceReference, Token> Tokens
+    {
+        get;set;
+    }
+
+    public void SendBack(MessageData data)
 	{
 		SendBack(Encoder.Serialize(data));
-	}
-}
-
-
-
-
-
-public class NotAuthenticatedAsException : CoflnetException
-{
-	public NotAuthenticatedAsException(SourceReference inquestion, string userMessage = null, int responseCode = 403, string info = null, long msgId = -1) : base("not_authenticated_as", $"You didn't authenticated as {inquestion.ToString()} over this connection", userMessage, responseCode, info)
-	{
 	}
 }
 

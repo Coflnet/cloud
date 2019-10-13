@@ -7,7 +7,6 @@ public class ReferenceManagerTests {
 
     class TestResource : Referenceable
     {
-
         public override CommandController GetCommandController()
         {
             return globalCommands;

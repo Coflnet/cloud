@@ -4,7 +4,7 @@ using UnityEngine;
 using MessagePack;
 using System;
 
-namespace Coflnet.Client
+namespace Coflnet
 {
 
 

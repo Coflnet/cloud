@@ -107,20 +107,20 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Serializes the <see cref="Referenceable"/> without the access attribute.
+		/// Serializes the <see cref="Referenceable"/> without the access.subscriber attribute.
 		/// </summary>
-		/// <returns>The without access.</returns>
+		/// <returns>The serialized object without the subscribers</returns>
 		/// <param name="id">Identifier.</param>
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public byte[] SerializeWithoutAccess (SourceReference id) {
+		public byte[] SerializeWithoutLocalInfo (SourceReference id) {
 			var data = GetResource (id);
 			byte[] result;
 			// NOTE: this could still cause trouble if Access would be accessed in a different Thread
 			lock (data) {
-				Access access = data.Access;
-				data.Access = null;
+				var subscribers = data.Access.Subscribers;
+				data.Access.Subscribers = null;
 				result = MessagePack.MessagePackSerializer.Typeless.Serialize (data);
-				data.Access = access;
+				data.Access.Subscribers = subscribers;
 			}
 			return result;
 		}

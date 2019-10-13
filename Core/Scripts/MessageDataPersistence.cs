@@ -36,6 +36,7 @@ namespace Coflnet
 		public virtual void SaveMessage(MessageData messageData)
 		{
 			var loaded = GetMessagesFor(messageData.rId).ToArray();
+			loaded.Append(messageData);
 
 			DataController.Instance.SaveObject(Path(messageData.rId), loaded);
 		}

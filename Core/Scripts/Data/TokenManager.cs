@@ -4,6 +4,7 @@ using System.Text;
 using Coflnet.Core.Crypto;
 using MessagePack;
 using Coflnet.Extentions;
+using System.Linq;
 
 namespace Coflnet
 {
@@ -15,6 +16,8 @@ namespace Coflnet
 		public static TokenManager Instance;
 
 		private Dictionary<byte[],byte[]> tokens;
+
+		private HashSet<MessageReference> invokedTokens;
 
 		/// <summary>
 		/// Adds a new token
@@ -31,9 +34,10 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="target">The target <see cref="Referenceable"/> this token can be used for</param>
 		/// <param name="token">The actual token value</param>
+		/// <param name="sender"></param>
 		public void AddToken(SourceReference target, Token token,SourceReference sender = default(SourceReference))
 		{
-			AddToken(target,MessagePackSerializer.Serialize(token));
+			AddToken(target,MessagePackSerializer.Serialize(token),sender);
 		}
 
 		/// <summary>
@@ -41,6 +45,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="target"></param>
 		/// <param name="serializedToken"></param>
+		/// <param name="sender"></param>
 		public void AddToken(SourceReference target, byte[] serializedToken,SourceReference sender = default(SourceReference))
 		{
 			if(sender == default(SourceReference))
@@ -49,6 +54,17 @@ namespace Coflnet
 			{
 				tokens.Add(target.AsByte.Append(sender.AsByte),serializedToken);
 			}
+		}
+
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public bool IsTokenInvoked(Token token)
+		{
+			return invokedTokens.Contains(token.Id);
 		}
 
 
@@ -71,6 +87,31 @@ namespace Coflnet
 		public Token GetToken(SourceReference target,SourceReference sender = default(SourceReference))
 		{
 			return MessagePackSerializer.Deserialize<Token>(GetInternalToken(target));
+		}
+
+		/// <summary>
+		/// Tries to get the token
+		/// </summary>
+		/// <param name="target">The target <see cref="Referenceable"/> this token is made for</param>
+		/// <param name="token">The variable to pass the token to</param>
+		/// <param name="sender">Optional sender the token was made for</param>
+		/// <returns><see cref="true"/> if the token was found <see cref="false"/> otherwise</returns>
+		public bool TryGetToken(SourceReference target,out Token token, SourceReference sender= default(SourceReference))
+		{
+			var key = target.AsByte;
+			if(sender != default(SourceReference))
+			{
+				key = key.Append(sender.AsByte);
+			}
+
+			byte[] serializedToken;
+			if(tokens.TryGetValue(key,out serializedToken))
+			{
+				token = MessagePackSerializer.Deserialize<Token>(serializedToken);
+				return true;
+			}
+			token = null;
+			return false;
 		}
 
 		public byte[] GetInternalToken(SourceReference target,SourceReference sender = default(SourceReference))
@@ -129,7 +170,7 @@ namespace Coflnet
 		/// <param name="subject">The subject to generate the token for</param>
 		/// <param name="issuer">As who to create the token</param>
 		/// <param name="signingPair">The <see cref="SigningKeyPair"/> of the <see cref="issuer"/></param>
-		/// <param name="claims">Optional additional claims to add to the token</param>
+		/// <param name="claims">Optional additional claims to add to the token, may not be one of [iss,sub,id,iat] as these are already set</param>
 		/// <returns>The newly created and signed token</returns>
 		public Token GenerateNewToken(
             SourceReference subject,
@@ -140,9 +181,120 @@ namespace Coflnet
 			return new Token()
 				.AddClaim("iss",issuer.ToString())
 				.AddClaim("sub",subject.ToString())
+				.AddClaim("id",ThreadSaveIdGenerator.NextId.ToString())
 				.AddClaim("iat",DateTime.UtcNow.ToFileTimeUtc().ToString())
 				.AddClaims(claims)
 				.Sign(signingPair);
+		}
+
+		/// <summary>
+		/// Generates a new Token for some <see cref="subject"/> 
+		/// </summary>
+		/// <param name="subject">The subject to generate the token for</param>
+		/// <param name="issuer">As who to create the token (the owner of the <see cref="signingPair"/>)</param>
+		/// <param name="signingPair">The <see cref="SigningKeyPair"/> of the <see cref="issuer"/></param>
+		/// <param name="expirationTime">The unix time when this token expires</param>
+		/// <param name="claims">Optional additional claims to add to the token, may not be one of [iss,sub,id,iat] as these are already set</param>
+		/// <returns>The newly created and signed token</returns>
+		public Token GenerateNewToken(
+            SourceReference subject,
+            SourceReference issuer,
+            SigningKeyPair signingPair,
+			long expirationTime,
+            params KeyValuePair<string, string>[] claims)
+		{
+			return ConstructToken(subject,issuer,expirationTime)
+				.AddClaims(claims)
+				.Sign(signingPair);
+		}
+
+		private Token ConstructToken(
+			SourceReference subject,
+            SourceReference issuer,
+			long expirationTime)
+			{
+				return new Token()
+				.AddClaim("iss",issuer.ToString())
+				.AddClaim("sub",subject.ToString())
+				.AddClaim("id",ThreadSaveIdGenerator.NextId.ToString())
+				.AddClaim("exp",expirationTime.ToString());
+			}
+
+
+		/// <summary>
+		/// Finds out if a given token is valid for a specific target.
+		/// </summary>
+		/// <param name="token">The token to test</param>
+		/// <param name="target">The target tried to be accessed</param>
+		/// <param name="sender">The sender that is trying to access the target</param>
+		/// <returns><see cref="true"/> if token is valid for all given options and not invoked</returns>
+		public bool IsTokenValid(Token token,Referenceable target,SourceReference sender = default(SourceReference))
+		{
+			// get the issuers key
+			var key = KeyPairManager.Instance.GetSigningPublicKey(token.Issuer,token.signature.algorythm);
+
+			// make sure the signature is valid
+			if(!token.Validate(key.publicKey))
+				return false;
+
+			// validate that the token is for the target
+			if(token.HasClaim("sub"))
+			{
+				var sub = token.GetClaimSR("sub");
+				if(sub != target.Id)
+				{
+					throw new CoflnetException(
+						"token_invalid",
+						$"The target {nameof(Referenceable)} id ({target.Id}) is not the one the token provides ({sub})");
+				}
+			}
+
+			if(sender != default(SourceReference))
+			{
+				// validate the sender
+				var intendedAudience =  token.GetClaimSR("aud");
+				if(sender != intendedAudience)
+				{
+					throw new CoflnetException(
+						"token_invalid",
+						$"The sender ({sender}) is not the one the token grants access ({intendedAudience})");
+				}
+			}
+			
+
+			// make sure the issuer has basic access to the resource
+			var issuer = token.GetClaimSR("iss");
+			if(!target.IsAllowedAccess(issuer))
+			{
+				throw new CoflnetException(
+                    "token_invalid",
+                    $"The issuer of the token ({issuer}) has no access to ({target.Id})");
+			}
+
+			// make sure the token expiration time is in the future
+			if(token.HasClaim("exp"))
+			{
+				if(token.GetClaimInt("exp") < CurrentUnixTime)
+				{
+					throw new CoflnetException(
+                    "token_invalid",
+                    $"The token has expired");
+				}
+			}
+
+			if(IsTokenInvoked(token))
+				return false;
+
+
+			return true;
+		}
+
+		private long CurrentUnixTime
+		{
+			get
+			{
+				return DateTime.UtcNow.ToFileTimeUtc();
+			}
 		}
 	}
 
@@ -165,7 +317,42 @@ namespace Coflnet
         {
         }
 
+		[IgnoreMember]
+		public SourceReference Issuer
+		{
+			get
+			{
+				return GetClaimSR("iss");
+			}
+			set
+			{
+				AddClaim("iss",value.ToString());
+			}
+		}
 
+		public string[] Scopes
+		{
+			get
+			{
+				return claims["scopes"].Split(',');
+			}
+			set
+			{
+				AddClaim("scooes",string.Join(",",value));
+			}
+		}
+
+		public MessageReference Id
+		{
+			get
+			{
+				return new MessageReference(Issuer,GetClaimInt("id"));
+			}
+			set
+			{
+				AddClaim("id",value.IdfromSource.ToString());
+			}
+		}
 
 
         /// <summary>
@@ -199,6 +386,46 @@ namespace Coflnet
 		{
 			this.claims.Add(key,value);
 			return this;
+		}
+
+		/// <summary>
+		/// Wherether nor not the token has a specific claim
+		/// </summary>
+		/// <param name="key">The key to the claim</param>
+		/// <returns></returns>
+		public bool HasClaim(string key)
+		{
+			return claims.ContainsKey(key);
+		} 
+
+		/// <summary>
+		/// Tries to get a specific claim as Int
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
+		public long GetClaimInt(string key)
+		{
+			long result;
+			if(!long.TryParse(claims[key],out result))
+			{
+				throw new CoflnetException("invalid_token",$"The {key} claim of the token is no int");
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Tries to get a specific claim as <see cref="SourceReference"/>
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
+		public SourceReference GetClaimSR(string key)
+		{
+			SourceReference result;
+			if(!SourceReference.TryParse(claims[key],out result))
+			{
+				throw new CoflnetException("invalid_token",$"The {key} claim of the token is not a {nameof(SourceReference)}");
+			}
+			return result;
 		}
 
 		/// <summary>

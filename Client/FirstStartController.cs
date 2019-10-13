@@ -43,6 +43,11 @@ namespace Coflnet.Client
 			{
 				DeviceService.Instance.Setup();
 			}
+			// make an install if we haven't yet
+			if(ConfigController.InstallationId == default(SourceReference))
+			{
+				InstallService.Instance.Setup();
+			}
 
 			UnityEngine.Debug.Log("doing setup :)");
 

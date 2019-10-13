@@ -13,7 +13,7 @@ public class ChatTests {
 
         ChatService.Instance.AddChat(chat);
 
-        ChatService.Instance.Save();
+        ChatService.Instance.Save(DataController.Instance);
 
         // set new instance of the chatmanager
         // this forces the manager to load the chats
@@ -25,7 +25,7 @@ public class ChatTests {
 
         // clean up
         ChatService.Instance.ChatManager.RemoveChat(loadedChat);
-        ChatService.Instance.Save();
+        ChatService.Instance.Save(DataController.Instance);
 
     }
     [Test]
@@ -33,14 +33,14 @@ public class ChatTests {
         var chat =new Chat(new ChatMember(new SourceReference(5,4)));
         ChatService.Instance.AddChat(chat);
 
-        ChatService.Instance.Save();
+        ChatService.Instance.Save(DataController.Instance);
 
         // set new instance of the chatmanager
         // this forces the manager to load the chats
         ChatService.Instance.ChatManager = new CoflnetChatManager();
 
         ChatService.Instance.ChatManager.RemoveChat(chat);
-        ChatService.Instance.Save();
+        ChatService.Instance.Save(DataController.Instance);
 
         // chat can't be found
         Assert.Throws<ChatNotFoundException>(()=>{

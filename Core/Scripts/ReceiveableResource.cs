@@ -1,14 +1,20 @@
 ﻿using Coflnet;
 using MessagePack;
+using System.Collections.Generic;
 
 namespace Coflnet {
 	/// <summary>
 	/// Receiveable resource.
-	/// Represents a <see cref="Referenceable"/> that is capeable of receiving commands on its own
+	/// Represents a <see cref="Referenceable"/> that is capeable of receiving/sending commands on its own
 	/// </summary>
 	[MessagePackObject]
 	public abstract class ReceiveableResource : Referenceable {
 		protected static CommandController persistenceCommands;
+
+		/// <summary>
+		/// Protects the <see cref="ReceiveableResource"/> from being spammed with unknown commands
+		/// </summary>
+		public AcceptCommandBehaviour commandAccept;
 
 		/// <summary>
 		/// Public Signing key of the resource
@@ -73,6 +79,31 @@ namespace Coflnet {
 		public void SendCommand (MessageData data) {
 			data.sId = this.Id;
 			CoflnetCore.Instance.SendCommand (data);
+		}
+	}
+
+	public class AcceptCommandBehaviour
+	{
+		/// <summary>
+		/// List of <see cref="Command"/>s to include or exclude depending on <see cref="IncludeNotExclude"/>
+		/// </summary>
+		public HashSet<string> CommandList;
+
+		/// <summary>
+		/// <see cref="true"/> if the list is to include. 
+		/// <see cref="false"/> if the <see cref="CommandList"/> has to be excluded
+		/// </summary>
+		public bool IncludeNotExclude = true;
+
+		/// <summary>
+		/// Determines if the Command Data should be forwareded to the resource or not
+		/// </summary>
+		/// <param name="data">Data to test</param>
+		/// <returns><see cref="true"/> if it should be forwarded <see cref="false"/> otherwise</returns>
+		public virtual bool AcceptCommand(MessageData data)
+		{
+			return IncludeNotExclude && CommandList.Contains(data.type) 
+			|| !IncludeNotExclude && !CommandList.Contains(data.type);
 		}
 	}
 }

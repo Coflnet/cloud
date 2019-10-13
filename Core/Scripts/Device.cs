@@ -15,11 +15,10 @@ namespace Coflnet
 		private static CommandController commandController;
 
 		/// <summary>
-		/// Wherether or not this is the primary device
-		/// Deprecated, the first item of the users device list is his primary device
+		/// What application type this device coresponds to
 		/// </summary>
-		//[DataMember]
-		//private bool primary;
+		[DataMember]
+		public SourceReference ApplicationId;
 		/// <summary>
 		/// Public Key is used for authetication purposes
 		/// </summary>
@@ -93,7 +92,7 @@ namespace Coflnet
 		{
 			commandController = new CommandController(globalCommands);
 			commandController.RegisterCommand<DeviceInstalledCommand>();
-			commandController.RegisterCommand<AddUserCommand>();
+			//commandController.RegisterCommand<AddUserCommand>();
 			commandController.RegisterCommand<RemoveUserCommand>();
 
 			// Add commands for the users list
@@ -112,12 +111,34 @@ namespace Coflnet
 		}
 	}
 
+	[DataContract]
+    public class Installation : ReceiveableResource
+    {
+		private static CommandController _commands;
 
-	
-	/// <summary>
-	/// Command that each device receives when the user has received a command (distribute)
-	/// </summary>
-	public class DeviceDistributeCommand : Command
+		[DataMember]
+		public SourceReference AppId;
+		[DataMember]
+		public Reference<Device> Device;
+		[DataMember]
+		public Reference<ApplicationData> AppData;
+
+		static Installation()
+		{
+			_commands = new CommandController(globalCommands);
+		}
+
+        public override CommandController GetCommandController()
+        {
+            return _commands;
+        }
+    }
+
+
+    /// <summary>
+    /// Command that each device receives when the user has received a command (distribute)
+    /// </summary>
+    public class DeviceDistributeCommand : Command
 	{
 		/// <summary>
 		/// Execute the command logic with specified data.

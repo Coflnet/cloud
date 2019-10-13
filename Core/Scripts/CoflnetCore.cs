@@ -83,6 +83,7 @@ namespace Coflnet
 			ReceiveableResource resource;
 			this.ReferenceManager.TryGetResource(data.sId,out resource);
 
+
 			if(resource != null && resource.publicKey != null)
 			{
 				if(!data.ValidateSignature(resource.publicKey))
@@ -90,6 +91,8 @@ namespace Coflnet
 					throw new CoflnetException("invalid_signature",$"The signature of the message `{data.sId}:{data.mId}` could not be vertified");
 				}
 			}
+
+
 			
 
 			this.ReferenceManager.ExecuteForReference(data,sender);

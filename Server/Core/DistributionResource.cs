@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 
 namespace Coflnet {
-	// special Resource which Distributes everyCommand that wasn't found to members
+	
+	/// <summary>
+	/// Special <see cref="Referenceable"/> which Distributes everyCommand it receives to its members
+	/// </summary>
 	public class DistributionResource : Referenceable {
 		protected static CommandController _commandController;
 
@@ -25,8 +28,6 @@ namespace Coflnet {
 			}
 
 			public override string Slug => "distribute";
-				
-			
 		}
 
 

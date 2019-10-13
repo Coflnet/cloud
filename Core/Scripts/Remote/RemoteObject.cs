@@ -262,13 +262,22 @@ namespace Coflnet.Core
 	}
 
 
-	/// <summary>
-	/// String that can be updated over the network
-	/// </summary>
-	public class RemoteString : RemoteObject<String>
-	{
+    /// <summary>
+    /// String that can be updated over the network
+    /// </summary>
+    public class RemoteString : RemoteObject<String>
+    {
+
+        public RemoteString(string nameOfAttribute, Referenceable parent) : base(nameOfAttribute, parent)
+        {
+			
+        }
+        public RemoteString()
+        {
+        }
+
 		
-	}
+    }
 
 
 }

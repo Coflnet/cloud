@@ -5,7 +5,6 @@ namespace Coflnet
 {
 	/// <summary>
 	/// Represents a serverside Application code that is capeable of managing resources or other tasks
-	/// Every server instance is an Application
 	/// </summary>
 	[MessagePackObject]
 	public class Application : Referenceable
@@ -15,6 +14,12 @@ namespace Coflnet
 		{
 			get;
 			private set;
+		}
+
+		[Key(5)]
+		public HashSet<string> ClientCommands
+		{
+			get;set;
 		}
 
 		[Key(0)]

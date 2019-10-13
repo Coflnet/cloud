@@ -85,7 +85,7 @@ namespace Coflnet
 				return false;
 			}
 
-			// is it the owner
+			// The owner always has access
 			if (requestingReference == Owner)
 				return true;
 
@@ -100,8 +100,8 @@ namespace Coflnet
 					return resourceAccess[requestingReference.FullServerId].CompareTo (mode) >= 0;
 			} 
 
-			// the resource itself and its server have access by default, but can be invoked with special cases
-			// Possible change: use the server instead of its owner as always access
+			// the resource itself and its server have access by default, 
+			// but the servers access can be removed
 			if(target.FullServerId == requestingReference || target == requestingReference)
 				return true;
 

@@ -37,6 +37,36 @@ namespace Coflnet
 
 		}
 
+
+		/// <summary>
+		/// Convertes the string representation of a <see cref="SourceReference"/> into its
+		/// </summary>
+		/// <param name="s"></param>
+		/// <param name="reference"></param>
+		/// <returns></returns>
+		public static bool TryParse(string s,out SourceReference reference)
+		{
+			var parts = s.Split('.');
+			long serverId;
+			long resourceId;
+
+			reference = default(SourceReference);
+
+			if(!long.TryParse(parts[0],out serverId))
+			{
+				return false;
+			}
+
+			if(!long.TryParse(parts[1],out resourceId))
+			{
+				return false;
+			}
+
+			reference = new SourceReference(serverId,resourceId);
+
+			return true;
+		}
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Coflnet.Server.SourceReference"/> struct.
 		/// </summary>

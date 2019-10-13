@@ -141,9 +141,20 @@ namespace Coflnet {
 					if (!item.CheckPermission (data, target)) {
 
 						// the token may allow it
-						//data.headers.Token.
-						TokenManager.Instance.Validate(data.headers.Token,target)
-						
+						var token = data.headers.Token;
+						if(token != null && TokenManager.Instance.IsTokenValid(token,target,data.sId)
+						&& (target as Core.IHasScopes).AvailableScopes
+							.IsAllowedToExecute(token.Scopes,command.Slug))
+						{
+							// the token allows us to execute this, but has the token issuer the right permission?
+							var temp = new MessageData(data);
+							temp.sId = token.Issuer;
+							if(item.CheckPermission(data,target)){
+								// horray the issuer is allowed to do this, so we are now as well
+								continue;
+							}
+						}
+
 
 						UnityEngine.Debug.Log (MessagePackSerializer.ToJson (data));
 						UnityEngine.Debug.Log ("concludes to : " + item.CheckPermission (data, target));
@@ -154,6 +165,7 @@ namespace Coflnet {
 
 			command.Execute (data);
 		}
+
 
 		/// <summary>
 		/// Executes a command.
