@@ -32,11 +32,13 @@ namespace Coflent.Client
 		}
 
 		/// <summary>
-		/// Tries to optain a new Device id
+		/// Generates a new Installation
 		/// </summary>
-		public void Setup()
+		public void Setup(SourceReference DeviceId)
 		{
-			ConfigController.DeviceId = clientCoreInstance.CreateResource<RegisterInstallation>().Id;
+			ConfigController.InstallationId = clientCoreInstance.CreateResource<RegisterInstallation>(DeviceId).Id;
+			// assign id
+			clientCoreInstance.Id = ConfigController.InstallationId;
 		}
 
 		/// <summary>
@@ -47,13 +49,13 @@ namespace Coflent.Client
 		{
 			get
 			{
-				if(ConfigController.DeviceId == default(SourceReference))
+				if(ConfigController.InstallationId == default(SourceReference))
 				{
-					Setup();
-				} else if(ConfigController.DeviceId.IsLocal)
+					Setup(ConfigController.DeviceId);
+				} else if(ConfigController.InstallationId.IsLocal)
 				{
 					// update the device id to the server generated one
-					ConfigController.InstallationId = ClientCore.Instance.ReferenceManager.
+					ConfigController.InstallationId = clientCoreInstance.ReferenceManager.
 													GetResource<Installation>(ConfigController.DeviceId).Id;
 				}
 				return ConfigController.InstallationId;

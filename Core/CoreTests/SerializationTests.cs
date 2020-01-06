@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Coflnet;
+using MessagePack;
 using MessagePack.Resolvers;
 using NUnit.Framework;
 using UnityEngine;
@@ -175,12 +176,12 @@ public class SerializationTests {
 
 	[Test]
 	public void ResourceSave () {
-
+		CompositeResolver.RegisterAndSetAsDefault(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
 		var user = new CoflnetUser ();
 		user.AssignId ();
 		user.OnlyFriendsMessage = true;
 		user.FirstName = "Bernd das Brot ist";
-		DataController.Instance.SaveData ($"res/{user.Id.ToString()}aaaa", user.Serialize ());
+		DataController.Instance.SaveData ($"res/{user.Id.ToString()}aaaa", MessagePackSerializer.Typeless.Serialize(user));
 		ReferenceManager.Instance.Save (user.Id, true);
 	}
 

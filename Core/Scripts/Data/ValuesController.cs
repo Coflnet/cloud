@@ -111,7 +111,7 @@ namespace Coflnet
 
 		private static string SaveKeyWithPrefix(string key)
 		{
-			return "data" + key;
+			return "values/" + key;
 		}
 	}
 

@@ -68,7 +68,7 @@ namespace Coflnet.Server
 		/// <param name="serverId">Server identifier.</param>
 		public static void Init(SourceReference serverId)
 		{
-			Instance.Id = serverId;
+			ServerInstance.Id = serverId;
 			CoflnetSocket.socketServer.Start();
 			ServerInstance.SetCommandsLive();
 			Coflnet.ServerController.Instance = Coflnet.Server.ServerController.ServerInstance;

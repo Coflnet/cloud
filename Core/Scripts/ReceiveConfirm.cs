@@ -19,7 +19,7 @@ namespace Coflnet {
 		}
 
 		protected override CommandSettings GetSettings () {
-			return new CommandSettings ();
+			return new CommandSettings (true,false,false,false,true);
 		}
 
 		public override string Slug => CommandSlug;

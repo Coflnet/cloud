@@ -1,6 +1,7 @@
 ﻿using Coflnet;
 using MessagePack;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Coflnet {
 	/// <summary>
@@ -8,12 +9,14 @@ namespace Coflnet {
 	/// Represents a <see cref="Referenceable"/> that is capeable of receiving/sending commands on its own
 	/// </summary>
 	[MessagePackObject]
+	[DataContract]
 	public abstract class ReceiveableResource : Referenceable {
 		protected static CommandController persistenceCommands;
 
 		/// <summary>
 		/// Protects the <see cref="ReceiveableResource"/> from being spammed with unknown commands
 		/// </summary>
+		[Key("ca")]
 		public AcceptCommandBehaviour commandAccept;
 
 		/// <summary>
@@ -23,8 +26,9 @@ namespace Coflnet {
 		public byte[] publicKey;
 
 		static ReceiveableResource () {
-			persistenceCommands = new CommandController ();
+			persistenceCommands = new CommandController (globalCommands);
 			persistenceCommands.RegisterCommand<GetMessages> ();
+			persistenceCommands.RegisterCommand<ReceiveConfirm>();
 		}
 
 		public override Command ExecuteCommand (MessageData data) {
@@ -78,7 +82,7 @@ namespace Coflnet {
 		/// <param name="data"></param>
 		public void SendCommand (MessageData data) {
 			data.sId = this.Id;
-			CoflnetCore.Instance.SendCommand (data);
+			data.CoreInstance.SendCommand (data);
 		}
 	}
 

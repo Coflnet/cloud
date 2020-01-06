@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 namespace Coflnet.Core
 {
+    /// <summary>
+    /// <see cref="RemoteObject{T}"/> capeable of updating key-value pairs and generating update command to do so
+    /// </summary>
+    /// <typeparam name="TKey">The type of the keys</typeparam>
+    /// <typeparam name="TValue">The type of the values</typeparam>
     public class RemoteDictionary<TKey, TValue> : RemoteObject<IDictionary<TKey, TValue>>, ICollection<KeyValuePair<TKey, TValue>>, IEnumerable<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
     {
         public RemoteDictionary()

@@ -10,20 +10,15 @@ namespace Coflnet
 {
 
     [DataContract]
-	public class Device : Referenceable
+	public class Device : ReceiveableResource
 	{
-		private static CommandController commandController;
+		public static CommandController commandController {get;}
 
 		/// <summary>
 		/// What application type this device coresponds to
 		/// </summary>
 		[DataMember]
 		public SourceReference ApplicationId;
-		/// <summary>
-		/// Public Key is used for authetication purposes
-		/// </summary>
-		[DataMember]
-		public byte[] PublicKey;
 		/// <summary>
 		/// Device secret used for authentication purposes
 		/// </summary>
@@ -90,7 +85,7 @@ namespace Coflnet
 
 		static Device()
 		{
-			commandController = new CommandController(globalCommands);
+			commandController = new CommandController(persistenceCommands);
 			commandController.RegisterCommand<DeviceInstalledCommand>();
 			//commandController.RegisterCommand<AddUserCommand>();
 			commandController.RegisterCommand<RemoveUserCommand>();
@@ -125,7 +120,8 @@ namespace Coflnet
 
 		static Installation()
 		{
-			_commands = new CommandController(globalCommands);
+			_commands = new CommandController(persistenceCommands);
+			_commands.RegisterCommand<CreateUser>();
 		}
 
         public override CommandController GetCommandController()

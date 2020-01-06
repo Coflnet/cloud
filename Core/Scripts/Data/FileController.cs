@@ -12,10 +12,15 @@ namespace Coflnet
 		public static string dataPaht = "/var/lib/coflnet";
 		public static string configPath = "/etc/coflnet";
 
+		/// <summary>
+		/// The subfolder within the <see cref="Environment.SpecialFolder.ApplicationData"/> where data will be saved
+		/// </summary>
+		public static readonly string dataPathPostFix = "coflnet";
+
 
 		static FileController()
 		{
-			dataPaht = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/coflnet";
+			dataPaht = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),dataPathPostFix);
 			UnityEngine.Debug.Log($"DataPath: {dataPaht}");
 
 			Directory.CreateDirectory(dataPaht);

@@ -168,9 +168,9 @@ namespace Coflnet.Client.Messaging
 		[MessagePackObject]
 		public class Params : CreationParamsBase
 		{
-			[Key(1)]
-			public string Name;
 			[Key(2)]
+			public string Name;
+			[Key(3)]
 			public List<SourceReference> Members;
 
 			/// <summary>

@@ -482,7 +482,14 @@ namespace Coflnet
 			var resource = reference.Resource;
 
 			if (resource != null) {
-				var command = resource.GetCommandController ().GetCommand (data.type);
+				Command command = null;
+				try{
+					command = resource.GetCommandController ()
+										.GetCommand (data.type);
+				} catch(CommandUnknownException)
+				{
+					throw new CommandUnknownException(data.type,resource,data.mId);
+				}
 				if(IAmTheManager)
 				{
 					// I can do everything
@@ -494,19 +501,17 @@ namespace Coflnet
 						UpdateSubscribers(resource,data);
 					}
 
-
 					// Not the only managing node? 
 					// delay execution until they confirm update
 					// coreInstance.SendCommand
 
 					// confirm execution escept it is a confirm itself
-					if(ReceiveConfirm.CommandSlug != command.Slug)
+					if(!command.Settings.DisableExecuteConfirm)
 					{
 						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
 							data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
 					}
 
-				
 					// done
 					return;
 				}
@@ -515,10 +520,12 @@ namespace Coflnet
 					// if the command isn't updating something, it is save to execute
 					resource.ExecuteCommand (data, command);
 
-					// THOUGHT: confirming may not be necessary since nonchanging commands return values otherwhise
-					coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-						data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
-				
+					if(!command.Settings.DisableExecuteConfirm)
+					{
+						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
+							data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
+					}
+					
 					// the response should be returned now
 					return;
 				}

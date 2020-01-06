@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Coflent.Client;
 using Coflnet.Client;
 using Coflnet.Server;
@@ -24,6 +25,11 @@ namespace Coflnet.Dev {
 		/// Cotains all simulated devices/server/users
 		/// </summary>
 		public Dictionary<SourceReference,SimulationInstance> simulationInstances;
+
+		/// <summary>
+		/// All messages sent over the network previously
+		/// </summary>
+		public List<MessageData> pastMessages = new List<MessageData>();
 
 
 		public static DevCore DevInstance {get;private set;}
@@ -57,15 +63,19 @@ namespace Coflnet.Dev {
 		/// Will reset the development enviroment when called again (to support multiple unit tests)
 		/// </summary>
 		/// <param name="id">Application/Server Id to use</param>
-		/// <param name="preventDefaultSetup"><c>ture</c> when default settings (dummys) should NOT be set such as <see cref="DummyPrivacyScreen"/></param>
-		public static void Init (SourceReference id, bool preventDefaultSetup = false) {
+		/// <param name="preventDefaultScreens"><c>true</c> when default settings (dummys) should NOT be set such as <see cref="DummyPrivacyScreen"/></param>
+		/// <param name="preventInit"><c>true</c> when The Inits of Client and Server-Cores should not be invoked and client should be prepared like a fresh install</param>
+		public static void Init (SourceReference id, bool preventDefaultScreens = false, bool preventInit = false) {
+			
+			//[Deprecated]
 			ConfigController.ActiveUserId = id;
+			// sets the primary managing server
 			ConfigController.ApplicationSettings.id = id.FullServerId;
 
 
 			UnityEngine.Debug.Log($"setting up with {id}");
 
-			if (!preventDefaultSetup) {
+			if (!preventDefaultScreens) {
 				SetupDefaults ();
 			}
 
@@ -90,9 +100,11 @@ namespace Coflnet.Dev {
 				DevInstance.AddClientCore(SourceReference.Default);
 			}
 
-			
-			ServerCore.Init ();
-			ClientCore.Init ();
+			if(!preventInit)
+			{
+				ServerCore.Init ();
+				ClientCore.Init ();
+			}
 
 		}
 
@@ -123,6 +135,8 @@ namespace Coflnet.Dev {
 			{Id=id};
 
 			SetCoreForService(newClientCore);
+			// for Services using the default Instance
+			ClientCore.Instance = newClientCore;
 
 
 
@@ -132,22 +146,24 @@ namespace Coflnet.Dev {
 			if(createDevice)
 			{
 				// create and add the user server and client side
-				var user = new Device(){Id=id};
+				var device = new Device(){Id=id};
 				SimulationInstance server;
 				if(simulationInstances.TryGetValue(id.FullServerId,out server))
 				{
-					server.core.ReferenceManager.AddReference(user);
+					server.core.ReferenceManager.AddReference(device);
 				}
-				UnityEngine.Debug.Log("Added device " + user.Id);
-				if(!newClientCore.ReferenceManager.AddReference(user)){
+				UnityEngine.Debug.Log("Added device " + device.Id);
+				if(!newClientCore.ReferenceManager.AddReference(device)){
 					UnityEngine.Debug.Log(newClientCore.ReferenceManager.GetReferences());
-					throw new Exception($"failed to add device {user.Id}");
+					throw new Exception($"failed to add device {device.Id}");
 				}
 			}
 
 			// activate commands
 			newClientCore.SetCommandsLive();
 			lastAddedClient=addedInstance;
+
+			
 
 			return addedInstance;
 		}
@@ -157,7 +173,8 @@ namespace Coflnet.Dev {
 		{
 
 			UserService.Instance.ClientCoreInstance = core;
-			DeviceService.Instance.clientCoreInstance = core;
+			InstallService.Instance = new InstallService(core);
+			DeviceService.Instance = new DeviceService(core);
 		}
 
 		/// <summary>
@@ -190,6 +207,15 @@ namespace Coflnet.Dev {
 
 			UnityEngine.Debug.Log("Devcore tries to execute " + data);
 
+			// record it
+			pastMessages.Add(data);
+			
+			if(data.sId == data.rId)
+			{
+				// resource is trying to send to itself
+				serverId = data.rId.ServerId;
+			}
+
 			if (executionCount > 100) {
 				throw new Exception ($"to many commands, probalby a loop {data}");
 			}
@@ -204,7 +230,7 @@ namespace Coflnet.Dev {
 				devData.Connection = new DevConnection();
 				data = devData;
 			
-
+			/*
 			if(data.type == "registerUser" || data.type == "loginUser" || data.type == "response"){
 
 				devData.sender = lastAddedClient;
@@ -214,30 +240,36 @@ namespace Coflnet.Dev {
 				data.rId = ConfigController.ActiveUserId;
 				
 				//
-			}
+			}*/
 
 			//UnityEngine.Debug.Log(data);
 			// search for the serverId first
-			if(simulationInstances.ContainsKey(new SourceReference(serverId,0))){
+			if(serverId != 0 && simulationInstances.ContainsKey(new SourceReference(serverId,0))){
+				UnityEngine.Debug.Log($"on {serverId.ToString("X")} ");
 				simulationInstances[new SourceReference(serverId,0)].ReceiveCommand(devData);
 			}
 			else if(simulationInstances.ContainsKey(data.rId)){
-
-				foreach (var item in simulationInstances)
-				{
-					UnityEngine.Debug.Log($"{item.Key}={item.Value.core.Id}" );
-				}
-
+				UnityEngine.Debug.Log($"on {data.rId} ");
 				// the receiver is known, send it to him
 				simulationInstances[data.rId].ReceiveCommand(devData);
 
-				
-				
-			} else if(simulationInstances.ContainsKey(SourceReference.Default) && simulationInstances[SourceReference.Default].core.Id == data.rId)
+			} else if(simulationInstances.ContainsKey(SourceReference.Default)
+				|| simulationInstances.Where(i=>i.Value.core.Id == data.rId).Any())// && simulationInstances[SourceReference.Default].core.Id == data.rId)
 			{
 				// the receiver is unknown but is asigned the last added client since it hasn't got an ID yet
-				simulationInstances[data.rId] = simulationInstances[SourceReference.Default];
+				SimulationInstance value;
+				
+				if(! simulationInstances.TryGetValue(default(SourceReference),out value))
+				{
+					value = simulationInstances.Where(i=>i.Value.core.Id == data.rId).First().Value;
+				}
+
+				simulationInstances[data.rId] = value;
 				simulationInstances[data.rId].ReceiveCommand(devData);
+
+
+				simulationInstances.Remove(SourceReference.Default);
+				
 			}
 			else if(simulationInstances.ContainsKey(data.rId.FullServerId)){
 				// the receiver itself doesn't exist, but the server for it does
@@ -364,6 +396,14 @@ namespace Coflnet.Dev {
 
     public class ClientCoreProxy : ClientCore
     {
+		private SourceReference _ID;
+
+		public override SourceReference Id {
+			get{return _ID;}
+			set{_ID = value;}
+		}
+
+
         public ClientCoreProxy()
         {
         }

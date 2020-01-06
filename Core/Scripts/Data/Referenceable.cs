@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Coflnet.Core.Commands;
+using MessagePack;
 
 namespace Coflnet
 {
@@ -11,9 +12,11 @@ namespace Coflnet
     [DataContract]
 	public abstract class Referenceable {
 		[DataMember]
-		public SourceReference Id;
+		[Key("Id")]
+		public virtual SourceReference Id {get;set;}
 
 		[DataMember]
+		[Key("a")]
 		public Access Access;
 
 		/// <summary>

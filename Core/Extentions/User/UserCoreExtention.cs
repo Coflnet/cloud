@@ -7,6 +7,8 @@ namespace Coflnet.Core.User {
         public void RegisterCommands(CommandController controller)
         {
             controller.RegisterCommand<RegisterUser>();
+            // part of the core
+            //controller.RegisterCommand<RegisterDevice>();
         }
     }
 }

@@ -34,7 +34,31 @@ namespace Coflnet {
 		public override string Slug => "registerUser";
 	}
 
-	[MessagePackObject]
+
+    public class CreateUser : CreationCommand
+    {
+        public override string Slug => "createuser";
+
+        public override Referenceable CreateResource(MessageData data)
+        {
+			CreateUserRequest request = data.GetAs<CreateUserRequest> ();
+			var user = new CoflnetUser(data.sId);
+			user.PrivacySettings = request.privacySettings;
+            return user;
+        }
+
+
+		[MessagePackObject]
+		public class CreateUserRequest : CreationCommand.CreationParamsBase
+		{
+			[Key (1)]
+			public Dictionary<string, bool> privacySettings;
+		}
+    }
+
+	
+
+    [MessagePackObject]
 	public class RegisterUserRequest {
 		[Key (0)]
 		public string captchaToken;

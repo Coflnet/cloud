@@ -54,7 +54,9 @@ namespace Coflnet.Core.Crypto
         /// <inheritdoc/>
         public override SigningKeyPair GenerateKeyPair()
         {
-            SigningKeyPair keyPair = new SigningKeyPair();
+            SigningKeyPair keyPair = new SigningKeyPair(new byte[32],new byte[64]);
+
+
             if(NativeLibsodium.crypto_sign_keypair(keyPair.publicKey,keyPair.secretKey) != 0)
                 throw new Exception("Could not create new KeyPair");
 

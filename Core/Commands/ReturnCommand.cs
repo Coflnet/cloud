@@ -93,7 +93,7 @@ namespace Coflnet
 			SourceReference oldId;
 			try 
 			{
-				oldId = data.GetAs<CreationParamsBase>().OldId;
+				oldId = data.GetAs<CreationParamsBase>().options.OldId;
 			}catch(Exception e)
 			{
 				UnityEngine.Debug.Log(e);
@@ -104,15 +104,23 @@ namespace Coflnet
 			resource.AssignId(data.CoreInstance.ReferenceManager);
 
 			// make sure the owner is set
-			resource.GetAccess().Owner = data.sId;
+			resource.GetAccess().Owner = data.rId;
 
 			// add the size to any data cap limit (tracking module)
 			// TODO 
 			
 
-			data.CoreInstance.SendCommand<CreationResponseCommand,KeyValuePair<SourceReference,SourceReference>>
-				(data.sId,new KeyValuePair<SourceReference,SourceReference>(oldId,resource.Id));
+			// it is possible that the return will not be received by the target in case it gets offline
+
+			data.SendBack(MessageData.CreateMessageData<CreationResponseCommand,KeyValuePair<SourceReference,SourceReference>>
+				(data.sId,new KeyValuePair<SourceReference,SourceReference>(oldId,resource.Id)));
 		}
+
+		
+        protected override CommandSettings GetSettings()
+        {
+            return new CommandSettings(true,false,false,WritePermission.Instance);
+        }
 
 
 		/// <summary>
@@ -122,12 +130,57 @@ namespace Coflnet
 		public class CreationParamsBase
 		{
 			/// <summary>
-			/// The temporarly client side assigned id 
+			/// Options for the creation of the object
 			/// </summary>
 			[Key(0)]
-			public SourceReference OldId;
+			public Options options;
+
+			/// <summary>
+			/// Additional Options
+			/// </summary>
+			[MessagePackObject]
+			public class Options
+			{
+				/// <summary>
+				/// The temporarly client side assigned id 
+				/// </summary>
+				[Key(0)]
+				public SourceReference OldId;
+
+				/// <summary>
+				/// The prefered (nearest) Region of the client to host 
+				/// </summary>
+				[Key(1)]
+				public SourceReference preferedRegion;
+			}
+
+			public CreationParamsBase()
+			{
+				options = new Options();
+			}
 		}
 	}
+
+    public abstract class ReceivableCreationCommand : CreationCommand
+    {
+
+        public override Referenceable CreateResource(MessageData data)
+        {
+            var res = CreateReceivable(data);
+			res.publicKey = data.GetAs<Params>().KeyPair.publicKey;
+			return res;
+        }
+
+		protected abstract ReceiveableResource CreateReceivable(MessageData data);
+
+
+		[MessagePackObject]
+		public class Params : CreationParamsBase
+		{
+			[Key(1)]
+			public SigningKeyPair KeyPair;
+		}
+    }
 
 
 
@@ -138,8 +191,8 @@ namespace Coflnet
         public override void Execute(MessageData data)
         {
 			var pair = data.GetAs<KeyValuePair<SourceReference,SourceReference>>();
+			UnityEngine.Debug.Log($"updating{pair.Key} with {pair.Value} on {data.rId} from {data.sId}");
             
-			UnityEngine.Debug.Log($"updating{pair.Key} with {pair.Value}");
 			data.CoreInstance.ReferenceManager.UpdateIdAndAddRedirect(pair.Key,pair.Value);
         }
 

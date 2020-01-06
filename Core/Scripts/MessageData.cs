@@ -51,6 +51,11 @@ namespace Coflnet
         [Key("x")]
         public Signature signature;
 
+        /// <summary>
+        /// Event invoked when message got send (or moved to the sending chain)
+        /// </summary>
+        public event Action<MessageData> AfterSend;
+
         protected dynamic deserialized;
 
         private CoflnetCore _coreInstance;
@@ -332,6 +337,8 @@ namespace Coflnet
         {
             data.rId = this.sId;
             CoreInstance.SendCommand(data);
+
+            AfterSend?.Invoke(this);
         }
 
         public MessageData(SourceReference sId, SourceReference rId, long mId, string t, byte[] message) : this(rId, mId, message, t)

@@ -30,13 +30,22 @@ namespace Coflnet.Dev
 
 		public void ReceiveCommand(DevMessageData data, SourceReference sender = default(SourceReference))
 		{
-
-			UnityEngine.Debug.Log($"Executing on {core.Id} " + data);
+			if(!IsConnected)
+			{
+				// whoops we have no network/internet (simulated)
+				return;
+			}
+			UnityEngine.Debug.Log($"Executing on {core.Id} ({core.GetType().Name})");
 			data.CoreInstance = core;
 			if(OnMessage == null || OnMessage.Invoke(data)){
 				core.ReceiveCommand(data,sender);
 				AfterMessage?.Invoke(data);
 			}
+		}
+
+		public SimulationInstance()
+		{
+			IsConnected = true;
 		}
 	}
 }

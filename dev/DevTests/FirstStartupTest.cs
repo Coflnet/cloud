@@ -21,6 +21,37 @@ public class FirstStartupTest {
         }
     }
 
+
+    [Test]
+    public void DeviceAndInstallRegister()
+    {
+        FirstStartSetupController.Instance.RedoSetup (true);
+        var serverId = new SourceReference (1, 1, 1, 0);
+        // start
+        DevCore.Init (serverId, false,true);
+        // servercore won't receive commands
+        //DevCore.DevInstance.simulationInstances[serverId].IsConnected = false;
+
+        //var clientCore = DevCore.DevInstance.simulationInstances[serverId];
+
+        // start the client
+        ClientCore.Init();
+
+        // Device and Installation should now exist
+        Assert.AreNotEqual(default(SourceReference),ConfigController.DeviceId);
+        Assert.AreNotEqual(default(SourceReference),ConfigController.InstallationId);
+
+        // enable network
+        DevCore.DevInstance.simulationInstances[serverId].IsConnected = true;
+
+        // cause an update that will attempt to send offline queue
+
+        // Device and Installation should have online ids
+
+        Debug.Log($"DeviceId: {ConfigController.DeviceId}");
+        Debug.Log($"InstallationId: {ConfigController.InstallationId}");
+    }
+
     [Test]
     public void FirstStartupRegisterLoginTest () {
         PrivacyService.Instance.privacyScreen = new AcceptAllScreen ();
@@ -29,9 +60,10 @@ public class FirstStartupTest {
 
 
 
-        Debug.Log ("The new user has the id: " + ConfigController.UserSettings.userId);
+        Debug.Log ("The new user has the id: " + UserService.Instance.CurrentUserId);
+        Debug.Log($"The Active user is: {ConfigController.ActiveUserId}");
         // userid exists client side
-        Assert.NotNull (ConfigController.Users.Find ((u) => u.userId == ConfigController.UserSettings.userId));
+        Assert.NotNull (UserService.Instance.CurrentUser);
 
         // exists server side
         CoflnetUser user;
@@ -89,4 +121,7 @@ public class FirstStartupTest {
             UnityEngine.Debug.Log("response received and validated successfully");
         });
     }
+
+
+    
 }

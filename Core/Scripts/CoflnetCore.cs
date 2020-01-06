@@ -70,6 +70,16 @@ namespace Coflnet
 			}
 		}
 
+
+		/// <summary>
+		/// Adds a new Identity that this instance Represents and should accept Commands for
+		/// </summary>
+		/// <param name="id">The <see cref="SourceReference"/> of the Identity</param>
+		public void AddIdentity(SourceReference id)
+		{
+			// default accept is all so nothing to do here
+		}
+
 		/// <summary>
 		/// Receives and processes a command.
 		/// Counterpart to <see cref="SendCommand"/>
@@ -96,7 +106,6 @@ namespace Coflnet
 			
 
 			this.ReferenceManager.ExecuteForReference(data,sender);
-
 			//SendCommand<ReceiveConfirm,ReceiveConfirmParams>(data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
 		}
 

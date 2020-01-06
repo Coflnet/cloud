@@ -50,7 +50,7 @@ namespace Coflent.Client
 				} else if(ConfigController.DeviceId.IsLocal)
 				{
 					// update the device id to the server generated one
-					ConfigController.DeviceId = ClientCore.Instance.ReferenceManager.
+					ConfigController.DeviceId = clientCoreInstance.ReferenceManager.
 													GetResource<Device>(ConfigController.DeviceId).Id;
 				}
 				return ConfigController.DeviceId;

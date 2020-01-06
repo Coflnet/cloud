@@ -88,9 +88,7 @@ namespace Coflnet
 			// The owner always has access
 			if (requestingReference == Owner)
 				return true;
-
-				UnityEngine.Debug.Log($"{requestingReference} is requesting {mode}");
-
+				
 			//is there a special case?
 			// this allows to give everyone except a few specific Resources access
 			if (resourceAccess != null) {

@@ -7,7 +7,7 @@ namespace Coflnet.Client {
 	/// <summary>
 	/// Coflnet client.
 	/// Main class to work with from the outside on a client device.
-	/// Also has the Id of the client device.
+	/// Also has the Id of the client installation.
 	/// </summary>
 	public class ClientCore : CoflnetCore {
 		static void HandleReceiveMessageData (MessageData data) { }
@@ -19,7 +19,13 @@ namespace Coflnet.Client {
 		/// </summary>
 		private ClientSocket socket;
 
-		public static ClientCore ClientInstance;
+
+		private static ClientCore _cc;
+
+		public static ClientCore ClientInstance {get{return _cc;}
+		set{
+			_cc = value;
+		}}
 
 		public CommandController CommandController {
 			get {
@@ -50,6 +56,7 @@ namespace Coflnet.Client {
 
 
 		public static void Init () {
+			UnityEngine.Debug.Log("doing client init");
 			ClientInstance.SetCommandsLive ();
 			ClientInstance.socket.Reconnect ();
 			LocalizationManager.Instance.LoadCompleted ();
@@ -58,6 +65,9 @@ namespace Coflnet.Client {
 				ClientInstance.CheckInstallation ();
 		}
 
+		/// <summary>
+		/// Enables alle Commands from extentions
+		/// </summary>
 		public void SetCommandsLive () {
 			commandController.RegisterCommand<ReferenceManager.UpdateResourceCommand>();
 
@@ -70,11 +80,6 @@ namespace Coflnet.Client {
 				extention.RegisterCommands (commandController);
 			}
 
-			// set the current device id if nothing is set
-			if(this.Id == default(SourceReference))
-				this.Id = ConfigController.DeviceId;
-
-
 			// add commands behind the device
 			if(this.ReferenceManager.Exists(this.Id))
 			{
@@ -85,7 +90,7 @@ namespace Coflnet.Client {
 					.AddBackfall(GetCommandController());
 			} else 
 			{
-				UnityEngine.Debug.Log("There is no device yet for the clientCore");
+				UnityEngine.Debug.Log("There is no installation yet for the clientCore");
 				ReferenceManager.AddReference (this);
 			}
 		}
@@ -182,7 +187,7 @@ namespace Coflnet.Client {
 		}
 
 		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0,SourceReference sender = default(SourceReference)) {
-			ServerController.Instance.SendCommand<C, T> (receipient, data);
+			ServerController.Instance.SendCommand<C, T> (receipient, data,sender);
 		}
 
 		public override void SendCommand<C> (SourceReference receipient, byte[] data) {
@@ -208,9 +213,9 @@ namespace Coflnet.Client {
 		/// </summary>
 		/// <typeparam name="C">Command that creates the resource</typeparam>
 		/// <returns>Proxy Referenceable</returns>
-		public Referenceable CreateResource<C>() where C : CreationCommand
+		public Referenceable CreateResource<C>(SourceReference owner = default(SourceReference)) where C : CreationCommand
 		{
-			return this.CreateResource<C,CreationCommand.CreationParamsBase>(new CreationCommand.CreationParamsBase());
+			return this.CreateResource<C,CreationCommand.CreationParamsBase>(new CreationCommand.CreationParamsBase(),owner);
 		}
 
 
@@ -222,31 +227,43 @@ namespace Coflnet.Client {
 		/// <param name="options">Options to pass along</param>
 		/// <typeparam name="C"></typeparam>
 		/// <returns>Temporary proxy object storing executed commands</returns>
-		public Referenceable CreateResource<C,T>(T options) where C : CreationCommand where T:CreationCommand.CreationParamsBase
+		public Referenceable CreateResource<C,T>(T options, SourceReference sender = default(SourceReference)) 
+									where C : CreationCommand where T:CreationCommand.CreationParamsBase
 		{
 
-			options.OldId = SourceReference.NextLocalId;
+			options.options.OldId = SourceReference.NextLocalId;
 
+			var ownerId = this.Id;
+			if(ownerId == default(SourceReference))
+			{
+				ownerId = ConfigController.ManagingServer;
+			}
 
 			// create it locally
 			// first craft MessageData
-			var data = MessageData.CreateMessageData<C,T>(this.Id,options,0,this.Id);
-			var core = new CreationCore(){ReferenceManager=this.ReferenceManager};
+			var normaldata = MessageData.CreateMessageData<C,T>(ownerId,options,0,this.Id);
 
-			data.CoreInstance = core;
+			// wrap it in a special message data that captures the id
+			var data = new CreationMessageData(normaldata);
+			var core = this;//new CreationCore(){ReferenceManager=this.ReferenceManager};
+			//core.SetCommandsLive();
+
+			data.CoreInstance = this;
+
+			// execute it on the owner resource if possible
+			ReferenceManager.GetResource(sender).ExecuteCommand(data);
 
 			// exeute it
-			ExecuteCommand(data);
+			//core.ExecuteCommand(data);
 			
 			// remove the RedirectReferenceable again (todo)
 
-			options.OldId = core.createdId;
+			options.options.OldId = data.createdId;
 			
-
 			// create it on the server
-			SendCommand<C,T>(ConfigController.ManagingServer,options,0,this.Id);
+			SendCommand<C,T>(ownerId,options,0,sender);
 
-			return ReferenceManager.GetResource<Referenceable>(core.createdId);
+			return ReferenceManager.GetResource<Referenceable>(data.createdId);
 		}
 
 		private class CreationCore : ClientCore
@@ -259,6 +276,24 @@ namespace Coflnet.Client {
 				createdId = ((KeyValuePair<SourceReference,SourceReference>)((object)data)).Value;
 
 				UnityEngine.Debug.Log($"The created resource has the id: {createdId}");
+			}
+
+		
+		}
+
+		private class CreationMessageData : MessageData
+		{
+			public SourceReference createdId;
+
+			public override void SendBack(MessageData data)
+			{
+				createdId = data.GetAs<KeyValuePair<SourceReference,SourceReference>>().Value;
+				UnityEngine.Debug.Log($"created resource has the id: {createdId}");
+			}
+
+			public CreationMessageData(MessageData data) : base(data)
+			{
+
 			}
 		}
 

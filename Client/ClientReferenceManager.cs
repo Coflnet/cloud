@@ -23,6 +23,7 @@ namespace Coflnet.Client {
 				return;
 			}
 
+
 			UnityEngine.Debug.Log ($"searching {coreInstance.Id} (ClientRefmanager) for {data.rId}");
 			InnerReference<Referenceable> reference;
 			TryGetReference (data.rId, out reference);
@@ -32,13 +33,13 @@ namespace Coflnet.Client {
 				return;
 			}
 
-			// execute the command if it is localPropagation
 			var command = reference
 						.Resource
 						.GetCommandController ()
 						.GetCommand (data.type);
 
-			if(command.Settings.LocalPropagation)
+			// execute the command if it is localPropagation or comming from the managing node
+			if(command.Settings.LocalPropagation || IsManagingNodeFor(data.sId,data.rId))
 			{
 				command.Execute(data);
 			}

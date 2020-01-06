@@ -1,4 +1,5 @@
 ﻿
+using System;
 using Coflent.Client;
 
 namespace Coflnet.Client
@@ -46,8 +47,9 @@ namespace Coflnet.Client
 			// make an install if we haven't yet
 			if(ConfigController.InstallationId == default(SourceReference))
 			{
-				InstallService.Instance.Setup();
+				InstallService.Instance.Setup(ConfigController.DeviceId);
 			}
+			
 
 			UnityEngine.Debug.Log("doing setup :)");
 
@@ -69,6 +71,45 @@ namespace Coflnet.Client
 		}
 	}
 
+	/// <summary>
+	/// Throws an Repeatexception until an online id is granted
+	/// </summary>
+	class OnlineIdResolver
+	{
+		private SourceReference _id;
 
+		public SourceReference Id
+		{
+			get 
+			{
+				if(_id.IsLocal)
+				{
+					throw new ReapeatExecutionException(new TimeSpan(0,0,5));
+				}
+				return _id;
+			}
+			set
+			{
+				_id = value;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Tells the core that the currect action should be repeated
+	/// </summary>
+    public class ReapeatExecutionException : CoflnetException
+    {
+		/// <summary>
+		/// The Time to wait until execution should be tried again.
+		/// Will be increased by 20% each new time execution fails (incremental backoff)
+		/// </summary>
+		/// <value></value>
+		public TimeSpan WaitTime {get;}
+
+        public ReapeatExecutionException(TimeSpan waitTime, string userMessage = null, int responseCode = 0, string info = null, long msgId = -1) : base("repeat", $"The action should be repeated in {waitTime}", userMessage, responseCode, info, msgId)
+        {
+        }
+    }
 }
 

@@ -164,6 +164,7 @@ namespace Coflnet {
 			}
 
 			command.Execute (data);
+
 		}
 
 
@@ -191,6 +192,7 @@ namespace Coflnet {
 
 				throw new CommandUnknownException (slug);
 			}
+
 			return commands[slug];
 		}
 
@@ -260,6 +262,9 @@ namespace Coflnet {
 
 	public class CommandUnknownException : CoflnetException {
 		public CommandUnknownException (string slug, long msgId = -1) : base ("unknown_command", $"The command `{slug}` is unknown. It may not be registered on the target Resource yet.", null, 404, null, msgId) { }
+
+		public CommandUnknownException (string slug, Referenceable target, long msgId = -1) 
+		: base ("unknown_command", $"The command `{slug}` wasn't found on the Resource {target.Id} ({target.GetType().Name}).", null, 404, null, msgId) { }
 	}
 
 	/// <summary>
@@ -414,6 +419,17 @@ namespace Coflnet {
 				protected set;
 			}
 
+
+			/// <summary>
+			/// Wherether or not to confirm the receiveiment of the command.
+			/// If set to <see cref="false"/> the command has to send the acknowledgement itself
+			/// </summary>
+			/// <value><c>true</c> if the receipient should not automatically confirm the executionof the command.</value>
+			public bool DisableExecuteConfirm {
+				get;
+				protected set;
+			}
+
 			/// <summary>
 			/// Gets the permissions needed for this command
 			/// </summary>
@@ -463,6 +479,20 @@ namespace Coflnet {
 				Encrypted = encrypted;
 				LocalPropagation = localPropagation;
 				Permissions = permissions;
+			}
+
+
+						/// <summary>
+			/// Initializes a new instance of the <see cref="T:Coflnet.Command.CommandSettings"/> class.
+			/// </summary>
+			/// <param name="threadSave">If set to <c>true</c> command is thread save.</param>
+			/// <param name="distribute">If set to <c>true</c> is changing (will be distributed).</param>
+			/// <param name="encrypted">If set to <c>true</c> encrypted.</param>
+			/// <param name="localPropagation">If set to <c>true</c> local propagation.</param>
+			/// <param name="disableExecuteConfirm">If set to <c>true</c> execution of the command wont be confirmed.</param>
+			/// <param name="permissions">Permissions.</param>
+			public CommandSettings (bool threadSave, bool distribute, bool encrypted, bool localPropagation,bool disableExecuteConfirm, params Permission[] permissions): this(threadSave,distribute,encrypted,localPropagation,permissions) {
+				this.DisableExecuteConfirm = disableExecuteConfirm;
 			}
 
 			public CommandSettings (params Permission[] permissions) {
@@ -591,6 +621,9 @@ namespace Coflnet {
 	}
 
 
+	/// <summary>
+	/// Creates a new Installation on The current Server
+	/// </summary>
 	public class RegisterInstallation : CreationCommand {
 		protected override CommandSettings GetSettings () {
 			// everyone can register devices
@@ -599,7 +632,10 @@ namespace Coflnet {
 
         public override Referenceable CreateResource(MessageData data)
         {
-            return new Installation ();
+			UnityEngine.Debug.Log("creating install on " + data.CoreInstance.GetType().Name);
+			var install = new Installation ();
+			install.Device = new Reference<Device>(data.rId);
+            return install;
         }
 
 		public override string Slug => "createInstall";

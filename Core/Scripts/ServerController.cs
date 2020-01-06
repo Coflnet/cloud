@@ -35,12 +35,19 @@ namespace Coflnet
 
 		public void SendCommandToServer(MessageData data, long serverId = 0)
 		{
-			if (serverId == 0 || !Servers.ContainsKey(serverId))
+			
+			if (serverId == 0)
+				serverId = ConfigController.PrimaryServer;
+
+			if (serverId == 0)
 			{
 				throw new System.Exception("There is no server with the id " + serverId.ToString("X"));
 			}
-			if (serverId == 0)
-				serverId = ConfigController.PrimaryServer;
+
+			if(!Servers.ContainsKey(serverId))
+			{
+				Servers.AddOrUpdate(serverId,new CoflnetServer(serverId),(sid,s)=>s);
+			}
 
 			SendCommandToServer(data, Servers[serverId]);
 		}
@@ -60,15 +67,14 @@ namespace Coflnet
 			SendCommandToServer(message, serverId);
 		}
 
-		public void SendCommand<T, Y>(SourceReference to, Y data) where T : Command
+		public void SendCommand<T, Y>(SourceReference to, Y data,SourceReference sender = default(SourceReference)) where T : Command
 		{
 			var serialized = MessagePack.MessagePackSerializer.Serialize(data);
-
-
-			SendCommand<T>(to, serialized);
+			
+			SendCommand<T>(to, serialized,sender);
 		}
 
-		public void SendCommand<C>(SourceReference to, byte[] data) where C : Command
+		public void SendCommand<C>(SourceReference to, byte[] data,SourceReference sender = default(SourceReference)) where C : Command
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
@@ -82,7 +88,10 @@ namespace Coflnet
 			{
 				bytes = data;
 			}
-			var message = new MessageData(to, bytes, commandInstance.Slug);
+			var message = new MessageData(to, bytes, commandInstance.Slug)
+			{
+				sId = sender
+			};
 
 
 
@@ -94,7 +103,7 @@ namespace Coflnet
 			}
 
 
-			SendCommandToServer(message);
+			SendCommandToServer(message,message.rId.ServerId);
 		}
 
 
@@ -105,7 +114,7 @@ namespace Coflnet
 		/// <param name="server">Server.</param>
 		public void SendCommandToServer(MessageData data, CoflnetServer server)
 		{
-			var connection = server.Connection;
+			var connection = server.GetOrCreateConnection();
 			connection.SendCommand(data);
 		}
 

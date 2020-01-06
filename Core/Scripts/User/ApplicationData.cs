@@ -17,6 +17,12 @@ namespace Coflnet
 		[Key("kv")]
 		public RemoteDictionary<string,string> KeyValues;
 
+		/// <summary>
+		/// The <see cref="KeyPair"/> Visible to other members of a chat
+		/// </summary>
+		[Key("kp")]
+		public SigningKeyPair communicationKeyPair;
+
 
 		/// <summary>
 		/// Creates a new Instance of the <see cref="ApplicationData"/> class.
