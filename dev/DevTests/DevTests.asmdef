@@ -4,12 +4,22 @@
         "Coflnet.dev",
         "Coflnet",
         "Coflnet.Server",
-        "Coflnet.Client"
-    ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
+        "Coflnet.Client",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "MessagePack.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

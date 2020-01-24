@@ -230,7 +230,7 @@ namespace Coflnet
         /// <typeparam name="T">The 1st type parameter.</typeparam>
         public virtual T GetAs<T>()
         {
-            if (Object.ReferenceEquals(null, deserialized))
+            if (deserialized == null) // Object.ReferenceEquals(null, deserialized))
             {
                 if (message.Length == 0)
                 {

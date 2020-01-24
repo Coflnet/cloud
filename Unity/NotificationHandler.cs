@@ -61,11 +61,6 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 
 			Debug.Log("enabled firebase");
 		}
-		Firebase.Messaging.FirebaseMessaging.TokenRegistrationOnInitEnabled = true;
-
-
-		Firebase.Messaging.FirebaseMessaging.TokenReceived += OnTokenReceived;
-		Firebase.Messaging.FirebaseMessaging.MessageReceived += OnMessageReceived;
 	}
 
 
@@ -370,44 +365,11 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 
 
 
-
-
-	public void OnTokenReceived(object sender, Firebase.Messaging.TokenReceivedEventArgs token)
-	{
-		if (!PrivacyController.instance.AmIAllowedToDo("share-firebase"))
-		{
-			return;
-		}
-		firebaseToken = token.Token;
-
-		Track.instance.SendTrackingRequest("Received firebase token/");
-		// if the token is allready sent stop here;
-		if (PlayerPrefs.GetString("firebaseToken", "noToken") == firebaseToken)
-			return;
-		/*string url = DataShifter.ufURL + "/api/v1/user/token/push";
-		ServerPostVariable[] fields = {
-			new ServerPostVariable("token",token.Token),
-			new ServerPostVariable("provider","firebase")
-		}; */
-		//MultiplayerController.instance.SendToApi(url, TokenCallback, fields);
-	}
-
 	public void TokenCallback(string response, System.Net.HttpStatusCode status)
 	{
 		if (status != System.Net.HttpStatusCode.OK)
 			return;
 		PlayerPrefs.SetString("firebaseToken", firebaseToken);
-	}
-
-	public void OnMessageReceived(object sender, Firebase.Messaging.MessageReceivedEventArgs e)
-	{
-		UnityEngine.Debug.Log("Received a new message data: " + e.Message.Data);
-		Track.instance.SendTrackingRequest("got message");
-		foreach (System.Collections.Generic.KeyValuePair<string, string> iter in
-			e.Message.Data)
-		{
-			Track.instance.SendTrackingRequest("Received a new message data: " + iter.Key + " -> " + iter.Value);
-		}
 	}
 
 	public bool TryShowNextAlert(AlertItem alertItem)
