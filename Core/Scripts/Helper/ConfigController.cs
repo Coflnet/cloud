@@ -62,11 +62,21 @@ namespace Coflnet
 
 		static ConfigController()
 		{
-			if (FileController.Exists("userSettings"))
-				Users = MessagePackSerializer.Deserialize<List<UserSettings>>(FileController.ReadAllBytes("userSettings"));
-			else
-				Users = new List<UserSettings>();
+			try 
+			{
+				Load();
+			} catch(Exception e)
+			{
+				UnityEngine.Debug.Log($"Could not load config fully: {e.Message}   \n {e.StackTrace}");
+			}
 
+			
+
+			AppDomain.CurrentDomain.ProcessExit += (object sender, EventArgs e) => Save();
+		}
+
+		private static void Load()
+		{
 			if (ValuesController.HasKey("currentUserIdentifier"))
 			{
 				ActiveUserId = ValuesController.GetValue<SourceReference>("currentUserIdentifier");
@@ -81,7 +91,10 @@ namespace Coflnet
 				InstallationId = ValuesController.GetValue<SourceReference>("installationId");
 			}
 
-			AppDomain.CurrentDomain.ProcessExit += (object sender, EventArgs e) => Save();
+			if (FileController.Exists("userSettings"))
+				Users = MessagePackSerializer.Deserialize<List<UserSettings>>(FileController.ReadAllBytes("userSettings"));
+			else
+				Users = new List<UserSettings>();
 		}
 
 

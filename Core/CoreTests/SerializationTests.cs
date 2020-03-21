@@ -1,5 +1,7 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Coflnet;
 using MessagePack;
@@ -123,29 +125,46 @@ public class SerializationTests {
 
 	long referenceId = 0;
 
+	/// <summary>
+	/// Consumes ~50MB RAM for generated ids
+	/// </summary>
 	[Test]
 	public void ThreadSafeIdGeneratorTest () {
-		long startId = ThreadSaveIdGenerator.NextId;
-
+		var ids = new ConcurrentDictionary<long,byte>(); 
+		var threadCount = 10;
+		var iterationsPerThread = 500000;
+		long lastId = 0 ; 
 		var start = new ThreadStart (() => {
-			for (int i = 0; i < 500000; i++) {
+			for (int i = 0; i < iterationsPerThread; i++) {
 				var id = ThreadSaveIdGenerator.NextId;
-				if (id < referenceId)
-					throw new System.Exception ($"The last id was smaller than the one before, thus not unique {id} < {referenceId}");
-				else
-					referenceId = id;
+				
+				if (!ids.TryAdd(id,0))
+					throw new System.Exception ($"The last id was already generated once {id} ");
+
+			}
+			if(threadCount*iterationsPerThread == ids.Count)
+			{
+				// done
+				lastId = ThreadSaveIdGenerator.NextId;
 			}
 		});
 		var threads = new List<Thread> ();
+		var firstId = ThreadSaveIdGenerator.NextId;
 		for (int i = 0; i < 10; i++) {
 			var t = new Thread (start);
 			t.Start ();
 			threads.Add (t);
 		}
 
-		threads[0].Join ();
 
-		Debug.Log ($"start: {startId} end: {ThreadSaveIdGenerator.NextId} ");
+		foreach (var thread in threads)
+		{
+			thread.Join();
+		}
+		threads.Clear();
+
+		Debug.Log ($"start: {firstId.ToString("n0")} end: {lastId.ToString("n0")} Theoretical: {(lastId-firstId).ToString("n0")} real: {ids.Count.ToString("n0")}");
+		ids.Clear();
 	}
 
 	[Test]

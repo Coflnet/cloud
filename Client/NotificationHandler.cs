@@ -26,7 +26,7 @@ namespace Coflnet.Client
 
 		void AfterLoad()
 		{
-			string welcome = LocalizationManager.Instance.GetTranslation("welcome_to_game");
+			string welcome = I18nController.Instance.GetTranslation("welcome_to_game");
 			AddMessageToAlertStream(welcome);
 		}
 
@@ -46,7 +46,7 @@ namespace Coflnet.Client
 		/// <param name="values">Optional additional values</param>
 		public void AddTranslatedAlert(string message, params KeyValuePair<string,string>[] values)
 		{
-			var translation = LocalizationManager.Instance.GetTranslation(message,values);
+			var translation = I18nController.Instance.GetTranslation(message,values);
 			AddMessageToAlertStream(translation);
 		}
 

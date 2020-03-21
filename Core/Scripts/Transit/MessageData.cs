@@ -279,28 +279,6 @@ namespace Coflnet
             return MessagePackSerializer.Serialize<T>(ob);
         }
 
-        /// <summary>
-        /// The user who sent the message, may be not present on the current server!
-        /// </summary>
-        /// <value>The user.</value>
-        [IgnoreMember]
-        [System.Obsolete("use the Reference instead")]
-        public CoflnetUser User
-        {
-            get
-            {
-                return null;//UserController.instance.GetUser(sId);
-            }
-        }
-        [IgnoreMember]
-        public Reference<CoflnetUser> UserReference
-        {
-            get
-            {
-                return new Reference<CoflnetUser>(new SourceReference());
-            }
-        }
-
         public void SetCommand<C>() where C : Command, new()
         {
             this.type = (new C()).Slug;
@@ -355,6 +333,7 @@ namespace Coflnet
         {
             return CoreInstance.ReferenceManager.GetResource<T>(rId);
         }
+
 
         /// <summary>
         /// Signs the message contents with the given keyPairs private key

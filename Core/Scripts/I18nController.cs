@@ -6,7 +6,16 @@ using System.Linq;
 
 namespace Coflnet
 {
-	public class LocalizationManager
+	/// <summary>
+	/// Old name for the I18nController
+	/// </summary>
+	public class LocalizationManager : I18nController
+	{
+
+	}
+
+
+	public class I18nController
 	{
 		private event Action localLoadedCallBack;
 		public bool loadDone { get; private set; }
@@ -21,11 +30,11 @@ namespace Coflnet
 		/// </summary>
 		public string Locale { get; protected set; }
 
-		public static LocalizationManager Instance { get; }
+		public static I18nController Instance { get; }
 
-		static LocalizationManager()
+		static I18nController()
 		{
-			Instance = new LocalizationManager();
+			Instance = new I18nController();
 		}
 
 		/// <summary>

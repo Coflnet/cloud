@@ -279,7 +279,7 @@ public class PrivacyController : MonoBehaviour, IPrivacyScreen
 	public void ShowMoreInfo(string translationKey)
 	{
 		MenuController menuController = MenuController.instance;
-		LocalizationManager localizationManager = LocalizationManager.Instance;
+		I18nController localizationManager = I18nController.Instance;
 		menuController.SetActive(moreInfoContainer);
 
 		menuController.SetChildButtonText(moreInfoContainer, 0, translationKey);

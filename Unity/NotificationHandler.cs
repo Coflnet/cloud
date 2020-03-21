@@ -48,7 +48,7 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 	void Start()
 	{
 		mc = MenuController.instance;
-		LocalizationManager.Instance.AddLoadCallback(AfterLoad);
+		I18nController.Instance.AddLoadCallback(AfterLoad);
 
 		Debug.Log("starting notificationhandler for firebase " + PrivacyController.instance.AmIAllowedToDo("share-firebase"));
 		if (!PrivacyController.instance.AmIAllowedToDo("share-firebase"))
@@ -66,7 +66,7 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 
 	void AfterLoad()
 	{
-		string welcome = LocalizationManager.Instance.GetTranslation("welcome_to_game");
+		string welcome = I18nController.Instance.GetTranslation("welcome_to_game");
 		AddMessageToAlertStream(welcome);
 	}
 
@@ -172,14 +172,14 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 
 	public void AddLocalAlert(string key, params KeyValuePair<string, string>[] values)
 	{
-		string translationWithExtra = LocalizationManager.Instance.GetTranslation(key, values);
+		string translationWithExtra = I18nController.Instance.GetTranslation(key, values);
 		AddMessageToAlertStream(translationWithExtra);
 	}
 
 
 	public void AddLocalAlertAsync(string key, params KeyValuePair<string, string>[] values)
 	{
-		string translationWithExtra = LocalizationManager.Instance.GetTranslation(key, values);
+		string translationWithExtra = I18nController.Instance.GetTranslation(key, values);
 		AddMessageToStreamAsync(translationWithExtra);
 		translationWithExtra = null;
 	}
@@ -190,7 +190,7 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 		string text,
 		string buttonText = "OK")
 	{
-		LocalizationManager lm = LocalizationManager.Instance;
+		I18nController lm = I18nController.Instance;
 		ShowNotification(lm.GetTranslation(title), lm.GetTranslation(text), lm.GetTranslation(buttonText));
 	}
 
@@ -276,7 +276,7 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 		string buttonTextRight = "yes",
 		UnityAction buttonLeft = null)
 	{
-		LocalizationManager lm = LocalizationManager.Instance;
+		I18nController lm = I18nController.Instance;
 		ShowNotification(
 			lm.GetTranslation(title),
 			lm.GetTranslation(text),
@@ -311,7 +311,7 @@ public class NotificationHandler : MonoBehaviour, INotificationDisplay
 		// TODO make a system that translates title and text here
 		// remember to implement the variables
 
-		LocalizationManager local = LocalizationManager.Instance;
+		I18nController local = I18nController.Instance;
 		if (buttonTextLeft == "no")
 			buttonTextLeft = local.GetTranslation("no");
 		if (buttonTextRight == "yes")

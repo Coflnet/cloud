@@ -53,12 +53,12 @@ public class CoflnetMain : MonoBehaviour
 
         for (int i = 0; i < loadedData.items.Length; i++)
         {
-            if (!Coflnet.LocalizationManager.Instance.Translations.ContainsKey(loadedData.items[i].key))
-                Coflnet.LocalizationManager.Instance.Translations.Add(loadedData.items[i].key, loadedData.items[i].value);
+            if (!Coflnet.I18nController.Instance.Translations.ContainsKey(loadedData.items[i].key))
+                Coflnet.I18nController.Instance.Translations.Add(loadedData.items[i].key, loadedData.items[i].value);
         }
 
 
         // done
-        Coflnet.LocalizationManager.Instance.LoadCompleted();
+        Coflnet.I18nController.Instance.LoadCompleted();
     }
 }

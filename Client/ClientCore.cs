@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Coflnet.Core;
 using Coflnet.Core.Commands;
+using UnityEngine;
 
 namespace Coflnet.Client {
 	/// <summary>
@@ -59,7 +60,7 @@ namespace Coflnet.Client {
 			UnityEngine.Debug.Log("doing client init");
 			ClientInstance.SetCommandsLive ();
 			ClientInstance.socket.Reconnect ();
-			LocalizationManager.Instance.LoadCompleted ();
+			I18nController.Instance.LoadCompleted ();
 
 			if (ClientInstance != null)
 				ClientInstance.CheckInstallation ();
@@ -230,7 +231,6 @@ namespace Coflnet.Client {
 		public Referenceable CreateResource<C,T>(T options, SourceReference sender = default(SourceReference)) 
 									where C : CreationCommand where T:CreationCommand.CreationParamsBase
 		{
-
 			options.options.OldId = SourceReference.NextLocalId;
 
 			var ownerId = this.Id;
@@ -251,7 +251,12 @@ namespace Coflnet.Client {
 			data.CoreInstance = this;
 
 			// execute it on the owner resource if possible
-			ReferenceManager.GetResource(sender).ExecuteCommand(data);
+			if(ReferenceManager.Exists(sender))
+				ReferenceManager.GetResource(sender).ExecuteCommand(data);
+			else {
+				Debug.Log("oh shot");
+				core.ExecuteCommand(data);
+			}
 
 			// exeute it
 			//core.ExecuteCommand(data);

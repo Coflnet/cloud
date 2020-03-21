@@ -15,10 +15,10 @@ public class LocalizedText : MonoBehaviour
 	{
 		if (prevent)
 			return;
-		if (LocalizationManager.Instance.loadDone)
+		if (I18nController.Instance.loadDone)
 			SetText();
 		else
-			LocalizationManager.Instance.AddLoadCallback(Loaded);
+			I18nController.Instance.AddLoadCallback(Loaded);
 	}
 
 	public void Loaded()
@@ -30,7 +30,7 @@ public class LocalizedText : MonoBehaviour
 	public void SetText()
 	{
 		Text text = GetComponent<Text>();
-		text.text = LocalizationManager.Instance.GetTranslation(key);
+		text.text = I18nController.Instance.GetTranslation(key);
 	}
 
 #if UNITY_WEBGL

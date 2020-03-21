@@ -6,8 +6,6 @@ namespace Coflnet
         string Data { get; }
         dynamic DeSerialized { get; set; }
         CoflnetCore CoreInstance { get; set; }
-        CoflnetUser User { get; }
-        Reference<CoflnetUser> UserReference { get; }
         byte[] SignableContent { get; }
 
         void Deserialize<T>();

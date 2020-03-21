@@ -214,7 +214,7 @@ namespace Coflnet.Unity
 			else
 			{
 				// localize Text
-				text = LocalizationManager.Instance.GetTranslation(text);
+				text = I18nController.Instance.GetTranslation(text);
 				ShowOffEmoji.instance.SetText(textObject, text);
 				Child(parent, index).SetActive(true);
 			}
@@ -247,25 +247,25 @@ namespace Coflnet.Unity
 
 		public void SetTranslatedChildText(GameObject parent, int index, string transKey)
 		{
-			SetChildText(parent, index, LocalizationManager.Instance.GetTranslation(transKey));
+			SetChildText(parent, index, I18nController.Instance.GetTranslation(transKey));
 		}
 
 		public void SetTranslatedChildButtonText(GameObject parent, int index, string transKey, params KeyValuePair<string, string>[] values)
 		{
-			SetChildButtonText(parent, index, LocalizationManager.Instance.GetTranslation(transKey, values));
+			SetChildButtonText(parent, index, I18nController.Instance.GetTranslation(transKey, values));
 		}
 
 		public void ShowThanksTo()
 		{
-			string text = LocalizationManager.Instance.GetTranslation("thanks_to");
+			string text = I18nController.Instance.GetTranslation("thanks_to");
 			NotificationHandler.instance.ShowNotification("", text);
 		}
 
 
 		public void DisplayNotUnderFifty()
 		{
-			string text = LocalizationManager.Instance.GetTranslation("not_under_fifty");
-			string title = LocalizationManager.Instance.GetTranslation("not_yet_unlocked");
+			string text = I18nController.Instance.GetTranslation("not_under_fifty");
+			string title = I18nController.Instance.GetTranslation("not_yet_unlocked");
 			NotificationHandler.instance.ShowNotification(title, text);
 		}
 

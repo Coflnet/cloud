@@ -49,8 +49,9 @@ public class MessageDeliveryTests {
                 bob,"hi",0,alice));
     }
 
-    [Test]
+    [Test,Timeout(1000)]
     public void UpdatePropagationMultipleServerConnectedTest() {
+
         var aliceDeviceId = new SourceReference(1,9);
         var bobDeviceId = new SourceReference(2,8);
         DevCore.Init(aliceDeviceId);
@@ -66,10 +67,11 @@ public class MessageDeliveryTests {
 
         alice.CloneAndSubscribe(bobDeviceId);
         
+        var msg = new MessageData(bobDeviceId,0,
+                            MessagePackSerializer.Serialize("coflnet.app"),"AddInstalledApp");
 
-
-        CoflnetCore.Instance.SendCommand(new MessageData(bobDeviceId,0,
-                            MessagePackSerializer.Serialize("coflnet.app"),"AddInstalledApp"));
+        throw new System.Exception("The next line never finishes");
+        //CoflnetCore.Instance.SendCommand(msg);
 
            
           //   MessageData.CreateMessageData<UpdateUserNameCommand,string>(

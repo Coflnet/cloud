@@ -132,8 +132,8 @@ public class BackController : MonoBehaviour
 
 	void LeaveGame()
 	{
-		string confirm = LocalizationManager.Instance.GetTranslation("confirm");
-		string realyLeave = LocalizationManager.Instance.GetTranslation("realy_leave");
+		string confirm = I18nController.Instance.GetTranslation("confirm");
+		string realyLeave = I18nController.Instance.GetTranslation("realy_leave");
 		NotificationHandler.instance.ShowNotification(confirm, realyLeave, UnityEngine.Application.Quit);
 	}
 

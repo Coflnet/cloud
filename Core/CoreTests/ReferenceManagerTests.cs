@@ -52,7 +52,7 @@ public class ReferenceManagerTests {
         Assert.AreEqual(res,manager.GetResource(newId));
     }
 
-        [Test]
+    [Test]
     public void AddIdAndRedirectSaveAndLoad() {
         // Use the Assert class to test conditions.
         var manager = new ReferenceManager();

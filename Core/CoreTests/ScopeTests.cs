@@ -127,9 +127,9 @@ public class ScopeTests {
         }
 
 
-        public override void SetFields(IHasScopes newRes, IHasScopes oldRes)
+        public override void SetFields(IHasScopes newRes, in IHasScopes oldRes)
         {
-            Set<ScopeRes>(newRes,oldRes,(n,o)=>{
+            Set<ScopeRes>(newRes,oldRes,(n, o)=>{
                 n.Id = o.Id;
                 n.Text =o.Text;
             });

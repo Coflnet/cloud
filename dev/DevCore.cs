@@ -5,12 +5,13 @@ using Coflent.Client;
 using Coflnet.Client;
 using Coflnet.Server;
 
-namespace Coflnet.Dev {
-	/// <summary>
-	/// Development Core for testing purposses.
-	/// It simulates A client alongside with a server.
-	/// </summary>
-	public class DevCore : CoflnetCore {
+namespace Coflnet.Dev
+{
+    /// <summary>
+    /// Development Core for testing purposses.
+    /// It simulates A client alongside with a server.
+    /// </summary>
+    public class DevCore : CoflnetCore {
 		private ClientCore clientCore;
 		private ServerCore serverCore;
 
@@ -325,111 +326,6 @@ namespace Coflnet.Dev {
 			SendCommand (messageData);
 		}
 	}
-
-	public class DevMessageData : ServerMessageData
-		{
-			// TODO
-			public SimulationInstance sender;
-
-			public DevMessageData(MessageData normal,SimulationInstance sender = null) : base(normal)
-			{
-				this.sender = sender;
-			}
-
-			public override void SendBack(MessageData data)
-			{
-				if(sender != null){
-					UnityEngine.Debug.Log($"on {sender.core.Id} {sender.core.GetType().Name} {data} ");
-					data.CoreInstance = sender.core;
-					data.sId = rId;//sender.core.Id;
-					sender.core.ReferenceManager.ExecuteForReference(data);
-				} else {
-					UnityEngine.Debug.Log("normal send back");
-					base.SendBack(data);
-				}
-			}
-		}
-
-
-    class DevConnection : IClientConnection
-    {
-        public CoflnetUser User
-        {
-            get;set;
-        }
-
-        public Device Device { get;set; }
-        public List<SourceReference> AuthenticatedIds { get;set; }
-
-        public CoflnetEncoder Encoder => CoflnetEncoder.Instance;
-
-        public Dictionary<SourceReference, Token> Tokens{get;set;}
-
-        public void SendBack(MessageData data)
-        {
-			var temp = data.rId;
-			data.rId = data.sId;
-			data.sId = temp;
-			UnityEngine.Debug.Log("sending now to " + data.rId);
-            DevCore.Instance.SendCommand(data);
-        }
-    }
-
-	public class ServerCoreProxy : ServerCore
-	{
-		public override void SendCommand(MessageData data, long serverId = 0)
-		{
-			// set the correct sender
-			data.sId = this.Id;
-			// go around the network 
-			DevCore.DevInstance.SendCommand(data,serverId);
-		}
-
-		public ServerCoreProxy(ReferenceManager referenceManager) : base(referenceManager)
-        {
-        }
-
-        public ServerCoreProxy()
-        {
-        }
-    }
-
-    public class ClientCoreProxy : ClientCore
-    {
-		private SourceReference _ID;
-
-		public override SourceReference Id {
-			get{return _ID;}
-			set{_ID = value;}
-		}
-
-
-        public ClientCoreProxy()
-        {
-        }
-
-        public ClientCoreProxy(CommandController commandController, ClientSocket socket) : base(commandController, socket)
-        {
-        }
-
-        public ClientCoreProxy(CommandController commandController, ClientSocket socket, ReferenceManager manager) : base(commandController, socket, manager)
-        {
-        }
-
-		public override void SendCommand(MessageData data, long serverId = 0)
-		{
-			// set the correct sender
-			data.sId = this.Id;
-			// go around the network 
-			DevCore.DevInstance.SendCommand(data,serverId);
-		}
-
-		public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference))
-		{
-			
-			DevCore.DevInstance.SendCommand<C,T>(receipient,data,id,sender);
-		}
-    }
 
 
 }

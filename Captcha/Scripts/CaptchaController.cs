@@ -223,7 +223,7 @@ public class CaptchaController : MonoBehaviour
 		Transform captchaScreen = captchaObject.transform.GetChild(0);
 		currentCaptcha.DisplayChallenge(challenge, GetChallangeAnimator().gameObject);
 
-		string translation = Coflnet.LocalizationManager.Instance.GetTranslation("please_select_all_x", new KeyValuePair<string, string>("target", challenge.target));
+		string translation = Coflnet.I18nController.Instance.GetTranslation("please_select_all_x", new KeyValuePair<string, string>("target", challenge.target));
 
 		captchaScreen.GetChild(0).GetChild(0).GetComponent<Text>().text = translation;
 
@@ -340,7 +340,7 @@ public class CaptchaController : MonoBehaviour
 		{
 			Debug.Log("error response: " + www.text);
 			// looks like this is an not existing image, tell the user
-			string img_not_found = Coflnet.LocalizationManager.Instance.GetTranslation("img_not_found");
+			string img_not_found = Coflnet.I18nController.Instance.GetTranslation("img_not_found");
 			NotificationHandler.instance.AddMessageToAlertStream(img_not_found);
 		}
 	}
