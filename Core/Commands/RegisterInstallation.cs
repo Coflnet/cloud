@@ -11,7 +11,6 @@ namespace Coflnet
 
         public override Referenceable CreateResource(MessageData data)
         {
-			UnityEngine.Debug.Log("creating install on " + data.CoreInstance.GetType().Name);
 			var install = new Installation ();
 			install.Device = new Reference<Device>(data.rId);
             return install;

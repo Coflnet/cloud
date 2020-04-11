@@ -1,4 +1,3 @@
-using UnityEngine;
 using Coflnet;
 using System;
 
@@ -31,8 +30,6 @@ using System;
             if(data.sId == default(SourceReference))
             data.sId = ConfigController.DeviceId;
             data.CoreInstance = this;
-
-            Debug.Log($"Executing {data}");
             if(count >= 50)
             {
                 throw new Exception("we are in a loop");

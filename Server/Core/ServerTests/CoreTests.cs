@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using Coflnet;
 using Coflnet.Server;
 using NUnit.Framework;
-using UnityEngine.TestTools;
 
 public class CoreTests {
 
@@ -147,6 +146,7 @@ public class CoreTests {
 		ServerCore.Init ();
 	}
 
+#if UnityEngine
 	[UnityTest]
 	public IEnumerator ConnectingTest () {
 		ServerCore.Init ();
@@ -200,21 +200,6 @@ public class CoreTests {
 		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
 	}
 
-	class ServerTestCommandGet : Coflnet.ServerCommand {
-		public override void Execute (MessageData data) {
-			//SendBack(data, 5);
-			data.SerializeAndSet<int> (4);
-			data.SendBack (data);
-		}
-
-		public override ServerCommandSettings GetServerSettings () {
-			return new ServerCommandSettings ();
-		}
-
-		public override string Slug => "serverTestCommandGet";
-
-	}
-
 	[UnityTest]
 	public IEnumerator CommandResponseTest () {
 
@@ -224,7 +209,6 @@ public class CoreTests {
 		MessageData response = null;
 		ClientSocket.Instance.Reconnect ();
 		ClientSocket.Instance.AddCallback (data => {
-			UnityEngine.Debug.Log ("received command : " + data.type);
 			response = data;
 		});
 		ConfigController.ActiveUserId = SourceReference.Default;
@@ -245,6 +229,23 @@ public class CoreTests {
 		Assert.AreEqual (response.GetAs<int> (), 4);
 
 		ServerCore.Stop ();
+	}
+
+#endif
+
+	class ServerTestCommandGet : Coflnet.ServerCommand {
+		public override void Execute (MessageData data) {
+			//SendBack(data, 5);
+			data.SerializeAndSet<int> (4);
+			data.SendBack (data);
+		}
+
+		public override ServerCommandSettings GetServerSettings () {
+			return new ServerCommandSettings ();
+		}
+
+		public override string Slug => "serverTestCommandGet";
+
 	}
 
 	[Test]
@@ -286,14 +287,6 @@ public class CoreTests {
 		}
 	}
 
-	// A UnityTest behaves like a coroutine in PlayMode
-	// and allows you to yield null to skip a frame in EditMode
-	[UnityTest]
-	public IEnumerator CoreTestsWithEnumeratorPasses () {
-		// Use the Assert class to test conditions.
-		// yield to skip a frame
-		yield return new UnityEngine.WaitForSeconds (1);
-	}
 
 	[Test]
 	public void CommandExtention () {

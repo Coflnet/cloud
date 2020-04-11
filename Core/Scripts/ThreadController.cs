@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Threading;
 using System;
 using System.Collections.Concurrent;
@@ -139,7 +138,6 @@ namespace Coflnet
 			if (overloadedCount > workers.Count / 2)
 			{
 				CreateWorkerThread();
-				Debug.Log("Created new worker thread now " + workers.Count + " in total");
 			}
 			int minThreashold = workers.Count / 2;
 			// make sure there are allways minWorkerCount worker threads
@@ -150,7 +148,6 @@ namespace Coflnet
 			else if (underloadedCount > workers.Count / 2 && workers.Count >= minThreashold)
 			{
 				DestroyWorkerThread(targetWorker);
-				Debug.Log("Destroyed worker thread now " + workers.Count + " in total");
 			}
 		}
 
@@ -193,10 +190,9 @@ namespace Coflnet
 
 		public void CreateWorkerThread()
 		{
-			Debug.Log("Current thread count: " + workers.Count + " on " + SystemInfo.processorCount + " cores");
 			// More threads than processors causes to much context switching
 			// one core is reserved for the main thread
-			if (SystemInfo.processorCount - 1 <= workers.Count)
+			if (Environment.ProcessorCount - 1 <= workers.Count)
 				return;
 
 
@@ -256,7 +252,6 @@ namespace Coflnet
 
 		public void Response(string data, int code)
 		{
-			UnityEngine.Debug.Log("received " + data);
 		}
 	}
 
@@ -307,7 +302,7 @@ namespace Coflnet
 				}
 				catch (Exception ex)
 				{
-					Track.instance.Error(item.data.type, JsonUtility.ToJson(item), ex.ToString());
+					Track.instance.Error(item.data.type, MessagePack.MessagePackSerializer.SerializeToJson(item), ex.ToString());
 				}
 			}
 			else
@@ -319,7 +314,6 @@ namespace Coflnet
 				if (!sleeping)
 				{
 					long time = (DateTime.UtcNow - startTime).Ticks;
-					Debug.Log("done in : " + time);
 				}
 				sleeping = true;
 				ManualResetEvent resetEvent = new ManualResetEvent(false);

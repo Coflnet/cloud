@@ -21,7 +21,6 @@ namespace Coflnet
 
 			// wrap it into a container so receiver knows to what request it coresponds to
 			returnData.message = IEncryption.ConcatBytes(BitConverter.GetBytes(data.mId), returnData.message);
-			UnityEngine.Debug.Log($"sending back with {returnData}");
 			data.SendBack(returnData);
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
@@ -95,7 +94,6 @@ namespace Coflnet
 				oldId = data.GetAs<CreationParamsBase>().options.OldId;
 			}catch(Exception e)
 			{
-				UnityEngine.Debug.Log(e);
 				throw new CoflnetException("invalid_payload","The payload of the command isn't of type CreationParamsBase nor derived from it");
 			}
 			var resource = CreateResource(data);
@@ -190,7 +188,6 @@ namespace Coflnet
         public override void Execute(MessageData data)
         {
 			var pair = data.GetAs<KeyValuePair<SourceReference,SourceReference>>();
-			UnityEngine.Debug.Log($"updating{pair.Key} with {pair.Value} on {data.rId} from {data.sId}");
             
 			data.CoreInstance.ReferenceManager.UpdateIdAndAddRedirect(pair.Key,pair.Value);
         }

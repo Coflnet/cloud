@@ -3,7 +3,9 @@ using System.IO;
 using System.Text;
 using MessagePack;
 using System.Collections.Generic;
-
+using System.Threading.Tasks;
+using System.Threading;
+using System.Buffers;
 
 namespace Coflnet
 {
@@ -21,7 +23,6 @@ namespace Coflnet
 		static FileController()
 		{
 			dataPaht = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),dataPathPostFix);
-			UnityEngine.Debug.Log($"DataPath: {dataPaht}");
 
 			Directory.CreateDirectory(dataPaht);
 		}
@@ -100,7 +101,7 @@ namespace Coflnet
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public static IEnumerable<T> ReadLinesAs<T>(string relativePath)
 		{
-			return ReadLinesAs<T>(relativePath, MessagePackSerializer.DefaultResolver);
+			return ReadLinesAs<T>(relativePath, MessagePackSerializer.DefaultOptions);
 		}
 
 
@@ -109,9 +110,9 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The lines as.</returns>
 		/// <param name="relativePath">Relative path.</param>
-		/// <param name="resolver">Resolver.</param>
+		/// <param name="options">Resolver.</param>
 		/// <typeparam name="T">The type to deserialize to.</typeparam>
-		public static IEnumerable<T> ReadLinesAs<T>(string relativePath, IFormatterResolver resolver)
+		public static IEnumerable<T> ReadLinesAs<T>(string relativePath, MessagePackSerializerOptions options)
 		{
 			var path = Path.Combine(dataPaht, relativePath);
 			if(!File.Exists(path)){
@@ -121,12 +122,29 @@ namespace Coflnet
 
 			using (var file = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				while (file.Position < file.Length)
+				var t = DeserializeListFromStreamAsync<T>(file,new CancellationToken());
+				t.Wait();
+				foreach (var item in t.Result)
 				{
-					yield return MessagePackSerializer.Deserialize<T>(file, resolver,true);
+					yield return item;
 				}
 			}
 		}
+
+		static async Task<List<T>> DeserializeListFromStreamAsync<T>(Stream stream, CancellationToken cancellationToken)
+		{
+			var dataStructures = new List<T>();
+			using (var streamReader = new MessagePackStreamReader(stream))
+			{
+				while (await streamReader.ReadAsync(cancellationToken) is ReadOnlySequence<byte> msgpack)
+				{
+					dataStructures.Add(MessagePackSerializer.Deserialize<T>(msgpack, cancellationToken: cancellationToken));
+				}
+			}
+
+			return dataStructures;
+		}
+
 
 		/// <summary>
 		/// Appends an object to file after serializing it
@@ -136,7 +154,7 @@ namespace Coflnet
 		/// <typeparam name="T">Type to serialize to.</typeparam>
 		public static void AppendLineAs<T>(string relativePath, T data)
 		{
-			AppendLineAs<T>(relativePath, data, MessagePackSerializer.DefaultResolver);
+			AppendLineAs<T>(relativePath, data, MessagePackSerializer.DefaultOptions);
 		}
 
 		/// <summary>
@@ -144,14 +162,14 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="relativePath">Relative path.</param>
 		/// <param name="data">Data.</param>
-		/// <param name="resolver">Resolver.</param>
+		/// <param name="options">Resolver.</param>
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public static void AppendLineAs<T>(string relativePath, T data, IFormatterResolver resolver)
+		public static void AppendLineAs<T>(string relativePath, T data, MessagePackSerializerOptions options)
 		{
 			Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(dataPaht, relativePath)));
 			using (var file = File.Open(Path.Combine(dataPaht, relativePath), FileMode.Append, FileAccess.Write, FileShare.None))
 			{
-				MessagePackSerializer.Serialize<T>(file, data, resolver);
+				MessagePackSerializer.Serialize<T>(file, data, options);
 			}
 		}
 
@@ -164,7 +182,7 @@ namespace Coflnet
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public static void WriteLinesAs<T>(string relativePath, IEnumerable<T> data)
 		{
-			WriteLinesAs<T>(relativePath, data, MessagePackSerializer.DefaultResolver);
+			WriteLinesAs<T>(relativePath, data, MessagePackSerializer.DefaultOptions);
 		}
 
 
@@ -176,13 +194,13 @@ namespace Coflnet
 		/// <param name="data">Data to write.</param>
 		/// <param name="resolver">Resolver to use for serialization.</param>
 		/// <typeparam name="T">What type to use for serialization.</typeparam>
-		public static void WriteLinesAs<T>(string relativePath, IEnumerable<T> data, IFormatterResolver resolver)
+		public static void WriteLinesAs<T>(string relativePath, IEnumerable<T> data, MessagePackSerializerOptions resolver)
 		{
 			using (var file = File.Open(Path.Combine(dataPaht, relativePath), FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
 			{
 				foreach (var item in data)
 				{
-					LZ4MessagePackSerializer.Serialize<T>(file, item, resolver);
+					MessagePackSerializer.Serialize<T>(file, item, resolver);
 				}
 			}
 		}
@@ -202,7 +220,7 @@ namespace Coflnet
 
 		private static T Deserialize<T>(byte[] data)
 		{
-			return LZ4MessagePackSerializer.Deserialize<T>(data);
+			return MessagePackSerializer.Deserialize<T>(data);
 		}
 
 		/// <summary>
@@ -213,7 +231,7 @@ namespace Coflnet
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public static void SaveAs<T>(string relativePath, T data)
 		{
-			WriteAllBytes(relativePath, LZ4MessagePackSerializer.Serialize(data));
+			WriteAllBytes(relativePath, MessagePackSerializer.Serialize(data));
 		}
 
 		/// <summary>
@@ -223,7 +241,6 @@ namespace Coflnet
 		public static void Delete(string relativePath)
 		{
 			var path = Path.Combine(dataPaht, relativePath);
-			UnityEngine.Debug.Log($"Trying to delete {path}");
 			if (Directory.Exists(Path.GetDirectoryName(path)))
 				File.Delete(path);
 		}

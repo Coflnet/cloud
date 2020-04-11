@@ -3,8 +3,6 @@ using System.Linq;
 using Coflnet;
 using Coflnet.Server;
 using NUnit.Framework;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 public class CoflnetUserTests {
 
@@ -93,8 +91,7 @@ public class CoflnetUserTests {
 		// await response
 		yield return new UnityEngine.WaitForSeconds (0.5f);
 
-		UnityEngine.Debug.Log (response.Data);
-		var login = response.GetAs<RegisterUserResponse> ();
+				var login = response.GetAs<RegisterUserResponse> ();
 
 		ClientSocket.Instance.SendCommand (
 			MessageData.CreateMessageData<Coflnet.LoginUser, LoginParams> (ConfigController.ApplicationSettings.id,

@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Coflnet;
 
 public class ReferenceManagerTests {
@@ -48,7 +46,6 @@ public class ReferenceManagerTests {
         manager.UpdateIdAndAddRedirect(res.Id,newId);
 
         Assert.AreEqual(res,manager.GetResource(res.Id));
-        Debug.Log("old found");
         Assert.AreEqual(res,manager.GetResource(newId));
     }
 
@@ -67,7 +64,6 @@ public class ReferenceManagerTests {
         manager.Save(oldId,true);
 
         Assert.AreEqual(res,manager.GetResource(res.Id));
-        Debug.Log("old found");
         Assert.AreEqual(res,manager.GetResource(newId));
     }
 }

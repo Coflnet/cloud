@@ -21,7 +21,6 @@ namespace Coflnet {
 			response.id = user.Id;
 			response.secret = user.Secret;
 
-			UnityEngine.Debug.Log ($"received from {data.sId}");
 
 			data.SendBack (MessageData.CreateMessageData<RegisteredUser, RegisterUserResponse> (data.sId, response));
 			//SendTo(data.sId, user.PublicId, "createdUser");

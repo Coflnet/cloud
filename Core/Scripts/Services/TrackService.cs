@@ -23,7 +23,6 @@ public class Track
 	public void Error(string type, string data, string error)
 	{
 #if UNITY_EDITOR
-		UnityEngine.Debug.LogError(type + data + " - " + error);
 #endif
 		SendTrackingRequest("Error/" + type + " / Stacktrace:" + error + " data: " + data);
 	}

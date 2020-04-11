@@ -51,8 +51,7 @@ namespace Coflnet.Client
 			}
 			
 
-			UnityEngine.Debug.Log("doing setup :)");
-
+			
 			PrivacyService.Instance.ShowScreen(Done);
 		}
 

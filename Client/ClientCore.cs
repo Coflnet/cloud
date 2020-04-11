@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Coflnet.Core;
 using Coflnet.Core.Commands;
-using UnityEngine;
 
 namespace Coflnet.Client {
 	/// <summary>
@@ -57,8 +56,7 @@ namespace Coflnet.Client {
 
 
 		public static void Init () {
-			UnityEngine.Debug.Log("doing client init");
-			ClientInstance.SetCommandsLive ();
+						ClientInstance.SetCommandsLive ();
 			ClientInstance.socket.Reconnect ();
 			I18nController.Instance.LoadCompleted ();
 
@@ -91,8 +89,7 @@ namespace Coflnet.Client {
 					.AddBackfall(GetCommandController());
 			} else 
 			{
-				UnityEngine.Debug.Log("There is no installation yet for the clientCore");
-				ReferenceManager.AddReference (this);
+								ReferenceManager.AddReference (this);
 			}
 		}
 
@@ -103,8 +100,7 @@ namespace Coflnet.Client {
 				// we are registered
 				return;
 			}
-			UnityEngine.Debug.Log("Detected no setup, setting up now");
-			// This is a fresh install, register at the managing server after showing privacy statement
+						// This is a fresh install, register at the managing server after showing privacy statement
 			FirstStartSetupController.Instance.Setup ();
 
 		}
@@ -181,8 +177,7 @@ namespace Coflnet.Client {
 			} catch (System.InvalidOperationException) {
 				// send failed, reconnect and try again
 				socket.Reconnect ();
-				UnityEngine.Debug.Log ("Reconnecting");
-
+				
 				socket.SendCommand (data);
 			}
 		}
@@ -280,8 +275,7 @@ namespace Coflnet.Client {
 				// this only exists as a "callback" 
 				createdId = ((KeyValuePair<SourceReference,SourceReference>)((object)data)).Value;
 
-				UnityEngine.Debug.Log($"The created resource has the id: {createdId}");
-			}
+							}
 
 		
 		}
@@ -293,8 +287,7 @@ namespace Coflnet.Client {
 			public override void SendBack(MessageData data)
 			{
 				createdId = data.GetAs<KeyValuePair<SourceReference,SourceReference>>().Value;
-				UnityEngine.Debug.Log($"created resource has the id: {createdId}");
-			}
+							}
 
 			public CreationMessageData(MessageData data) : base(data)
 			{
@@ -354,8 +347,7 @@ namespace Coflnet.Client {
 
 			// this is different on server sides
 			SendCommand<Sub2Command,SourceReference>(ConfigController.ManagingServer,id,0,this.Id);
-			UnityEngine.Debug.Log($"Subscribing client from {Id}");
-
+			
 			// now clone it
 			FinishSubscribing(id,afterClone);
 		}

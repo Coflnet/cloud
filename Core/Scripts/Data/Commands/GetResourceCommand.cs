@@ -8,7 +8,6 @@ namespace Coflnet
 		public override MessageData ExecuteWithReturn (MessageData data) {
 			data.message = data.CoreInstance.ReferenceManager.SerializeWithoutLocalInfo (data.rId);
 			
-			UnityEngine.Debug.Log("returning resource");
 			
 			return data;
 			//MessagePack.MessagePackSerializer.Typeless.Serialize()                

@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using RestSharp;
-using MessagePack;
 using System;
 using Coflnet;
 

@@ -7,8 +7,6 @@ using Coflnet;
 using MessagePack;
 using MessagePack.Resolvers;
 using NUnit.Framework;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 public class SerializationTests {
 	private static string _TestCommandName = "testCommand";
@@ -92,7 +90,6 @@ public class SerializationTests {
 	[Test]
 	public void SourceReferenceLocation () {
 		var sourceReference = new SourceReference (1, 2, 3, 0);
-		UnityEngine.Debug.Log (sourceReference.ServerId);
 		Assert.AreEqual (2, sourceReference.LocationInRegion);
 	}
 
@@ -163,7 +160,6 @@ public class SerializationTests {
 		}
 		threads.Clear();
 
-		Debug.Log ($"start: {firstId.ToString("n0")} end: {lastId.ToString("n0")} Theoretical: {(lastId-firstId).ToString("n0")} real: {ids.Count.ToString("n0")}");
 		ids.Clear();
 	}
 
@@ -172,7 +168,6 @@ public class SerializationTests {
 		long id;
 		long start = ThreadSaveIdGenerator.NextId;
 		long lastId = start;
-		Debug.Log ("start: " + start);
 		for (int i = 0; i < 10000000; i++) {
 			id = ThreadSaveIdGenerator.NextId;
 			if (id < lastId)
@@ -181,21 +176,12 @@ public class SerializationTests {
 		}
 
 		long end = ThreadSaveIdGenerator.NextId;
-		Debug.Log ($"end: {end }  dif {end - start}");
 	}
 
-	// A UnityTest behaves like a coroutine in PlayMode
-	// and allows you to yield null to skip a frame in EditMode
-	[UnityTest]
-	public IEnumerator SerializationTestsWithEnumeratorPasses () {
-		// Use the Assert class to test conditions.
-		// yield to skip a frame
-		yield return null;
-	}
 
 	[Test]
 	public void ResourceSave () {
-		CompositeResolver.RegisterAndSetAsDefault(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
+		var resolver = CompositeResolver.Create(PrimitiveObjectResolver.Instance, StandardResolver.Instance);
 		var user = new CoflnetUser ();
 		user.AssignId ();
 		user.OnlyFriendsMessage = true;

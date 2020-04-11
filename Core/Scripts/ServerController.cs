@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using UnityEngine;
 using System;
 
 namespace Coflnet
@@ -97,7 +96,6 @@ namespace Coflnet
 
 			// go around network if receiver is local (0.x)
 			if(to.ServerId == 0){
-				Debug.Log("oh no :/");
 				CoflnetCore.Instance.ReceiveCommand(message);
 				return;
 			}

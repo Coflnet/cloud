@@ -21,8 +21,7 @@ namespace Coflnet.Dev
 			var temp = data.rId;
 			data.rId = data.sId;
 			data.sId = temp;
-			UnityEngine.Debug.Log("sending now to " + data.rId);
-            DevCore.Instance.SendCommand(data);
+			            DevCore.Instance.SendCommand(data);
         }
     }
 

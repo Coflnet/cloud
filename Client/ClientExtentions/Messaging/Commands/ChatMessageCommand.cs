@@ -11,8 +11,7 @@ namespace Coflnet.Client.Messaging
         /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
         public override void Execute(MessageData data)
         {
-             UnityEngine.Debug.Log("received message " + data.Data);
-             ChatService.Instance.ReceiveMessage(data.GetAs<ChatMessage>(),data.sId);
+                          ChatService.Instance.ReceiveMessage(data.GetAs<ChatMessage>(),data.sId);
         }
         /// <summary>
         /// Special settings and Permissions for this <see cref="Command"/>

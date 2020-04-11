@@ -59,7 +59,7 @@ public class OAuth2Controller
 		}
 
 
-		var binary = MessagePack.MessagePackSerializer.FromJson(response.Content);
+		var binary = MessagePack.MessagePackSerializer.ConvertFromJson(response.Content);
 		var content = MessagePack.MessagePackSerializer.Deserialize<OAuthResponse>(binary);
 
 
@@ -108,7 +108,6 @@ public class OAuth2Controller
 		WWW www = new WWW(url, form);
 		yield return www;
 		if (!string.IsNullOrEmpty(www.error))
-			Debug.Log(www.url + www.text + www.error);
 		else
 		{
 			UserRegister response = JsonUtility.FromJson<UserRegister>(www.text);
@@ -141,11 +140,9 @@ public class OAuth2Controller
 		WWW www = new WWW(toOpen, form);
 		yield return www;
 		if (!string.IsNullOrEmpty(www.error))
-			Debug.Log(www.text);
 		else
 		{
 			OAuthResponse response = JsonUtility.FromJson<OAuthResponse>(www.text);
-			Debug.Log("user token: " + response.access_token);
 			PlayerPrefs.SetString("user_access_token", response.access_token);
 			PlayerPrefs.SetString("user_refresh_token", response.refresh_token);
 			PlayerPrefs.SetInt("user_expire_time", CurrentUnixTime() + response.expires_in);

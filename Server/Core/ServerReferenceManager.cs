@@ -18,14 +18,12 @@ namespace Coflnet.Server
 			var mainManagingNode = ManagingNodeFor(data.rId);
 			var IAmTheManager = mainManagingNode == CurrentServerId;
 
-			UnityEngine.Debug.Log ($"searching {coreInstance.Id} ({coreInstance.GetType().Name}) for {data.rId}");
 			InnerReference<Referenceable> reference;
 			TryGetReference (data.rId, out reference);
 
 			if (reference == null) {
 				// is the current server the managing server?
 				if (!IAmTheManager) {
-					UnityEngine.Debug.Log ("passing on to " + data.rId);
 					// we are not the main managing server, pass it on to it
 					CoflnetCore.Instance.SendCommand (data);
 					return;
@@ -97,7 +95,6 @@ namespace Coflnet.Server
 
 
 			if(!IAmTheManager && (!isTheSenderTheManager)){
-				UnityEngine.Debug.Log ($"distributing {data.type} to {data.rId}, IAmTheManager: {IAmTheManager}, isTheSenderTheManager: {isTheSenderTheManager}, mainManagingNode {mainManagingNode}, CurrentServerId {CurrentServerId}, ");
 				// This message hasn't been on the manager yet, send it to him
 				// this occurs if I am the senders manager
 				coreInstance.SendCommand(data);

@@ -67,7 +67,6 @@ namespace Coflnet
 				Load();
 			} catch(Exception e)
 			{
-				UnityEngine.Debug.Log($"Could not load config fully: {e.Message}   \n {e.StackTrace}");
 			}
 
 			

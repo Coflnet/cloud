@@ -24,8 +24,7 @@ namespace Coflnet.Client {
 			}
 
 
-			UnityEngine.Debug.Log ($"searching {coreInstance.Id} (ClientRefmanager) for {data.rId}");
-			InnerReference<Referenceable> reference;
+						InnerReference<Referenceable> reference;
 			TryGetReference (data.rId, out reference);
 
 			if (reference == null || reference.Resource == null) {

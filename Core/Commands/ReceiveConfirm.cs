@@ -13,7 +13,6 @@ namespace Coflnet {
 
 		public override void Execute (MessageData data) {
 			var dataParams = data.GetAs<ReceiveConfirmParams> ();
-			UnityEngine.Debug.Log ($"deleting message {MessagePackSerializer.ToJson(dataParams.messageId)} from {dataParams.sender} for " + MessagePackSerializer.ToJson (data.sId));
 
 			MessageDataPersistence.Instance.Remove (data.sId, dataParams.sender, dataParams.messageId);
 		}

@@ -1,12 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using System.Security.Cryptography.X509Certificates;
-using Unity.Jobs;
-using Unity.Collections;
 using System.Net.Http;
 using RestSharp;
 using MessagePack;
@@ -223,8 +220,7 @@ public override ServerMessageData Deserialize(MessageEventArgs args)
 
     public override T Deserialize<T>(byte[] args)
 	{
-		var bytes = MessagePackSerializer.FromJson(Encoding.UTF8.GetString(args));
-		Debug.Log(JsonUtility.ToJson(new ByteContainer(bytes)));
+		var bytes = MessagePackSerializer.ConvertFromJson(Encoding.UTF8.GetString(args));
 		return CoflnetEncoder.Instance.Deserialize<T>(bytes);
 	}
 
@@ -240,34 +236,10 @@ public override ServerMessageData Deserialize(MessageEventArgs args)
 
 	public override byte[] Serialize<T>(T target)
 	{
-		return Encoding.UTF8.GetBytes(MessagePackSerializer.ToJson<T>(target));
+		return Encoding.UTF8.GetBytes(MessagePackSerializer.SerializeToJson<T>(target));
 	}
 }
 
-
-public class CoflEncoder<T>
-{
-	public T value;
-
-	public void GetFromMessagePackSerializer(byte[] bytes)
-	{
-		MemoryStream memory = new MemoryStream(bytes);
-		value = MessagePackSerializer.Deserialize<T>(memory);
-	}
-
-	public void FromJson(string json)
-	{
-		value = JsonUtility.FromJson<T>(json);
-	}
-
-	public T Value
-	{
-		get
-		{
-			return value;
-		}
-	}
-}
 
 
 [DataContract]
@@ -327,24 +299,17 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		var protocols = Context.SecWebSocketProtocols;
 
 
-		Debug.Log("opening socket");
 		foreach (var item in protocols)
 		{
 			if (item == "dev")
 			{
 				this.Encoder = CoflnetJsonEncoder.Instance;
-				Debug.Log("Using dev encoder");
 				Send("runing on dev, Format");
-				Send(MessagePackSerializer.ToJson(
+				Send(MessagePackSerializer.SerializeToJson(
 					new CoflnetJsonEncoder.DevMessageData(ServerMessageData.SerializeServerMessageData
-					(new KeyValuePair<string, string>("hi", "ok"),
+					(new KeyValuePair<string, string>("exampleKey", "This is an example of a valid command"),
 					 "setValue",
 					 this.Encoder))));
-
-
-				Send(JsonUtility.ToJson(
-					new CoflnetJsonEncoder.ByteContainer(
-						MessagePackSerializer.Serialize(new byte[] { 0x01, 0x01, 0x01, 0x01 }))));
 				//	MessageData.SerializeMessageData("hi", "setValue")))));
 			}
 		}
@@ -353,13 +318,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		if (this.Encoder == null)
 		{
 			this.Encoder = CoflnetEncoder.Instance;
-			Debug.Log("using standard encoder");
 		}
-
-		Debug.Log("Connection has " + Context.UserEndPoint.ToString());
-		Debug.Log(Context.Headers);
-		Send("heyho:D");
-		Debug.Log("new connection");
 
 		System.Timers.Timer timer = new System.Timers.Timer();
 		timer.AutoReset = true;
@@ -384,7 +343,6 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		// try to parse and execute the command sent
 		try
 		{
-			UnityEngine.Debug.Log(e.Data);
 			ServerMessageData messageData = Encoder.Deserialize(e);
 			// if connection information is needed
 			messageData.Connection = this;
@@ -399,7 +357,6 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 			// prevent id spoofing
 			if (messageData.sId != new SourceReference() && !AuthenticatedIds.Contains(messageData.sId))
 			{
-				Debug.Log("ids: " + MessagePackSerializer.ToJson(AuthenticatedIds));
 				throw new NotAuthenticatedAsException(messageData.sId);
 			}
 
@@ -427,8 +384,6 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 
 	protected override void OnError(WebSocketSharp.ErrorEventArgs e)
 	{
-
-		Debug.Log(e.Message + e.Exception.ToString());
 		base.OnError(e);
 	}
 	protected override void OnClose(CloseEventArgs e)
@@ -445,7 +400,6 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// <param name="data">Data.</param>
 	public void SendBack(byte[] data)
 	{
-		Debug.Log("Sending data back");
 		Send(data);
 	}
 
@@ -533,7 +487,6 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 			{
 				Connections.Add(value.Id, this);
 				AuthenticatedIds.Add(value.Id);
-				Debug.Log($"Authenticated as {value.Id}");
 			}
 			_user = value;
 		}

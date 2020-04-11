@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
-using NUnit.Framework;
-using System.Collections;
+﻿using NUnit.Framework;
 using Coflnet.Dev;
 using Coflnet;
 using System.Runtime.Serialization;
@@ -21,8 +18,7 @@ public class CloningTest {
         var alice = DevCore.DevInstance.simulationInstances[aliceId.FullServerId].core;
         var bob = DevCore.DevInstance.AddServerCore(bobId).core;
 
-        UnityEngine.Debug.Log($"Bob Id: {bob.Id}, alice: {alice.Id}");
-
+        
         var resource = new TestResource();
         // register resource on Server2
         resource.AssignId(bob.ReferenceManager);
@@ -31,8 +27,7 @@ public class CloningTest {
         resource.GetAccess().Authorize(aliceId);
 
         // make sure the resource is there
-        UnityEngine.Debug.Log($"The resource {resource.Id} is available on {bob.Id} the value is {resource.specialNumber}");
-        Assert.AreEqual(resource.specialNumber,
+                Assert.AreEqual(resource.specialNumber,
         bob.ReferenceManager.GetResource<TestResource>(resource.Id).specialNumber);
 
         

@@ -32,17 +32,14 @@ namespace Coflnet {
 		}
 
 		public override Command ExecuteCommand (MessageData data) {
-			UnityEngine.Debug.Log ("running receivable");
 			// each incoming command will be forwarded to the resource
 			try {
 				var command = base.ExecuteCommand (data);
 				if (command.Settings.Distribute) {
-					UnityEngine.Debug.Log ($"sending command ");
 					CoflnetCore.Instance.SendCommand (data);
 				}
 				return command;
 			} catch (CommandUnknownException e) {
-				UnityEngine.Debug.Log ($"didn't find Command {e.Slug} ");
 				
 				// this command is unkown to the us, if we are not the target persist it and send it later
 				if(data.rId != data.CoreInstance.Id)

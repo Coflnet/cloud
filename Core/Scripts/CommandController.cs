@@ -157,8 +157,6 @@ namespace Coflnet
 					}
 
 
-					UnityEngine.Debug.Log (MessagePackSerializer.ToJson (data));
-					UnityEngine.Debug.Log ("concludes to : " + permision.CheckPermission (data, target));
 					throw new PermissionNotMetException(permision.Slug,data.rId,data.sId,command.Slug,data.mId);
 				}
 			}
@@ -204,7 +202,6 @@ namespace Coflnet
 			if (!commands.ContainsKey (slug)) {
 				// was this the last command controller or can we check another?
 				if (Backfall != null) {
-					UnityEngine.Debug.Log ("searching deeper");
 					return Backfall.GetCommand (slug);
 				}
 

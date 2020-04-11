@@ -1,0 +1,4 @@
+/media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.csprojAssemblyReference.cache
+/media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.csproj.CoreCompileInputs.cache
+/media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.AssemblyInfoInputs.cache
+/media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.AssemblyInfo.cs

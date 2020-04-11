@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Collections;
 using Coflnet;
 using Coflnet.Server;
@@ -15,6 +13,8 @@ public class NetworkingTests
 
 
 	}
+
+#if UnityEngine
 
 	/// <summary>
 	/// Tests a distributable resource
@@ -58,4 +58,5 @@ public class NetworkingTests
 		ServerCore.Stop();
 		LogAssert.ignoreFailingMessages = false;
 	}
+	#endif
 }

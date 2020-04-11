@@ -234,14 +234,12 @@ namespace Coflnet.Client.Messaging
 		public CoflnetChatManager()
 		{
 			LoadChats();
-			UnityEngine.Debug.Log("loaded");
-		}
+					}
 
 		~CoflnetChatManager()
 		{
 			SaveChats();
-			UnityEngine.Debug.Log("saving :D");
-		}
+					}
 
 		
 
@@ -314,9 +312,7 @@ namespace Coflnet.Client.Messaging
 			while(result.Count < count && reverseMessageIndex >0 && cap > 0)
 			{
 				var fileName = FileName(chat.ID,reverseMessageIndex);
-				UnityEngine.Debug.Log(fileName);
-				UnityEngine.Debug.Log($"chat messagecount = {chat.MessageCount-offset}");
-
+								
 				var fileContent = new List<LocalChatMessage>();
 
 				foreach (var message in FileController.ReadLinesAs<LocalChatMessage>(fileName))

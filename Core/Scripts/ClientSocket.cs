@@ -28,9 +28,8 @@ namespace Coflnet
 			Instance.webSocket.Log.Level = LogLevel.Trace;
 			Instance.webSocket.Log.Output += (arg1, arg2) =>
 			{
-				//UnityEngine.Debug.Log("clientsocket: " + arg1);
+				// Log it
 			};
-			UnityEngine.Debug.Log("clientsocket log is deactivated: ");
 
 			Instance.webSocket.Connect();
 		}
@@ -38,7 +37,6 @@ namespace Coflnet
 
 		public static ClientSocket NewInstance()
 		{
-			UnityEngine.Debug.Log("staring instance on " + ConfigController.GetUrl("socket", ConfigController.WebProtocol.wss));
 			return new ClientSocket(new WebSocket(ConfigController.GetUrl("socket", ConfigController.WebProtocol.wss)));
 		}
 
@@ -54,7 +52,6 @@ namespace Coflnet
 			socket.OnError += (object sender, ErrorEventArgs e) =>
 			{
 
-				UnityEngine.Debug.Log("socket error: " + e.Message);
 			};
 			socket.OnMessage += OnMessage;
 		}
@@ -82,17 +79,14 @@ namespace Coflnet
 			}
 			catch (System.Exception ex)
 			{
-				UnityEngine.Debug.Log("socket error " + ex.Message + " json: " + MessagePackSerializer.ToJson(e.RawData));
 			}
 
 
-			UnityEngine.Debug.Log("socket response: " + MessagePackSerializer.ToJson(e.RawData));
 		}
 
 		private void OnOpen(System.EventArgs e)
 		{
 			// authorize client if possible
-			UnityEngine.Debug.Log("opened socket");
 		}
 
 		/// <summary>

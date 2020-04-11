@@ -13,13 +13,11 @@ namespace Coflnet.Dev
 			public override void SendBack(MessageData data)
 			{
 				if(sender != null){
-					UnityEngine.Debug.Log($"on {sender.core.Id} {sender.core.GetType().Name} {data} ");
-					data.CoreInstance = sender.core;
+										data.CoreInstance = sender.core;
 					data.sId = rId;//sender.core.Id;
 					sender.core.ReferenceManager.ExecuteForReference(data);
 				} else {
-					UnityEngine.Debug.Log("normal send back");
-					base.SendBack(data);
+										base.SendBack(data);
 				}
 			}
 		}

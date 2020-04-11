@@ -22,8 +22,7 @@ namespace Coflnet.Server
 			{
 				throw new CoflnetException("secret_invalid", "The users secret is incorrect");
 			}
-			UnityEngine.Debug.Log("authentiated");
-			serverMessage.Connection.User = user;
+						serverMessage.Connection.User = user;
 
 			var response = MessageData.CreateMessageData<LoginUserResponse, SourceReference>(user.Id, user.Id);
 			response.sId = data.CoreInstance.Id;

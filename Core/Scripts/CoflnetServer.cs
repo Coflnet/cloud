@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using MessagePack;
+using static Coflnet.ClientSocket;
 
 namespace Coflnet
 {

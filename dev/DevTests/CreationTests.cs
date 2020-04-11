@@ -27,8 +27,7 @@ public class CreationTests {
 
 		var resource = user.ReferenceManager.GetResource<TestResource>(res.Id);
 
-		UnityEngine.Debug.Log(MessagePack.MessagePackSerializer.ToJson(resource));
-
+		
 		// is the right type
 		Assert.IsTrue(resource is TestResource);
 		// has a nonlocal serverId
@@ -60,8 +59,7 @@ public class CreationTests {
 
 		var resource = user.ReferenceManager.GetResource<TestResource>(res.Id);
 
-		UnityEngine.Debug.Log(MessagePack.MessagePackSerializer.ToJson(resource));
-
+		
 		Assert.AreEqual(testValue,resource.value);
     }
 

@@ -242,7 +242,6 @@ namespace Coflnet
 			// create temporary proxy to receive commands bevore cloning is finished
 			ReferenceManager.AddReference(new SubscribeProxy(resourceId));
 
-			UnityEngine.Debug.Log($"Subscribing to {resourceId} from {Id}");
 
 			// this is different on client sides
 			SendCommand<SubscribeCommand>(resourceId,0,Id);
@@ -265,7 +264,6 @@ namespace Coflnet
 
 				var test = ReferenceManager.GetResource<Referenceable>(resourceId);
 
-				UnityEngine.Debug.Log($"Cloned and replaced {resource.Id} on {Id}({this.GetType().Name}) type: {test.GetType().Name}");
 
 				// replay messages
 				foreach (var data in proxy.buffer)

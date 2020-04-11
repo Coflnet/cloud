@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Collections;
 using Coflnet;
 using MessagePack;
@@ -32,7 +30,6 @@ public partial class RemoteListTests {
         var bytes= MessagePackSerializer.Typeless.Serialize(list);
 
          // log it to the console to check the content
-        Debug.Log(MessagePackSerializer.ToJson(bytes ));
 
         var reconstrated = MessagePackSerializer.Typeless.Deserialize(bytes) as ResWithList;
 
@@ -57,7 +54,6 @@ public partial class RemoteListTests {
         var bytes= MessagePackSerializer.Typeless.Serialize(list);
 
          // log it to the console to check the content
-        Debug.Log(MessagePackSerializer.ToJson(bytes ));
 
         var reconstrated = MessagePackSerializer.Typeless.Deserialize(bytes) as ResWithList;
 
@@ -121,7 +117,6 @@ public partial class RemoteListTests {
        // var bytes = MessagePackSerializer.Serialize(list);
 
        // Debug.Log(MessagePackSerializer.ToJson(bytes));
-        Debug.Log(MessagePackSerializer.ToJson( MessagePackSerializer.Typeless.Serialize(stringList)));
     }
 
     public class ResWithList : Referenceable, IMessagePackSerializationCallbackReceiver

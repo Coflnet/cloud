@@ -5,7 +5,6 @@ using Coflnet;
 using Coflnet.Client;
 using Coflnet.Dev;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEngine.TestTools;
 
 public class FirstStartupTest {
@@ -118,8 +117,7 @@ public class FirstStartupTest {
 
         CoflnetCore.Instance.SendCommand<GetUserKeyValue, string> (ConfigController.ActiveUserId, "mykey",ConfigController.ActiveUserId, (d) => {
             Assert.AreEqual(valueToStore,d.GetAs<string>());
-            UnityEngine.Debug.Log("response received and validated successfully");
-        });
+                    });
     }
 
 

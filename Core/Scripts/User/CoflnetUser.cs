@@ -519,10 +519,8 @@ namespace Coflnet
 	/// </summary>
 	public class SetUserKeyValue : ValueSetter {
 		public override void Execute (MessageData data) {
-			UnityEngine.Debug.Log ("data is:  " + data.Data);
 			var okay = data.GetAs<KeyValuePair<string, string>> ();
 
-			UnityEngine.Debug.Log ($"trying {data.rId} on {data.CoreInstance.ReferenceManager.RelativeStorageFolder}");
 
 			data.CoreInstance.ReferenceManager
 				.GetResource<CoflnetUser> (data.rId)

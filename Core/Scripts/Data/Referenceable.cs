@@ -74,8 +74,7 @@ namespace Coflnet
 		/// <param name="requestingReference">Requesting reference.</param>
 		/// <param name="mode">Mode.</param>
 		public virtual bool IsAllowedAccess (SourceReference requestingReference, AccessMode mode = AccessMode.READ) {
-            UnityEngine.Debug.Log($"Checking {mode} on {Id} and Access {Access}");
-			return (Access != null) && Access.IsAllowedToAccess (requestingReference, mode,this.Id)
+            return (Access != null) && Access.IsAllowedToAccess (requestingReference, mode,this.Id)
 				// A resource might access itself
 				||
 				requestingReference == this.Id;

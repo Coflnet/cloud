@@ -281,25 +281,5 @@ namespace Coflnet
 				return new SourceReference(0,ThreadSaveIdGenerator.NextId);
 			}
 		}
-
-		    // serialize/deserialize internal field.
-    class CustomObjectFormatter : IMessagePackFormatter<SourceReference>
-    {
-            public int Serialize(ref byte[] bytes, int offset, SourceReference value, IFormatterResolver formatterResolver)
-            {
-				return MessagePackBinary.WriteInt64(ref bytes,offset,value.ServerId) + 
-				MessagePackBinary.WriteInt64(ref bytes,offset+8,value.ServerId);
-				
-            }
-
-            public SourceReference Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
-            {
-				var serverId = MessagePackBinary.ReadInt64(bytes,offset,out readSize);
-				offset+=readSize;
-				var resourceId = MessagePackBinary.ReadInt64(bytes,offset,out readSize);
-				readSize *=2; // 2 int64
-                return new SourceReference(serverId,resourceId);
-            }
-        }
 	}
 }

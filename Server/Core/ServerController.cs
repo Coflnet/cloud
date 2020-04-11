@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
 using Coflnet;
 using System.Text;
@@ -174,11 +173,6 @@ namespace Coflnet.Server
 			return encrypt.DecryptWithSessionKey(data);
 		}
 
-		public void SendAsJson(object data)
-		{
-			SendData(Encoding.UTF8.GetBytes(JsonUtility.ToJson(data)));
-		}
-
 		protected void SendInternal<T>(T data)
 		{
 			SendInternal(MessagePack.MessagePackSerializer.Serialize<T>(data));
@@ -222,8 +216,7 @@ namespace Coflnet.Server
 		{
 			this.websocketServer = server;
 			// add the event listener
-			Debug.LogError("Receive deactivated");
-			// CoflnetSocket.socketServer.receivedData += ReceiveData;
+			// todo
 		}
 
 		protected override void SendInternal(byte[] data)

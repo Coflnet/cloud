@@ -1676,7 +1676,6 @@ namespace WebSocketSharp
 
 		private void open()
 		{
-			UnityEngine.Debug.Log("Opening the connection");
 			_inMessage = true;
 			startReceiving();
 			try
@@ -2343,7 +2342,6 @@ namespace WebSocketSharp
 					  conf.ClientCertificateSelectionCallback);
 
 
-					UnityEngine.Debug.Log("Hanschake failed 3 the connection");
 					if (conf.ClientCertificates != null)
 						sslStream.AuthenticateAsClient(
 						  host,
@@ -2356,7 +2354,6 @@ namespace WebSocketSharp
 				}
 				catch (Exception ex)
 				{
-					UnityEngine.Debug.Log("Hanschake failed 4 the connection" + ex.Message);
 					throw new WebSocketException(CloseStatusCode.TlsHandshakeFailure, ex);
 				}
 			}

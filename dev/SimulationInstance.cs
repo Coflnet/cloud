@@ -35,8 +35,7 @@ namespace Coflnet.Dev
 				// whoops we have no network/internet (simulated)
 				return;
 			}
-			UnityEngine.Debug.Log($"Executing on {core.Id} ({core.GetType().Name})");
-			data.CoreInstance = core;
+						data.CoreInstance = core;
 			// only execute if there is no onmessage or onmessage allows it
 			if(OnMessage == null || OnMessage.Invoke(data)){
 				core.ReceiveCommand(data,sender);

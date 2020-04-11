@@ -189,7 +189,6 @@ namespace Coflnet
 				return;
 			}
 
-			UnityEngine.Debug.Log($"cloning {id}");
 
 			coreInstance.SendCommand<GetResourceCommand,short>(id,0,o =>{
 				var resource = MessagePack.MessagePackSerializer.Typeless.Deserialize(o.message) as Referenceable;
@@ -253,7 +252,6 @@ namespace Coflnet
 			InnerReference<Referenceable> reference;
 
 			if (!TryGetReference (id, out reference) || reference.Resource == null) {
-				UnityEngine.Debug.LogError($"Notfound error on {coreInstance.Id}({coreInstance.GetType().Name})");
 				throw new ObjectNotFound (id);
 			}
 
@@ -261,7 +259,6 @@ namespace Coflnet
 			if (reference.Resource is T) {
 				return (T) reference.Resource;
 			}
-			UnityEngine.Debug.Log($"this is {reference.Resource.GetType().Name} not the requested type {typeof(T).Name}");
 			try {
 				return (T) Convert.ChangeType (reference, typeof (T));
 			} catch (InvalidCastException) {
@@ -433,7 +430,6 @@ namespace Coflnet
 			// Redirects occur if offline ids were used
 			if (reference is RedirectReference<Referenceable>) {
 				var redirectReference = reference as RedirectReference<Referenceable>;
-				UnityEngine.Debug.Log ("redirecting :)");
 				return TryGetReference (redirectReference.newId, out result);
 			}
 
@@ -459,14 +455,12 @@ namespace Coflnet
 			var mainManagingNode = ManagingNodeFor(data.rId);
 			var IAmTheManager = mainManagingNode == CurrentServerId;
 
-			UnityEngine.Debug.Log ($"searching {coreInstance.Id} ({coreInstance.GetType().Name}) for {data.rId}");
 			InnerReference<Referenceable> reference;
 			TryGetReference (data.rId, out reference);
 
 			if (reference == null) {
 				// is the current server the managing server?
 				if (!IAmTheManager) {
-					UnityEngine.Debug.Log ("passing on to " + data.rId);
 					// we are not the main managing server, pass it on to it
 					CoflnetCore.Instance.SendCommand (data);
 					return;
@@ -556,7 +550,6 @@ namespace Coflnet
 
 
 			if(!IAmTheManager && (!isTheSenderTheManager) && !data.rId.IsLocal){
-				UnityEngine.Debug.Log ($"distributing {data.type} to {data.rId}, IAmTheManager: {IAmTheManager}, isTheSenderTheManager: {isTheSenderTheManager}, mainManagingNode {mainManagingNode}, CurrentServerId {CurrentServerId}, ");
 				// This message hasn't been on the manager yet, send it to him
 				reference.ExecuteForResource(data);
 			}
@@ -583,7 +576,6 @@ namespace Coflnet
 			// it has to be the references or my managing node
 			if(!IsManagingNodeFor(sender,data.rId) && !IsManagingNodeFor(sender,coreInstance.Id))
 			{
-				UnityEngine.Debug.LogError($"{sender} isn't the manager for {data.rId}");
 				return;
 			}
 
@@ -636,7 +628,6 @@ namespace Coflnet
 		/// <returns><see cref="true"/> if distribution should be attempted</returns>
 		protected bool ExecuteForReference(Referenceable resource,MessageData data,SourceReference sender)
 		{
-			//UnityEngine.Debug.Log ($" on {this.coreInstance.Id} ({coreInstance.GetType().Name}) executing {data} ");
 			var command = resource.GetCommandController ().GetCommand (data.type);
 
 			// only execute changing commands command if we are the managing server 

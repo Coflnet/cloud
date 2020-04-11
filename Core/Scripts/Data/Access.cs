@@ -81,7 +81,6 @@ namespace Coflnet
 			// unauthorized senders can't access
 			if(requestingReference == default(SourceReference))
 			{
-				UnityEngine.Debug.Log("Sender is not set, access was blocked");
 				return false;
 			}
 

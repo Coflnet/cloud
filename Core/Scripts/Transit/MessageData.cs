@@ -110,7 +110,6 @@ namespace Coflnet
             {
                 if (_coreInstance == null)
                 {
-                    UnityEngine.Debug.Log("falling back to default");
                     return CoflnetCore.Instance;
                 }
                 return _coreInstance;

@@ -9,8 +9,7 @@ namespace Coflnet.Client
 
 
 
-			UnityEngine.Debug.Log("new id : " + response.id);
-
+			
 
 			// all outdated the client core is a device not an user
 

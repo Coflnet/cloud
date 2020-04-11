@@ -5,13 +5,12 @@ using Coflent.Client;
 using Coflnet.Client;
 using Coflnet.Server;
 
-namespace Coflnet.Dev
-{
-    /// <summary>
-    /// Development Core for testing purposses.
-    /// It simulates A client alongside with a server.
-    /// </summary>
-    public class DevCore : CoflnetCore {
+namespace Coflnet.Dev {
+	/// <summary>
+	/// Development Core for testing purposses.
+	/// It simulates A client alongside with a server.
+	/// </summary>
+	public class DevCore : CoflnetCore {
 		private ClientCore clientCore;
 		private ServerCore serverCore;
 
@@ -25,15 +24,14 @@ namespace Coflnet.Dev
 		/// <summary>
 		/// Cotains all simulated devices/server/users
 		/// </summary>
-		public Dictionary<SourceReference,SimulationInstance> simulationInstances;
+		public Dictionary<SourceReference, SimulationInstance> simulationInstances;
 
 		/// <summary>
 		/// All messages sent over the network previously
 		/// </summary>
-		public List<MessageData> pastMessages = new List<MessageData>();
+		public List<MessageData> pastMessages = new List<MessageData> ();
 
-
-		public static DevCore DevInstance {get;private set;}
+		public static DevCore DevInstance { get; private set; }
 
 		static DevCore () {
 
@@ -41,7 +39,7 @@ namespace Coflnet.Dev
 			FileController.dataPaht += "/dev";
 		}
 
-		public DevCore(){
+		public DevCore () {
 			this.ReferenceManager = ReferenceManager.Instance;
 		}
 
@@ -67,14 +65,11 @@ namespace Coflnet.Dev
 		/// <param name="preventDefaultScreens"><c>true</c> when default settings (dummys) should NOT be set such as <see cref="DummyPrivacyScreen"/></param>
 		/// <param name="preventInit"><c>true</c> when The Inits of Client and Server-Cores should not be invoked and client should be prepared like a fresh install</param>
 		public static void Init (SourceReference id, bool preventDefaultScreens = false, bool preventInit = false) {
-			
+
 			//[Deprecated]
 			ConfigController.ActiveUserId = id;
 			// sets the primary managing server
 			ConfigController.ApplicationSettings.id = id.FullServerId;
-
-
-			UnityEngine.Debug.Log($"setting up with {id}");
 
 			if (!preventDefaultScreens) {
 				SetupDefaults ();
@@ -83,26 +78,25 @@ namespace Coflnet.Dev
 			// to have instances loaded
 			var toLoadInstance = ClientCore.ClientInstance;
 			var serverInstance = ServerCore.ServerInstance;
-			if(DevInstance == null){
-				DevInstance = new DevCore (); 
-				DevInstance.simulationInstances = new Dictionary<SourceReference, SimulationInstance>();
+			if (DevInstance == null) {
+				DevInstance = new DevCore ();
+				DevInstance.simulationInstances = new Dictionary<SourceReference, SimulationInstance> ();
 				CoflnetCore.Instance = DevInstance;
 			} else {
 				// reset if there was an devinstance bevore
-				DevInstance.simulationInstances.Clear();
-				ServerCore.ServerInstance = new ServerCoreProxy();
-				ClientCore.ClientInstance = new ClientCoreProxy();
+				DevInstance.simulationInstances.Clear ();
+				ServerCore.ServerInstance = new ServerCoreProxy ();
+				ClientCore.ClientInstance = new ClientCoreProxy ();
 			}
 
-			DevInstance.AddServerCore(id.FullServerId );
-			if(!id.IsServer){
-				DevInstance.AddClientCore(id);
+			DevInstance.AddServerCore (id.FullServerId);
+			if (!id.IsServer) {
+				DevInstance.AddClientCore (id);
 			} else {
-				DevInstance.AddClientCore(SourceReference.Default);
+				DevInstance.AddClientCore (SourceReference.Default);
 			}
 
-			if(!preventInit)
-			{
+			if (!preventInit) {
 				ServerCore.Init ();
 				ClientCore.Init ();
 			}
@@ -113,16 +107,14 @@ namespace Coflnet.Dev
 		/// Adds a new Server to the simulation and initializes it.
 		/// </summary>
 		/// <param name="id">Id of the server</param>
-		public SimulationInstance AddServerCore(SourceReference id)
-		{
-			var newServerCore = new ServerCoreProxy(new ReferenceManager($"res{simulationInstances.Count}"))
-			{Id=id};
-			var simulationInstance =AddCore(newServerCore);
+		public SimulationInstance AddServerCore (SourceReference id) {
+			var newServerCore = new ServerCoreProxy (new ReferenceManager ($"res{simulationInstances.Count}")) { Id = id };
+			var simulationInstance = AddCore (newServerCore);
 
-			newServerCore.SetCommandsLive();
+			newServerCore.SetCommandsLive ();
 
 			return simulationInstance;
-			
+
 		}
 
 		/// <summary>
@@ -130,64 +122,50 @@ namespace Coflnet.Dev
 		/// </summary>
 		/// <param name="id">Id of the client</param>
 		/// <param name="createDevice">If an instance of <see cref="CoflnetUser"/> should be created on  the server as well</param>
-		public SimulationInstance AddClientCore(SourceReference id, bool createDevice = false)
-		{
-			var newClientCore = new ClientCoreProxy(new CommandController(CoreCommands),ClientSocket.Instance,new ClientReferenceManager($"res{simulationInstances.Count}"))
-			{Id=id};
+		public SimulationInstance AddClientCore (SourceReference id, bool createDevice = false) {
+			var newClientCore = new ClientCoreProxy (new CommandController (CoreCommands), ClientSocket.Instance, new ClientReferenceManager ($"res{simulationInstances.Count}")) { Id = id };
 
-			SetCoreForService(newClientCore);
+			SetCoreForService (newClientCore);
 			// for Services using the default Instance
 			ClientCore.Instance = newClientCore;
 
+			var addedInstance = AddCore (newClientCore);
 
-
-			var addedInstance = AddCore(newClientCore);
-
-
-			if(createDevice)
-			{
+			if (createDevice) {
 				// create and add the user server and client side
-				var device = new Device(){Id=id};
+				var device = new Device () { Id = id };
 				SimulationInstance server;
-				if(simulationInstances.TryGetValue(id.FullServerId,out server))
-				{
-					server.core.ReferenceManager.AddReference(device);
+				if (simulationInstances.TryGetValue (id.FullServerId, out server)) {
+					server.core.ReferenceManager.AddReference (device);
 				}
-				UnityEngine.Debug.Log("Added device " + device.Id);
-				if(!newClientCore.ReferenceManager.AddReference(device)){
-					UnityEngine.Debug.Log(newClientCore.ReferenceManager.GetReferences());
-					throw new Exception($"failed to add device {device.Id}");
+				if (!newClientCore.ReferenceManager.AddReference (device)) {
+					throw new Exception ($"failed to add device {device.Id}");
 				}
 			}
 
 			// activate commands
-			newClientCore.SetCommandsLive();
-			lastAddedClient=addedInstance;
-
-			
+			newClientCore.SetCommandsLive ();
+			lastAddedClient = addedInstance;
 
 			return addedInstance;
 		}
 
-
-		public void SetCoreForService(ClientCore core)
-		{
+		public void SetCoreForService (ClientCore core) {
 
 			UserService.Instance.ClientCoreInstance = core;
-			InstallService.Instance = new InstallService(core);
-			DeviceService.Instance = new DeviceService(core);
+			InstallService.Instance = new InstallService (core);
+			DeviceService.Instance = new DeviceService (core);
 		}
 
 		/// <summary>
 		/// Adds a core to the simulation
 		/// </summary>
 		/// <param name="core">CoflnetCore to add </param>
-		public SimulationInstance AddCore(CoflnetCore core)
-		{
-			var newInstance = new SimulationInstance(){
+		public SimulationInstance AddCore (CoflnetCore core) {
+			var newInstance = new SimulationInstance () {
 				core = core
 			};
-			this.simulationInstances.Add(core.Id,newInstance);
+			this.simulationInstances.Add (core.Id, newInstance);
 			return newInstance;
 		}
 
@@ -206,13 +184,10 @@ namespace Coflnet.Dev
 		/// <param name="serverId">optional serverId, ignored in this implementation</param>
 		public override void SendCommand (MessageData data, long serverId = 0) {
 
-			UnityEngine.Debug.Log("Devcore tries to execute " + data);
-
 			// record it
-			pastMessages.Add(data);
-			
-			if(data.sId == data.rId)
-			{
+			pastMessages.Add (data);
+
+			if (data.sId == data.rId) {
 				// resource is trying to send to itself
 				serverId = data.rId.ServerId;
 			}
@@ -227,10 +202,10 @@ namespace Coflnet.Dev
 				data.sId = new SourceReference (data.rId.ServerId, 0);
 			}
 
-			var devData =  new DevMessageData(data);
-				devData.Connection = new DevConnection();
-				data = devData;
-			
+			var devData = new DevMessageData (data);
+			devData.Connection = new DevConnection ();
+			data = devData;
+
 			/*
 			if(data.type == "registerUser" || data.type == "loginUser" || data.type == "response"){
 
@@ -243,65 +218,53 @@ namespace Coflnet.Dev
 				//
 			}*/
 
-			//UnityEngine.Debug.Log(data);
-			// search for the serverId first
-			if(serverId != 0 && simulationInstances.ContainsKey(new SourceReference(serverId,0))){
-				UnityEngine.Debug.Log($"on {serverId.ToString("X")} ");
-				simulationInstances[new SourceReference(serverId,0)].ReceiveCommand(devData);
-			}
-			else if(simulationInstances.ContainsKey(data.rId)){
-				UnityEngine.Debug.Log($"on {data.rId} ");
+			//			// search for the serverId first
+			if (serverId != 0 && simulationInstances.ContainsKey (new SourceReference (serverId, 0))) {
+				simulationInstances[new SourceReference (serverId, 0)].ReceiveCommand (devData);
+			} else if (simulationInstances.ContainsKey (data.rId)) {
 				// the receiver is known, send it to him
-				simulationInstances[data.rId].ReceiveCommand(devData);
+				simulationInstances[data.rId].ReceiveCommand (devData);
 
-			} else if(simulationInstances.ContainsKey(SourceReference.Default)
-				|| simulationInstances.Where(i=>i.Value.core.Id == data.rId).Any())// && simulationInstances[SourceReference.Default].core.Id == data.rId)
+			} else if (simulationInstances.ContainsKey (SourceReference.Default) ||
+				simulationInstances.Where (i => i.Value.core.Id == data.rId).Any ()) // && simulationInstances[SourceReference.Default].core.Id == data.rId)
 			{
 				// the receiver is unknown but is asigned the last added client since it hasn't got an ID yet
 				SimulationInstance value;
-				
-				if(! simulationInstances.TryGetValue(default(SourceReference),out value))
-				{
-					value = simulationInstances.Where(i=>i.Value.core.Id == data.rId).First().Value;
+
+				if (!simulationInstances.TryGetValue (default (SourceReference), out value)) {
+					value = simulationInstances.Where (i => i.Value.core.Id == data.rId).First ().Value;
 				}
 
 				simulationInstances[data.rId] = value;
-				simulationInstances[data.rId].ReceiveCommand(devData);
+				simulationInstances[data.rId].ReceiveCommand (devData);
 
+				simulationInstances.Remove (SourceReference.Default);
 
-				simulationInstances.Remove(SourceReference.Default);
-				
-			}
-			else if(simulationInstances.ContainsKey(data.rId.FullServerId)){
+			} else if (simulationInstances.ContainsKey (data.rId.FullServerId)) {
 				// the receiver itself doesn't exist, but the server for it does
-				simulationInstances[data.rId.FullServerId].ReceiveCommand(devData);
-				
-			}else if(data is DevMessageData && (data as DevMessageData).sender != null){
+				simulationInstances[data.rId.FullServerId].ReceiveCommand (devData);
+
+			} else if (data is DevMessageData && (data as DevMessageData).sender != null) {
 				// no idea what id this is supposed to go but the container has a sender
-				(data as DevMessageData).sender.core.ReferenceManager.ExecuteForReference(data);
-			}
-			else{
+				(data as DevMessageData).sender.core.ReferenceManager.ExecuteForReference (data);
+			} else {
 				throw new Exception ($"the target {data.rId} is not registered in the development enviroment {data.type}");
 			}
 
-
-/* 
-			UnityEngine.Debug.Log ($"executing for reference {data.t}");
-			if (data.rId == ConfigController.ActiveUserId || data.rId == ConfigController.ApplicationSettings.id)
-				ReferenceManager.Instance.ExecuteForReference (data);
-			else {
-				throw new Exception ($"the target {data.rId} is not registered in the development enviroment {data.t}");
-			}*/
+			/* 
+									if (data.rId == ConfigController.ActiveUserId || data.rId == ConfigController.ApplicationSettings.id)
+							ReferenceManager.Instance.ExecuteForReference (data);
+						else {
+							throw new Exception ($"the target {data.rId} is not registered in the development enviroment {data.t}");
+						}*/
 		}
 
 		/// <summary>
 		/// Messagedata used within the development enviroment.
 		/// Useful for knowing who sent int in the simulated  enviroment before ids are set
 		/// </summary>
-		
 
-		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) {
-			UnityEngine.Debug.Log ($"executing for ");
+		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0, SourceReference sender = default (SourceReference)) {
 			var commandInstance = ((C) Activator.CreateInstance (typeof (C)));
 
 			var messageData = MessageData.SerializeMessageData<T> (data, commandInstance.Slug, id);
@@ -309,10 +272,8 @@ namespace Coflnet.Dev
 			messageData.rId = receipient;
 			messageData.sId = sender;
 
-			 
 			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation) {
 				messageData.CoreInstance = simulationInstances[messageData.rId].core;
-				UnityEngine.Debug.Log("using thread");
 				ThreadController.Instance.ExecuteCommand (commandInstance, messageData);
 			}
 
@@ -326,6 +287,5 @@ namespace Coflnet.Dev
 			SendCommand (messageData);
 		}
 	}
-
 
 }
