@@ -28,7 +28,8 @@ namespace Coflnet
 			Instance.webSocket.Log.Level = LogLevel.Trace;
 			Instance.webSocket.Log.Output += (arg1, arg2) =>
 			{
-				// Log it
+				Logger.Log(arg1);
+				Logger.Log(arg2);
 			};
 
 			Instance.webSocket.Connect();

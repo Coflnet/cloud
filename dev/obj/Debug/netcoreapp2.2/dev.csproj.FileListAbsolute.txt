@@ -2,3 +2,17 @@
 /media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.csproj.CoreCompileInputs.cache
 /media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.AssemblyInfoInputs.cache
 /media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.AssemblyInfo.cs
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/dev.deps.json
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/dev.runtimeconfig.json
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/dev.runtimeconfig.dev.json
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/dev.dll
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/dev.pdb
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/Client.dll
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/Core.dll
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/Server.dll
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/Core.pdb
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/Server.pdb
+/media/ekwav/Daten3/dev/cloud/dev/bin/Debug/netcoreapp2.2/Client.pdb
+/media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.csproj.CopyComplete
+/media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.dll
+/media/ekwav/Daten3/dev/cloud/dev/obj/Debug/netcoreapp2.2/dev.pdb

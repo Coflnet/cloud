@@ -33,7 +33,6 @@ public class CloningTest {
         
         // clone the resource to server1
         alice.ReferenceManager.CloneResource(resource.Id,res=>{
-            Debug.Log("Fuck YES" + (res as TestResource).specialNumber);
             Assert.AreEqual(42, (res as TestResource).specialNumber);
         });
     }
@@ -145,7 +144,7 @@ public class CloningTest {
             var access = res.GetAccess();
             foreach (var item in access.GetSpecialCases())
             {
-                Debug.Log($"{item.Key} has {item.Value} and {data.GetTargetAs<Referenceable>().Access.generalAccess}");   
+                Logger.Log($"{item.Key} has {item.Value} and {data.GetTargetAs<Referenceable>().Access.generalAccess}");   
             }
             data.GetTargetAs<TestResource>().specialNumber++;
         }

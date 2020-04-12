@@ -6,17 +6,7 @@ using NUnit.Framework;
 
 public class CoflnetUserTests {
 
-	[Test]
-	public void RegisterUserCommand () {
-		ServerCore.Init ();
-
-	}
-
-	[Test]
-	public void UserMessageForwarding () {
-		ServerCore.Init ();
-
-	}
+	#if UNITY_EDITOR
 
 	// A UnityTest behaves like a coroutine in PlayMode
 	// and allows you to yield null to skip a frame in EditMode
@@ -44,7 +34,7 @@ public class CoflnetUserTests {
 
 		// await response
 		yield return new UnityEngine.WaitForSeconds (0.5f);
-		Debug.Log (response.GetAs<RegisterUserResponse> ().id);
+		Logger.Log (response.GetAs<RegisterUserResponse> ().id);
 
 		// user was created in the last second
 		Assert.IsTrue (response.GetAs<RegisterUserResponse> ().id.ResourceId > ThreadSaveIdGenerator.NextId - 10000000);
@@ -192,7 +182,7 @@ public class CoflnetUserTests {
 			MessageData.CreateMessageData<Coflnet.ReceiveableResource.GetMessages, int> (receiverUser.Id, 0));
 
 		yield return new WaitForSeconds (0.5f);
-		Debug.Log (response.type);
+		Logger.Log (response.type);
 		// message is delivered
 		Assert.AreEqual (response.GetAs<string> (), "hi");
 
@@ -205,7 +195,7 @@ public class CoflnetUserTests {
 
 	class ChatMessageCommand : Command {
 		public override void Execute (MessageData data) {
-			Debug.Log ("executed");
+			Logger.Log ("executed");
 		}
 
 		protected override CommandSettings GetSettings () {
@@ -258,7 +248,7 @@ public class CoflnetUserTests {
 		var receiverUser = CoflnetUser.Generate (new SourceReference (1, 1, 2, 0));
 		receiverUser.Id = new SourceReference (3, 1, 2, ThreadSaveIdGenerator.NextId);
 		receiverUser.GetCommandController ().OverwriteCommand<ChatMessageCommand> ();
-		Debug.Log (receiverUser.Id);
+		Logger.Log (receiverUser.Id);
 
 		(new CoflnetUser ()).GetCommandController ().OverwriteCommand<TestCommandWithPermission> ();
 
@@ -271,4 +261,6 @@ public class CoflnetUserTests {
 		Assert.IsTrue (MessagePersistence.ServerInstance.GetMessagesFor (receiverUser.Id).ToList ().Any ());
 
 	}
+
+	#endif
 }

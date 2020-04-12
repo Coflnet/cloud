@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Collections;
 using Coflnet.Client.Messaging;
 using Coflnet;

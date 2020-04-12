@@ -160,7 +160,7 @@ namespace Coflnet
 		/// <param name="userId">User identifier.</param>
 		public CoflnetThreadWorker GetWorkerForUser(SourceReference userId)
 		{
-			//ThreadPool.QueueUserWorkItem((object state) => { Debug.Log("hi"); });
+			//ThreadPool.QueueUserWorkItem((object state) => { Logger.Log("hi"); });
 			//ThreadStart threadStart = new ThreadStart(Work);
 			//Thread thread = new Thread(threadStart, 1000);
 			byte[] idSlice = BitConverter.GetBytes(userId.ResourceId);
@@ -229,10 +229,10 @@ namespace Coflnet
 			//var request = new RestRequest(Method.GET);
 			//var asyncHandle = client.ExecuteAsync(request, response =>
 			//{
-			//	Debug.Log("von rest sharp :D " + from + response.Content.ToString().Substring(0, index % 15));
+			//	Logger.Log("von rest sharp :D " + from + response.Content.ToString().Substring(0, index % 15));
 			//});
 			//var response = client.Execute(request);
-			//Debug.Log("von rest sharp :D " + from + response.Content.ToString().Substring(0, 15));
+			//Logger.Log("von rest sharp :D " + from + response.Content.ToString().Substring(0, 15));
 
 			System.Random rnd = new System.Random();
 			var result = rnd.Next(1, 13);
@@ -247,7 +247,7 @@ namespace Coflnet
 				result += rnd.Next(1, 13);
 			}
 			sum += result;
-			//Debug.Log("done work" + result);
+			//Logger.Log("done work" + result);
 		}
 
 		public void Response(string data, int code)

@@ -60,7 +60,7 @@ public class CaptchaImageToggler : MonoBehaviour
 		}
 		selected = !selected;
 
-		Debug.Log("clicked on captcha");
+		Logger.Log("clicked on captcha");
 	}
 
 	public void Reset()

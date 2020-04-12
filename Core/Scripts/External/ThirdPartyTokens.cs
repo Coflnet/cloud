@@ -41,7 +41,7 @@ namespace Coflnet
 			//client.DownloadDataAsync("https://beta.coflnet.com");
 			//client.DownloadDataCompleted += (object sender, DownloadDataCompletedEventArgs e) =>
 			//{
-			//    Debug.Log(Encoding.UTF8.GetString(e.Result));
+			//    Logger.Log(Encoding.UTF8.GetString(e.Result));
 			// };
 
 		}

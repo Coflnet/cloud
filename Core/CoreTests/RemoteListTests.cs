@@ -116,7 +116,7 @@ public partial class RemoteListTests {
 
        // var bytes = MessagePackSerializer.Serialize(list);
 
-       // Debug.Log(MessagePackSerializer.ToJson(bytes));
+       // Logger.Log(MessagePackSerializer.ToJson(bytes));
     }
 
     public class ResWithList : Referenceable, IMessagePackSerializationCallbackReceiver

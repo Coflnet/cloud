@@ -249,7 +249,7 @@ namespace Coflnet.Client {
 			if(ReferenceManager.Exists(sender))
 				ReferenceManager.GetResource(sender).ExecuteCommand(data);
 			else {
-				Debug.Log("oh shot");
+				Logger.Log("oh shot");
 				core.ExecuteCommand(data);
 			}
 

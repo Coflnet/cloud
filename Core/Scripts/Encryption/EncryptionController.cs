@@ -501,7 +501,7 @@ public class EncryptionController {
 
 	private string SignKey (byte[] publicKey, KeyPair identKey, byte[] expireTimestamp) {
 		byte[] empKeyWithTimestamp = Encrypt.ConcatBytes (publicKey, expireTimestamp);
-		//Debug.Log ("unsinged key: " +JsonUtility.ToJson( new KeyPair(expireTimestamp,empKeyWithTimestamp)) );
+		//Logger.Log ("unsinged key: " +JsonUtility.ToJson( new KeyPair(expireTimestamp,empKeyWithTimestamp)) );
 		byte[] signedOneTimeKey = Encrypt.SignByte (empKeyWithTimestamp, identKey);
 		return Convert.ToBase64String (signedOneTimeKey);
 	}

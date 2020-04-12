@@ -52,7 +52,7 @@ public class CoflnetSocket
 	{
 		socketServer = new WebSocketServer(8080, sslEnabled);
 		socketServer.Log.Level = LogLevel.Trace;
-		//      wssv.Log.Output = Debug.Log;
+		//      wssv.Log.Output = Logger.Log;
 
 
 		//socketServer = new CoflnetWebsocketServer();
@@ -377,8 +377,8 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		{
 			Track.instance.Error(ex.Message, e.Data, ex.StackTrace);
 		}*/
-		//Debug.Log(ID);
-		//Debug.Log("Got some data :)");      
+		//Logger.Log(ID);
+		//Logger.Log("Got some data :)");      
 	}
 
 

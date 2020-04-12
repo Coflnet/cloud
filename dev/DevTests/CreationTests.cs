@@ -1,10 +1,6 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
-using NUnit.Framework;
-using System.Collections;
+﻿using NUnit.Framework;
 using Coflnet.Dev;
 using Coflnet;
-using Coflnet.Client;
 using System.Runtime.Serialization;
 
 public class CreationTests {

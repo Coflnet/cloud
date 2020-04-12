@@ -71,7 +71,7 @@ namespace Coflnet.Client
 			UserService.Instance.CurrentUser.PrivacySettings[slug] = decission;
 			// update it on the server/all instances
 
-			Debug.Log("disabled this");
+			Logger.Log("disabled this");
 			/*CoflnetCore.Instance.SendCommand<
 					   UserCommands.UpdatePrivacySetting,
 						KeyValuePair<string, bool>>(

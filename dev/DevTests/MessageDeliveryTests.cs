@@ -1,11 +1,7 @@
 ﻿using Coflnet.Dev;
-using UnityEngine.TestTools;
 using NUnit.Framework;
-using System.Collections;
 using Coflnet;
-using Coflnet.Client;
 using Coflnet.Client.Messaging;
-using Coflnet.Core.User;
 using MessagePack;
 
 public class MessageDeliveryTests {

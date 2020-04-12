@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Coflnet;
 using Coflnet.Client;
 using Coflnet.Dev;
 using NUnit.Framework;
-using UnityEngine.TestTools;
 
 public class FirstStartupTest {
 
@@ -47,8 +45,8 @@ public class FirstStartupTest {
 
         // Device and Installation should have online ids
 
-        Debug.Log($"DeviceId: {ConfigController.DeviceId}");
-        Debug.Log($"InstallationId: {ConfigController.InstallationId}");
+        Logger.Log($"DeviceId: {ConfigController.DeviceId}");
+        Logger.Log($"InstallationId: {ConfigController.InstallationId}");
     }
 
     [Test]
@@ -59,8 +57,8 @@ public class FirstStartupTest {
 
 
 
-        Debug.Log ("The new user has the id: " + UserService.Instance.CurrentUserId);
-        Debug.Log($"The Active user is: {ConfigController.ActiveUserId}");
+        Logger.Log ("The new user has the id: " + UserService.Instance.CurrentUserId);
+        Logger.Log($"The Active user is: {ConfigController.ActiveUserId}");
         // userid exists client side
         Assert.NotNull (UserService.Instance.CurrentUser);
 
@@ -96,7 +94,7 @@ public class FirstStartupTest {
         var serverId = new SourceReference (1, 1, 1, 0);
         DevCore.Init (serverId, true);
 
-        Debug.Log (ConfigController.UserSettings.userId);
+        Logger.Log (ConfigController.UserSettings.userId);
 
         var valueToStore = "abc123Hellou :D";
 
@@ -112,7 +110,7 @@ public class FirstStartupTest {
 
         foreach (var item in DevCore.DevInstance.simulationInstances.Keys)
         {
-            Debug.Log ($"having {item}");
+            Logger.Log ($"having {item}");
         }
 
         CoflnetCore.Instance.SendCommand<GetUserKeyValue, string> (ConfigController.ActiveUserId, "mykey",ConfigController.ActiveUserId, (d) => {

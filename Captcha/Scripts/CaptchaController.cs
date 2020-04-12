@@ -151,7 +151,7 @@ public class CaptchaController : MonoBehaviour
 	/// <param name="responseCode">Response code.</param>
 	public void ReceiveApiResponse(string data, System.Net.HttpStatusCode responseCode)
 	{
-		Debug.Log("received captcha");
+		Logger.Log("received captcha");
 		CaptchaChallengeResponse response = JsonUtility.FromJson<CaptchaChallengeResponse>(data);
 		// it is possible that we allready have a pass token
 		if (response.pass_token != null)
@@ -165,7 +165,7 @@ public class CaptchaController : MonoBehaviour
 					DisplayMultiImageSelect(response.challenge);
 					break;
 				default:
-					Debug.LogError("API responded with unknown captcha type");
+					Logger.LogError("API responded with unknown captcha type");
 					break;
 			}
 
@@ -179,7 +179,7 @@ public class CaptchaController : MonoBehaviour
 	protected void ReceivePassToken(string passToken)
 	{
 		ShowSuccess();
-		Debug.Log("Succeeded: " + passToken);
+		Logger.Log("Succeeded: " + passToken);
 		if (passTokenCallback != null)
 		{
 			passTokenCallback(passToken);
@@ -226,7 +226,7 @@ public class CaptchaController : MonoBehaviour
 
 		captchaScreen.GetChild(0).GetChild(0).GetComponent<Text>().text = translation;
 
-		Debug.Log("showed captcha");
+		Logger.Log("showed captcha");
 	}
 
 
@@ -337,7 +337,7 @@ public class CaptchaController : MonoBehaviour
 		}
 		else
 		{
-			Debug.Log("error response: " + www.text);
+			Logger.Log("error response: " + www.text);
 			// looks like this is an not existing image, tell the user
 			string img_not_found = Coflnet.I18nController.Instance.GetTranslation("img_not_found");
 			NotificationHandler.instance.AddMessageToAlertStream(img_not_found);

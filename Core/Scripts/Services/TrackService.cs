@@ -56,7 +56,7 @@ public class Track
 		//if (PrivacyController.privacyLevel > 1)
 		//	url += GetVisitorID();
 		//url += GetCurrentLevel();
-		//Debug.Log(url);
+		//Logger.Log(url);
 		if (lastRequest == url)
 			return;
 		lastRequest = url;
