@@ -37,7 +37,10 @@ namespace Coflnet
 		/// Use the attribute Settings to get the caches settings.
 		/// </summary>
 		/// <returns>The settings.</returns>
-		protected abstract CommandSettings GetSettings ();
+		protected virtual CommandSettings GetSettings ()
+		{
+			return new CommandSettings(WritePermission.Instance);
+		}
 
 		/// <summary>
 		/// Sends a command to the server

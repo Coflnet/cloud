@@ -1,9 +1,0 @@
-/media/ekwav/Daten3/dev/cloud/Core/obj/Debug/netstandard2.0/Core.csprojAssemblyReference.cache
-/media/ekwav/Daten3/dev/cloud/Core/obj/Debug/netstandard2.0/Core.csproj.CoreCompileInputs.cache
-/media/ekwav/Daten3/dev/cloud/Core/obj/Debug/netstandard2.0/Core.AssemblyInfoInputs.cache
-/media/ekwav/Daten3/dev/cloud/Core/obj/Debug/netstandard2.0/Core.AssemblyInfo.cs
-/media/ekwav/Daten3/dev/cloud/Core/bin/Debug/netstandard2.0/Core.deps.json
-/media/ekwav/Daten3/dev/cloud/Core/bin/Debug/netstandard2.0/Core.dll
-/media/ekwav/Daten3/dev/cloud/Core/bin/Debug/netstandard2.0/Core.pdb
-/media/ekwav/Daten3/dev/cloud/Core/obj/Debug/netstandard2.0/Core.dll
-/media/ekwav/Daten3/dev/cloud/Core/obj/Debug/netstandard2.0/Core.pdb

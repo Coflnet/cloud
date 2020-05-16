@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-
+/// <summary>
+/// Example
+/// </summary>
 namespace Coflnet.Dev
 {
+    /*
     class Program
     {
         static void Main(string[] args)
@@ -20,4 +23,5 @@ namespace Coflnet.Dev
             Logger.OnError += Console.Error.WriteLine;
         }
     }
+    */
 }

@@ -53,6 +53,7 @@ namespace Coflnet
 
         /// <summary>
         /// Event invoked when message got send (or moved to the sending chain)
+        /// Can be used to execute longer running tasks
         /// </summary>
         public event Action<MessageData> AfterSend;
 
@@ -211,6 +212,17 @@ namespace Coflnet
         {
             this.type = type;
             this.message = data;
+        }
+
+        /// <summary>
+        /// simplest encoding recomended for sending commands to other systems
+        /// </summary>
+        /// <param name="type">The identifier of the command</param>
+        /// <param name="data">The data to be passed</param>
+        /// <returns></returns>
+        public MessageData(string type, string data) : this(type,Encoding.UTF8.GetBytes(data))
+        {
+
         }
 
         public MessageData(SourceReference rId, byte[] message, string t)
