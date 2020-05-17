@@ -1,6 +1,7 @@
 ﻿using Coflnet.Core.Crypto;
 using MessagePack;
 using System;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Coflnet
@@ -17,38 +18,46 @@ namespace Coflnet
     /// x = senders signature of the message content Ed25519(m|t|s|r|i)
     /// </summary>
     [MessagePackObject]
+    [DataContract]
     public class MessageData : IMessageData
     {
         /// <summary>
         /// The sender identifier.
         /// </summary>
         [Key("s")]
+        [DataMember]
         public SourceReference sId;
         /// <summary>
         /// The recipient id
         /// </summary>
         [Key("r")]
+        [DataMember]
         public SourceReference rId;
         /// <summary>
         /// The message identifier choosen by the sender
         /// </summary>
         [Key("i")]
+        [DataMember]
         public long mId;
         [Key("m")]
+        [DataMember]
         public virtual byte[] message { get; set; }
         /// <summary>
         /// Type aka slug of a command
         /// </summary>
         [Key("t")]
+        [DataMember]
         public string type;
 
         [Key("h")]
+        [DataMember]
         public MessageDataHeader headers;
 
         /// <summary>
         /// senders signature of the message content Ed25519(m|t|s|r|i|h)
         /// </summary>
         [Key("x")]
+        [DataMember]
         public Signature signature;
 
         /// <summary>
@@ -75,6 +84,7 @@ namespace Coflnet
         /// </summary>
         /// <value>The data as UTF8 string.</value>
         [IgnoreMember]
+		[IgnoreDataMember]
         public virtual string Data
         {
             get
@@ -88,6 +98,7 @@ namespace Coflnet
         /// </summary>
         /// <value>The deserialized.</value>
         [IgnoreMember]
+		[IgnoreDataMember]
         public dynamic DeSerialized
         {
             get
@@ -105,6 +116,7 @@ namespace Coflnet
         /// </summary>
         /// <value>The core wich should be used.</value>
         [IgnoreMember]
+		[IgnoreDataMember]
         public CoflnetCore CoreInstance
         {
             get
@@ -220,7 +232,7 @@ namespace Coflnet
         /// <param name="type">The identifier of the command</param>
         /// <param name="data">The data to be passed</param>
         /// <returns></returns>
-        public MessageData(string type, string data) : this(type,Encoding.UTF8.GetBytes(data))
+        public MessageData(string type, string data = "") : this(type,Encoding.UTF8.GetBytes(data))
         {
 
         }

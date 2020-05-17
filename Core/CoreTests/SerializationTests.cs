@@ -65,7 +65,7 @@ public class SerializationTests {
 
 		var ccOuter = new CommandController (cc);
 		Assert.Throws<TestException> (() => {
-			ccOuter.ExecuteCommand (new MessageData (_TestCommandName, null));
+			ccOuter.ExecuteCommand (new MessageData (_TestCommandName));
 		});
 	}
 
@@ -74,7 +74,7 @@ public class SerializationTests {
 		var cc = new CommandController ();
 		var ccOuter = new CommandController (cc);
 		Assert.Throws<CommandUnknownException> (() => {
-			ccOuter.ExecuteCommand (new MessageData (_TestCommandName + "abc", null));
+			ccOuter.ExecuteCommand (new MessageData (_TestCommandName + "abc"));
 		});
 	}
 

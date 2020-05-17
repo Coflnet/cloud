@@ -189,6 +189,10 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data">Decoded object sent from the server</param>
 		public void ExecuteCommand (MessageData data, Referenceable target = null) {
+			if(data == null || data.type == null)
+			{
+				throw new CommandUnknownException("null");
+			}
 			var command = GetCommand (data.type);
 			ExecuteCommand (command, data, target);
 		}

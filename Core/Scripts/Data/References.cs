@@ -2,6 +2,7 @@
 using System;
 using System.Text;
 using MessagePack.Formatters;
+using System.Runtime.Serialization;
 
 namespace Coflnet
 {
@@ -11,10 +12,13 @@ namespace Coflnet
 	/// </summary>
 	//[MessagePackFormatter(typeof(CustomObjectFormatter))]
 	[MessagePackObject]
+	[DataContract]
 	public struct SourceReference
 	{
 		[Key(0)]
+		[DataMember]
 		public readonly long ServerId;
+		[DataMember]
 		[Key(1)]
 		public readonly long ResourceId;
 
@@ -159,6 +163,7 @@ namespace Coflnet
 		/// </summary>
 		/// <value></value>
 		[IgnoreMember]
+		[IgnoreDataMember]
 		public byte[] AsByte
 		{
 			get
@@ -176,6 +181,7 @@ namespace Coflnet
 		/// </summary>
 		/// <value></value>
 		[IgnoreMember]
+		[IgnoreDataMember]
 		public bool IsLocal
 		{
 			get{
@@ -226,6 +232,7 @@ namespace Coflnet
 		}
 
 		[IgnoreMember]
+		[IgnoreDataMember]
 		public bool IsServer
 		{
 			get
@@ -235,6 +242,7 @@ namespace Coflnet
 		}
 
 		[IgnoreMember]
+		[IgnoreDataMember]
 		public SourceReference FullServerId
 		{
 			get{
@@ -243,6 +251,7 @@ namespace Coflnet
 		}
 
 		[IgnoreMember]
+		[IgnoreDataMember]
 		public int Region
 		{
 			get
@@ -256,6 +265,7 @@ namespace Coflnet
 		/// </summary>
 		/// <value>The location relative to region.</value>
 		[IgnoreMember]
+		[IgnoreDataMember]
 		public int LocationInRegion
 		{
 			get
@@ -265,6 +275,7 @@ namespace Coflnet
 		}
 
 		[IgnoreMember]
+		[IgnoreDataMember]
 		public ushort ServerRelativeToLocation
 		{
 			get
