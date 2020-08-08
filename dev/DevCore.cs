@@ -36,7 +36,7 @@ namespace Coflnet.Dev {
 		static DevCore () {
 
 			// postfix the datapath to not corrupt other data
-			FileController.dataPaht += "/dev";
+			FileController.dataPath += "/dev";
 		}
 
 		public DevCore () {

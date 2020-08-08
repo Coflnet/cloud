@@ -91,6 +91,10 @@ namespace Coflnet
             {
                 return Encoding.UTF8.GetString(message);
             }
+            set 
+            {
+                message = Encoding.UTF8.GetBytes(value);
+            }
         }
 
         /// <summary>
@@ -275,7 +279,7 @@ namespace Coflnet
         /// Stores the result in serialized attribute 
         /// </summary>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        public void Deserialize<T>()
+        public virtual void Deserialize<T>()
         {
             deserialized = MessagePackSerializer.Deserialize<T>(message);
         }

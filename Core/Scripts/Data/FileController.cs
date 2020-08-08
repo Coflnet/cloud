@@ -11,7 +11,23 @@ namespace Coflnet
 {
 	public static class FileController
 	{
-		public static string dataPaht = "/var/lib/coflnet";
+		static string _dataPath;
+		public static string dataPath {
+			get 
+			{
+				if(_dataPath == null)
+				{
+					_dataPath = DefaultDataPath;
+				}
+				return _dataPath;
+			}
+			set 
+			{
+				Logger.Log($"Datapath set to: {value}");
+				Directory.CreateDirectory(value);
+				_dataPath = value;
+			}
+		}
 		public static string configPath = "/etc/coflnet";
 
 		/// <summary>
@@ -19,12 +35,11 @@ namespace Coflnet
 		/// </summary>
 		public static readonly string dataPathPostFix = "coflnet";
 
+		static string DefaultDataPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),dataPathPostFix);
 
 		static FileController()
 		{
-			dataPaht = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),dataPathPostFix);
 
-			Directory.CreateDirectory(dataPaht);
 		}
 
 		/// <summary>
@@ -34,7 +49,7 @@ namespace Coflnet
 		/// <param name="text">Text.</param>
 		public static void WriteAllText(string path, string text)
 		{
-			File.WriteAllText(Path.Combine(dataPaht, path), text);
+			WriteAllBytes(Path.Combine(dataPath, path), System.Text.Encoding.UTF8.GetBytes(text));
 		}
 
 		/// <summary>
@@ -45,7 +60,7 @@ namespace Coflnet
 		/// <param name="bytes">Bytes.</param>
 		public static void WriteAllBytes(string path, byte[] bytes)
 		{
-			System.IO.FileInfo file = new FileInfo(Path.Combine(dataPaht, path));
+			System.IO.FileInfo file = new FileInfo(Path.Combine(dataPath, path));
 			file.Directory.Create();
 			File.WriteAllBytes(file.FullName, bytes);
 		}
@@ -59,7 +74,7 @@ namespace Coflnet
 		/// <param name="relativePath">Path.</param>
 		public static byte[] ReadAllBytes(string relativePath)
 		{
-			return File.ReadAllBytes(Path.Combine(dataPaht, relativePath));
+			return File.ReadAllBytes(Path.Combine(dataPath, relativePath));
 		}
 
 		/// <summary>
@@ -90,7 +105,7 @@ namespace Coflnet
 		/// <param name="path">Path.</param>
 		public static bool Exists(string path)
 		{
-			return File.Exists(Path.Combine(dataPaht, path));
+			return File.Exists(Path.Combine(dataPath, path));
 		}
 
 		/// <summary>
@@ -114,7 +129,7 @@ namespace Coflnet
 		/// <typeparam name="T">The type to deserialize to.</typeparam>
 		public static IEnumerable<T> ReadLinesAs<T>(string relativePath, MessagePackSerializerOptions options)
 		{
-			var path = Path.Combine(dataPaht, relativePath);
+			var path = Path.Combine(dataPath, relativePath);
 			if(!File.Exists(path)){
 				// there is nothing to read
 				yield break;
@@ -166,8 +181,8 @@ namespace Coflnet
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public static void AppendLineAs<T>(string relativePath, T data, MessagePackSerializerOptions options)
 		{
-			Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(dataPaht, relativePath)));
-			using (var file = File.Open(Path.Combine(dataPaht, relativePath), FileMode.Append, FileAccess.Write, FileShare.None))
+			Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(dataPath, relativePath)));
+			using (var file = File.Open(Path.Combine(dataPath, relativePath), FileMode.Append, FileAccess.Write, FileShare.None))
 			{
 				MessagePackSerializer.Serialize<T>(file, data, options);
 			}
@@ -196,7 +211,7 @@ namespace Coflnet
 		/// <typeparam name="T">What type to use for serialization.</typeparam>
 		public static void WriteLinesAs<T>(string relativePath, IEnumerable<T> data, MessagePackSerializerOptions resolver)
 		{
-			using (var file = File.Open(Path.Combine(dataPaht, relativePath), FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+			using (var file = File.Open(Path.Combine(dataPath, relativePath), FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
 			{
 				foreach (var item in data)
 				{
@@ -240,7 +255,7 @@ namespace Coflnet
 		/// <param name="relativePath">Relative path.</param>
 		public static void Delete(string relativePath)
 		{
-			var path = Path.Combine(dataPaht, relativePath);
+			var path = Path.Combine(dataPath, relativePath);
 			if (Directory.Exists(Path.GetDirectoryName(path)))
 				File.Delete(path);
 		}
@@ -252,7 +267,7 @@ namespace Coflnet
 		/// <param name="relativePath">Relative path to the folder</param>
 		public static void DeleteFolder(string relativePath)
 		{
-			var path = Path.Combine(dataPaht, relativePath);
+			var path = Path.Combine(dataPath, relativePath);
 			if(Directory.Exists(path)){
 				Directory.Delete(path,true);
 			}
@@ -265,7 +280,7 @@ namespace Coflnet
 		/// <param name="relativeDestination">Relative destination.</param>
 		public static void Move(string relavtiveOrigin, string relativeDestination)
 		{
-			File.Move(Path.Combine(dataPaht, relavtiveOrigin), Path.Combine(dataPaht, relativeDestination));
+			File.Move(Path.Combine(dataPath, relavtiveOrigin), Path.Combine(dataPath, relativeDestination));
 		}
 	}
 }

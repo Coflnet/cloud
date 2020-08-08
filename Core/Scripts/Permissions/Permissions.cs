@@ -58,7 +58,7 @@ namespace Coflnet {
 		}
 
 		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return target.IsAllowedAccess (data.sId, AccessMode.WRITE);
+			return target != null && target.IsAllowedAccess (data.sId, AccessMode.WRITE);
 		}
 
 		public override string Slug => "writePermission";
