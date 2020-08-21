@@ -20,8 +20,8 @@ namespace Coflnet.Client
 		{
 			get 
 			{
-				var dataId = UserService.Instance.CurrentUser.appData[ConfigController.ApplicationSettings.id].ReferenceId;
-				return ClientCoreInstance.ReferenceManager.GetResource<ApplicationData>(dataId)
+				var dataId = UserService.Instance.CurrentUser.appData[ConfigController.ApplicationSettings.id].EntityId;
+				return ClientCoreInstance.EntityManager.GetEntity<ApplicationData>(dataId)
 					.KeyValues;
 			}
 		}

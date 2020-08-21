@@ -3,7 +3,7 @@ using System.Collections;
 using Coflnet;
 using MessagePack;
 using System.Linq;
-using static Coflnet.MessageData;
+using static Coflnet.CommandData;
 
 public class SignatureTest {
 
@@ -18,7 +18,7 @@ public class SignatureTest {
         data.Sign(keyPair);
 
         // validate that signature exists
-        Assert.IsNotNull(data.signature);
+        Assert.IsNotNull(data.Signature);
 
         // validate signature
         
@@ -38,10 +38,10 @@ public class SignatureTest {
         // "network" 
         var bytes = MessagePackSerializer.Serialize(data);
 
-        var newData = MessagePackSerializer.Deserialize<MessageData>(bytes);
+        var newData = MessagePackSerializer.Deserialize<CommandData>(bytes);
 
         // validate that signature exists
-        Assert.IsNotNull(newData.signature);
+        Assert.IsNotNull(newData.Signature);
 
         // validate signature
         Assert.IsTrue(data.ValidateSignature(keyPair.publicKey));
@@ -58,14 +58,14 @@ public class SignatureTest {
         data.Sign(keyPair);
 
         // reverse the array to invalidate signature
-        data.signature.content = data.signature.content.Reverse().ToArray();
+        data.Signature.content = data.Signature.content.Reverse().ToArray();
 
         // "network" 
         var bytes = MessagePackSerializer.Serialize(data);
-        var newData = MessagePackSerializer.Deserialize<MessageData>(bytes);
+        var newData = MessagePackSerializer.Deserialize<CommandData>(bytes);
 
         // validate that signature exists
-        Assert.IsNotNull(newData.signature);
+        Assert.IsNotNull(newData.Signature);
 
         
         // the signature is invalid
@@ -92,7 +92,7 @@ public class SignatureTest {
     [Test]
     public void KeyPairManagerCreate()
     {
-        var pair = KeyPairManager.Instance.GetOrCreateSigningPair(new SourceReference(5,6));
+        var pair = KeyPairManager.Instance.GetOrCreateSigningPair(new EntityId(5,6));
 
         // pair was created
         Assert.NotNull(pair);
@@ -107,6 +107,6 @@ public class SignatureTest {
         //Assert.IsTrue(data.ValidateSignature(pair.publicKey));
     }
 
-    private MessageData DummyData=> new MessageData(new SourceReference(1,2),0,"hi","test");
+    private CommandData DummyData=> new CommandData(new EntityId(1,2),0,"hi","test");
 
 }

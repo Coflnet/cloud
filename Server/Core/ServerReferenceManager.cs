@@ -4,22 +4,22 @@ using MessagePack;
 
 namespace Coflnet.Server
 {
-	public class ServerReferenceManager : Coflnet.ReferenceManager
+	public class ServerReferenceManager : Coflnet.EntityManager
     {
-		public override void ExecuteForReference(MessageData data, SourceReference sender = default(SourceReference))
+		public override void ExecuteForReference(CommandData data, EntityId sender = default(EntityId))
 		{
-			if (data.rId.ServerId == 0) {
+			if (data.Recipient.ServerId == 0) {
 				// special case it is myself (0 is local)
 				coreInstance.ExecuteCommand (data);
 				return;
 			}
 
 
-			var mainManagingNode = ManagingNodeFor(data.rId);
+			var mainManagingNode = ManagingNodeFor(data.Recipient);
 			var IAmTheManager = mainManagingNode == CurrentServerId;
 
-			InnerReference<Referenceable> reference;
-			TryGetReference (data.rId, out reference);
+			InnerReference<Entity> reference;
+			TryGetReference (data.Recipient, out reference);
 
 			if (reference == null) {
 				// is the current server the managing server?
@@ -29,17 +29,17 @@ namespace Coflnet.Server
 					return;
 				}
 				// we are the main managing server but this resource doesn't exist
-				throw new ObjectNotFound (data.rId);
+				throw new ObjectNotFound (data.Recipient);
 			}
 
 			//var amIAManagingNode = IsManagingNodeFor(this.coreInstance.Id,data.rId);
-			var isTheSenderTheManager = IsManagingNodeFor(sender,data.rId);
+			var isTheSenderTheManager = IsManagingNodeFor(sender,data.Recipient);
 
 
 			var resource = reference.Resource;
 
 			if (resource != null) {
-				var command = resource.GetCommandController ().GetCommand (data.type);
+				var command = resource.GetCommandController ().GetCommand (data.Type);
 				if(IAmTheManager)
 				{
 					// I can do everything
@@ -55,12 +55,12 @@ namespace Coflnet.Server
 					// Not the only managing node? 
 					// delay execution until they confirm update
 					// coreInstance.SendCommand
-					if(reference is RedundantInnerReference<Referenceable>)
+					if(reference is RedundantInnerReference<Entity>)
 					{
-						var redRef = reference  as RedundantInnerReference<Referenceable>;
+						var redRef = reference  as RedundantInnerReference<Entity>;
 						SibblingUpdate(redRef,data,resource.GetHashCode(),()=>{
 							coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-							data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
+							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
 						});
 					}
 
@@ -68,7 +68,7 @@ namespace Coflnet.Server
 					if(ReceiveConfirm.CommandSlug != command.Slug)
 					{
 						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-							data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
+							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
 					}
 					// done
 					return;
@@ -80,7 +80,7 @@ namespace Coflnet.Server
 
 					// THOUGHT: confirming may not be necessary since nonchanging commands return values otherwhise
 					coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-						data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
+						data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
 				
 					// the response should be returned now
 					return;
@@ -109,13 +109,13 @@ namespace Coflnet.Server
 		/// <param name="data"></param>
 		/// <param name="hash"></param>
 		/// <param name="callback"></param>
-		public void SibblingUpdate(RedundantInnerReference<Referenceable> reference,MessageData data,int hash, Action callback)
+		public void SibblingUpdate(RedundantInnerReference<Entity> reference,CommandData data,int hash, Action callback)
 		{
 			int confirmCount = 0;
 
 			foreach(var item in reference.SiblingNodes)
 			{
-				ServerCore.Instance.SendCommand<SibblingUpdate,MessageData>(new SourceReference(item,0),data,ServerCore.Instance.Id,d=>
+				ServerCore.Instance.SendCommand<SibblingUpdate,CommandData>(new EntityId(item,0),data,ServerCore.Instance.Id,d=>
 				{
 					if(d.GetAs<int>() != hash)
 					{
@@ -144,21 +144,21 @@ namespace Coflnet.Server
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute(MessageData data)
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute(CommandData data)
 		{
-			var resource = MessagePackSerializer.Typeless.Deserialize(data.message) as Referenceable;
+			var resource = MessagePackSerializer.Typeless.Deserialize(data.message) as Entity;
 
 			// make sure it exists, we are sibbling node and the main managing node is sending
-			if(!data.CoreInstance.ReferenceManager.Exists(resource.Id) ||
-				!data.CoreInstance.ReferenceManager.IsManagingNodeFor(data.CoreInstance.Id,resource.Id)
-				|| data.CoreInstance.ReferenceManager.ManagingNodeFor(resource.Id) != data.sId )
+			if(!data.CoreInstance.EntityManager.Exists(resource.Id) ||
+				!data.CoreInstance.EntityManager.IsManagingNodeFor(data.CoreInstance.Id,resource.Id)
+				|| data.CoreInstance.EntityManager.ManagingNodeFor(resource.Id) != data.SenderId )
 			{
-				throw new PermissionNotMetException("is_managingnode",resource.Id,data.sId,Slug);
+				throw new PermissionNotMetException("is_managingnode",resource.Id,data.SenderId,Slug);
 			}
 
 			// okay this is a valid clone
-			data.CoreInstance.ReferenceManager.ReplaceResource(resource);
+			data.CoreInstance.EntityManager.ReplaceResource(resource);
 		}
 
 		/// <summary>

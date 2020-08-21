@@ -7,9 +7,9 @@ namespace Coflnet
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override MessageData ExecuteWithReturn (MessageData data) {
-			data.SerializeAndSet<Access> (data.GetTargetAs<Referenceable> ().Access);
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override CommandData ExecuteWithReturn (CommandData data) {
+			data.SerializeAndSet<Access> (data.GetTargetAs<Entity> ().Access);
 			return data;
 		}
 

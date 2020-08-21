@@ -25,7 +25,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="id">Identifier.</param>
 		/// <param name="data">Data.</param>
-		public void ReceiveMessage(long id, MessageData data)
+		public void ReceiveMessage(long id, CommandData data)
 		{
 			Command.CommandMethod command;
 			if (callbacks.TryGetValue(id, out command))
@@ -39,7 +39,7 @@ namespace Coflnet
 			}
 		}
 		/*
-		public async Task<MessageData> Execute(long id)
+		public async Task<CommandData> Execute(long id)
 		{
 			var socket = new WebSocketSharp.WebSocket();
 			await socket.

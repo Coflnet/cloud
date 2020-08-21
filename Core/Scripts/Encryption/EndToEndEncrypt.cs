@@ -34,7 +34,7 @@ namespace Coflnet
 		/// The identifier of the other side
 		/// </summary>
 		[DataMember]
-		private SourceReference identifier;
+		private EntityId identifier;
 		// we are server if we didn't send the first message
 		[DataMember]
 		private bool isServer;
@@ -87,7 +87,7 @@ namespace Coflnet
 		/// <param name="identifier">Identifier of the other resource.</param>
 		/// <param name="isServer">If set to <c>true</c> the current machine is the server (didn't start the connection).</param>
 		/// <param name="hasReceived">If set to <c>true</c> has received.</param>
-		public EndToEndEncrypt(ChainKey sessionReceiveKey, ChainKey sessionSendKey, SourceReference identifier, bool isServer, bool hasReceived)
+		public EndToEndEncrypt(ChainKey sessionReceiveKey, ChainKey sessionSendKey, EntityId identifier, bool isServer, bool hasReceived)
 		{
 			this.sessionReceiveKey = sessionReceiveKey;
 			this.sessionSendKey = sessionSendKey;
@@ -100,7 +100,7 @@ namespace Coflnet
 		/// Initializes a new instance of the <see cref="T:Coflnet.EndToEndEncrypt"/> class.
 		/// </summary>
 		/// <param name="identifier">Identifier of the other side resource.</param>
-		public EndToEndEncrypt(SourceReference identifier)
+		public EndToEndEncrypt(EntityId identifier)
 		{
 			this.identifier = identifier;
 
@@ -594,7 +594,7 @@ namespace Coflnet
 		}
 
 
-		public SourceReference Identifier
+		public EntityId Identifier
 		{
 			get
 			{

@@ -17,15 +17,15 @@ namespace Coflnet.Client.Messaging
         /// <summary>
         /// Execute the command logic with specified data.
         /// </summary>
-        /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-        /// <param name="target">The local <see cref="Referenceable"/> on which to test on .</param>
-        public override bool CheckPermission (MessageData data, Referenceable target) {
+        /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+        /// <param name="target">The local <see cref="Entity"/> on which to test on .</param>
+        public override bool CheckPermission (CommandData data, Entity target) {
             var chat = target as GroupChatResource;
             if(chat == null)
             {
                 return false;
             }
-            return chat.Members.Any(i => i.userId == data.sId);
+            return chat.Members.Any(i => i.userId == data.SenderId);
         }
 
         public override string Slug => "IsChatMember";

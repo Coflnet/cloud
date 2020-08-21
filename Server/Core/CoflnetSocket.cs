@@ -33,9 +33,9 @@ public class CoflnetSocket
 	//static readonly RestClient client = new RestClient();
 
 
-	public void SetBirthDay(MessageData data)
+	public void SetBirthDay(CommandData data)
 	{
-		UserController.instance.GetUser(data.sId).Birthday = data.GetAs<DateTime>();
+		UserController.instance.GetUser(data.SenderId).Birthday = data.GetAs<DateTime>();
 
 	}
 
@@ -75,11 +75,11 @@ public class CoflnetSocket
 
 
 	/// <summary>
-	/// Tries to send a command to the <see cref="MessageData.rId"/> will try direct connection, Managing Server and Location router.
+	/// Tries to send a command to the <see cref="CommandData.Recipient"/> will try direct connection, Managing Server and Location router.
 	/// </summary>
 	/// <returns><c>true</c>, if command was sent, <c>false</c> otherwise.</returns>
 	/// <param name="data">Data.</param>
-	public static bool TrySendCommand(MessageData data, long serverId = 0)
+	public static bool TrySendCommand(CommandData data, long serverId = 0)
 	{
 		if (serverId == 0)
 		{
@@ -88,21 +88,21 @@ public class CoflnetSocket
 				return true;
 			}
 			// resource isn't connected, try to route the data forward
-			serverId = data.rId.ServerId;
+			serverId = data.Recipient.ServerId;
 		}
 
-		if (Instance.server.TrySendTo(new SourceReference(serverId, 0), data))
+		if (Instance.server.TrySendTo(new EntityId(serverId, 0), data))
 		{
 			return true;
 		}
 		// & 0x7FFFFFFFFFFF0000 removes the local serverid wich leaves us with the location router
-		return Instance.server.TrySendTo(new SourceReference(serverId & 0x7FFFFFFFFFFF0000, 0), data);
+		return Instance.server.TrySendTo(new EntityId(serverId & 0x7FFFFFFFFFFF0000, 0), data);
 	}
 }
 
 
 [MessagePackObject]
-public class ServerMessageData : MessageData
+public class ServerCommandData : CommandData
 {
 	[IgnoreMember]
 	public IClientConnection Connection;
@@ -125,9 +125,9 @@ public class ServerMessageData : MessageData
 	}
 
 
-	public static MessageData SerializeServerMessageData<T>(T target, string type, CoflnetEncoder encoder)
+	public static CommandData SerializeServerCommandData<T>(T target, string type, CoflnetEncoder encoder)
 	{
-		return new MessageData(type, encoder.Serialize<T>(target));
+		return new CommandData(type, encoder.Serialize<T>(target));
 	}
 
 	public override T GetAs<T>()
@@ -136,21 +136,21 @@ public class ServerMessageData : MessageData
 	}
 
 
-	public ServerMessageData() : base()
+	public ServerCommandData() : base()
 	{
 	}
 
-	public ServerMessageData(MessageData data) : base(data)
+	public ServerCommandData(CommandData data) : base(data)
 	{
 	}
 
-	public override void SendBack(MessageData data)
+	public override void SendBack(CommandData data)
 	{
-		if(this.sId.ServerId == 0)
+		if(this.SenderId.ServerId == 0)
 		{
 			// the senderId is local to the device
 			// we don't know who he is, yet just return the data
-			data.rId = this.sId;
+			data.Recipient = this.SenderId;
 			Connection.SendBack(data);
 		} else 
 		{
@@ -171,17 +171,17 @@ public interface IClientConnection
 	/// This connection is allowed to set all these ids as sender.
 	/// </summary>
 	/// <value>The authenticated identifiers.</value>
-	List<SourceReference> AuthenticatedIds { get; set; }
+	List<EntityId> AuthenticatedIds { get; set; }
 
 	/// <summary>
 	/// Additional Tokens for accessing protected resources with specific scopes
 	/// </summary>
 	/// <value>The tokens</value>
-	Dictionary<SourceReference,Token> Tokens {get;set;}
+	Dictionary<EntityId,Token> Tokens {get;set;}
 
 	CoflnetEncoder Encoder { get; }
 
-	void SendBack(MessageData data);
+	void SendBack(CommandData data);
 }
 
 
@@ -211,10 +211,10 @@ public override T Deserialize<T>(MessageEventArgs args)
 }
 
 
-public override ServerMessageData Deserialize(MessageEventArgs args)
+public override ServerCommandData Deserialize(MessageEventArgs args)
 {
     var bytes = MessagePackSerializer.FromJson(args.Data);
-    return (ServerMessageData)CoflnetEncoder.Instance.Deserialize<DevMessageData>(bytes);
+    return (ServerCommandData)CoflnetEncoder.Instance.Deserialize<DevCommandData>(bytes);
 }
 */
 
@@ -246,7 +246,7 @@ public override ServerMessageData Deserialize(MessageEventArgs args)
 public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 {
 	protected CommandController commandController;
-	protected static Dictionary<SourceReference, CoflnetWebsocketServer> Connections;
+	protected static Dictionary<EntityId, CoflnetWebsocketServer> Connections;
 
 	/// <summary>
 	/// Custom encoder, usually Json or messagepack
@@ -267,7 +267,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// </summary>
 	private CoflnetServer server;
 
-	private List<SourceReference> _authenticatedIds;
+	private List<EntityId> _authenticatedIds;
 
 	public CoflnetWebsocketServer(CommandController commandController)
 	{
@@ -281,7 +281,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 
 	static CoflnetWebsocketServer()
 	{
-		Connections = new Dictionary<SourceReference, CoflnetWebsocketServer>();
+		Connections = new Dictionary<EntityId, CoflnetWebsocketServer>();
 	}
 
 
@@ -306,11 +306,11 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 				this.Encoder = CoflnetJsonEncoder.Instance;
 				Send("runing on dev, Format");
 				Send(MessagePackSerializer.SerializeToJson(
-					new CoflnetJsonEncoder.DevMessageData(ServerMessageData.SerializeServerMessageData
+					new CoflnetJsonEncoder.DevCommandData(ServerCommandData.SerializeServerCommandData
 					(new KeyValuePair<string, string>("exampleKey", "This is an example of a valid command"),
 					 "setValue",
 					 this.Encoder))));
-				//	MessageData.SerializeMessageData("hi", "setValue")))));
+				//	CommandData.SerializeCommandData("hi", "setValue")))));
 			}
 		}
 
@@ -343,29 +343,29 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		// try to parse and execute the command sent
 		try
 		{
-			ServerMessageData messageData = Encoder.Deserialize(e);
+			ServerCommandData commandData = Encoder.Deserialize(e);
 			// if connection information is needed
-			messageData.Connection = this;
+			commandData.Connection = this;
 
 
-			if (messageData.rId.ServerId == 0)
+			if (commandData.Recipient.ServerId == 0)
 			{
 				throw new CoflnetException("unknown_server", "this server is unknown (There is no server with the id 0)");
 			}
 
 
 			// prevent id spoofing
-			if (messageData.sId != new SourceReference() && !AuthenticatedIds.Contains(messageData.sId))
+			if (commandData.SenderId != new EntityId() && !AuthenticatedIds.Contains(commandData.SenderId))
 			{
-				throw new NotAuthenticatedAsException(messageData.sId);
+				throw new NotAuthenticatedAsException(commandData.SenderId);
 			}
 
 
-			ReferenceManager.Instance.ExecuteForReference(messageData);
-			//	var controllerForObject = ReferenceManager.Instance.GetResource(messageData.rId)
+			EntityManager.Instance.ExecuteForReference(commandData);
+			//	var controllerForObject = ReferenceManager.Instance.GetResource(commandData.rId)
 			//					.GetCommandController();
 
-			//	controllerForObject.ExecuteCommand(messageData);
+			//	controllerForObject.ExecuteCommand(commandData);
 		}
 		catch (CoflnetException ex)
 		{
@@ -436,7 +436,7 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// <returns><c>true</c>, if send to was successful, <c>false</c> otherwise.</returns>
 	/// <param name="receiver">Receiver.</param>
 	/// <param name="data">Data to send.</param>
-	public bool TrySendTo(SourceReference receiver, byte[] data)
+	public bool TrySendTo(EntityId receiver, byte[] data)
 	{
 		CoflnetWebsocketServer target;
 		Connections.TryGetValue(receiver, out target);
@@ -452,20 +452,20 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 	/// Tries to send data to some receiver
 	/// </summary>
 	/// <returns><c>true</c>, if send was successful, <c>false</c> otherwise.</returns>
-	/// <param name="data">Data to send with valid <see cref="MessageData.rId"/>.</param>
-	public bool TrySend(MessageData data)
+	/// <param name="data">Data to send with valid <see cref="CommandData.Recipient"/>.</param>
+	public bool TrySend(CommandData data)
 	{
-		return TrySendTo(data.rId, data);
+		return TrySendTo(data.Recipient, data);
 
 	}
 
 	/// <summary>
-	/// Tries the send data to some specific <see cref="SourceReference"/> may be a router or managing server
+	/// Tries the send data to some specific <see cref="EntityId"/> may be a router or managing server
 	/// </summary>
 	/// <returns><c>true</c>, if send to was successful, <c>false</c> otherwise.</returns>
 	/// <param name="receiver">Receiver.</param>
 	/// <param name="data">Data.</param>
-	public bool TrySendTo(SourceReference receiver, MessageData data)
+	public bool TrySendTo(EntityId receiver, CommandData data)
 	{
 		return TrySendTo(receiver, Encoder.Serialize(data));
 
@@ -510,13 +510,13 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		}
 	}
 
-	public List<SourceReference> AuthenticatedIds
+	public List<EntityId> AuthenticatedIds
 	{
 		get
 		{
 			if (_authenticatedIds == null)
 			{
-				_authenticatedIds = new List<SourceReference>();
+				_authenticatedIds = new List<EntityId>();
 			}
 			return _authenticatedIds;
 		}
@@ -527,12 +527,12 @@ public class CoflnetWebsocketServer : WebSocketBehavior, IClientConnection
 		}
 	}
 
-    public Dictionary<SourceReference, Token> Tokens
+    public Dictionary<EntityId, Token> Tokens
     {
         get;set;
     }
 
-    public void SendBack(MessageData data)
+    public void SendBack(CommandData data)
 	{
 		SendBack(Encoder.Serialize(data));
 	}
@@ -546,7 +546,7 @@ public class AuthorizationMessage
 	[DataMember(Name = "ds")]
 	public string deviceSecret;
 	[DataMember(Name = "did")]
-	public SourceReference deviceId;
+	public EntityId deviceId;
 
 	public enum Format
 	{
@@ -560,104 +560,6 @@ public class AuthorizationMessage
 	public Format format;
 	[DataMember(Name = "ut")]
 	public string userToken;
-}
-
-
-
-/// <summary>
-/// Represents an oauth client application or some script capeable of performing commands.
-/// </summary>
-[DataContract]
-public class OAuthClient : ILocalReferenceable
-{
-	private CommandController commandController = new CommandController();
-
-	private static Dictionary<string, OAuthClient> clients = new Dictionary<string, OAuthClient>();
-
-	public static OAuthClient Find(string id)
-	{
-		if (!clients.ContainsKey(id))
-		{
-			throw new ClientNotFoundException($"The client {id} wasn't found on this server");
-		}
-		return clients[id];
-	}
-
-	public override CommandController GetCommandController()
-	{
-		return commandController;
-	}
-
-	[DataMember]
-	private int id;
-	/// <summary>
-	/// The client owner
-	/// </summary>
-
-	[DataMember]
-	private SourceReference userId;
-	[DataMember]
-	private string name;
-	[DataMember]
-	private string publicId;
-	[DataMember]
-	private string description;
-	[DataMember]
-	private string secret;
-	[DataMember]
-	private string redirect;
-	[DataMember]
-	private bool revoked;
-	[DataMember]
-	private bool passwordClient;
-	[DataMember]
-	private string iconUrl;
-	[DataMember]
-	public OAuthClientSettings settings;
-	/// <summary>
-	/// Custom commands registered at runtime
-	/// </summary>
-	[IgnoreDataMember]
-	public CommandController customCommands;
-
-	public class ClientNotFoundException : CoflnetException
-	{
-		public ClientNotFoundException(string message, string userMessage = null, string info = null, long msgId = -1) : base("client_not_found", message, userMessage, 404, info, msgId)
-		{
-		}
-	}
-}
-
-
-/// <summary>
-/// Custom client settings
-/// </summary>
-[DataContract]
-public class OAuthClientSettings
-{
-	[DataMember]
-	private OAuthClient client;
-	[DataMember]
-	private int standardUserCalls;
-	[DataMember]
-	private int standardUserStorage;
-	[DataMember]
-	private int standardCallsUntilCaptcha;
-	[DataMember]
-	private bool allowSelfUserRegistration;
-	[DataMember]
-	private bool captchaRequiredForRegistration;
-	[DataMember]
-	private bool trackingEnabled;
-	[DataMember]
-	private UInt64 usageLeft;
-
-	public void DecreaseUsage(ushort amount)
-	{
-		if (usageLeft < amount)
-			throw new ClientLimitExeededException();
-		usageLeft -= amount;
-	}
 }
 
 public class ClientLimitExeededException : CoflnetException

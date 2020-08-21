@@ -5,12 +5,12 @@ using System;
     {
         private int count =0;
 
-        public static void Init(SourceReference deviceId)
+        public static void Init(EntityId deviceId)
         {
             // we are the resource now (needed for updating to it)
             ConfigController.DeviceId = deviceId;
-            Instance.ReferenceManager = new ReferenceManager();
-            Instance.ReferenceManager.coreInstance = Instance;
+            Instance.EntityManager = new EntityManager();
+            Instance.EntityManager.coreInstance = Instance;
             Instance.Id = deviceId.FullServerId;
         }
 
@@ -25,25 +25,25 @@ using System;
             return new CommandController();
         }
 
-        public override void SendCommand(MessageData data, long serverId = 0)
+        public override void SendCommand(CommandData data, long serverId = 0)
         {
-            if(data.sId == default(SourceReference))
-            data.sId = ConfigController.DeviceId;
+            if(data.SenderId == default(EntityId))
+            data.SenderId = ConfigController.DeviceId;
             data.CoreInstance = this;
             if(count >= 50)
             {
                 throw new Exception("we are in a loop");
             }
             count++;
-            ReferenceManager.ExecuteForReference(data);
+            EntityManager.ExecuteForReference(data);
         }
 
-        public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference))
+        public override void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId))
         {
            return;
         }
 
-        public override void SendCommand<C>(SourceReference receipient, byte[] data)
+        public override void SendCommand<C>(EntityId receipient, byte[] data)
         {
             throw new System.NotImplementedException();
         }

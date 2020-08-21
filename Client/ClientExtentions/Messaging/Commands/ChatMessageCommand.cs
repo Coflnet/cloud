@@ -8,10 +8,10 @@ namespace Coflnet.Client.Messaging
         /// <summary>
         /// Execute the command logic with specified data.
         /// </summary>
-        /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-        public override void Execute(MessageData data)
+        /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+        public override void Execute(CommandData data)
         {
-                          ChatService.Instance.ReceiveMessage(data.GetAs<ChatMessage>(),data.sId);
+            ChatService.Instance.ReceiveMessage(data.GetAs<ChatMessage>(),data.SenderId);
         }
         /// <summary>
         /// Special settings and Permissions for this <see cref="Command"/>

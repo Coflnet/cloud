@@ -6,14 +6,14 @@ namespace Coflnet
 	/// <summary>
 	/// Persists Message data
 	/// </summary>
-	public class MessageDataPersistence
+	public class CommandDataPersistence
 	{
-		public static MessageDataPersistence Instance;
+		public static CommandDataPersistence Instance;
 
 
-		static MessageDataPersistence()
+		static CommandDataPersistence()
 		{
-			Instance = new MessageDataPersistence();
+			Instance = new CommandDataPersistence();
 		}
 
 		/// <summary>
@@ -21,9 +21,9 @@ namespace Coflnet
 		/// </summary>
 		/// <returns>The messages for a resource.</returns>
 		/// <param name="id">Identifier.</param>
-		public virtual IEnumerable<MessageData> GetMessagesFor(SourceReference id)
+		public virtual IEnumerable<CommandData> GetMessagesFor(EntityId id)
 		{
-			foreach (var item in DataController.Instance.LoadObject<MessageData[]>(Path(id)))
+			foreach (var item in DataController.Instance.LoadObject<CommandData[]>(Path(id)))
 			{
 				yield return item;
 			}
@@ -32,13 +32,13 @@ namespace Coflnet
 		/// <summary>
 		/// Saves the message.
 		/// </summary>
-		/// <param name="messageData">Message data.</param>
-		public virtual void SaveMessage(MessageData messageData)
+		/// <param name="commandData">Message data.</param>
+		public virtual void SaveMessage(CommandData commandData)
 		{
-			var loaded = GetMessagesFor(messageData.rId).ToArray();
-			loaded.Append(messageData);
+			var loaded = GetMessagesFor(commandData.Recipient).ToArray();
+			loaded.Append(commandData);
 
-			DataController.Instance.SaveObject(Path(messageData.rId), loaded);
+			DataController.Instance.SaveObject(Path(commandData.Recipient), loaded);
 		}
 
 		/// <summary>
@@ -46,9 +46,9 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="sender">Sender.</param>
 		/// <param name="id">Identifier.</param>
-		public virtual void Remove(SourceReference receipient, SourceReference sender, long id)
+		public virtual void Remove(EntityId receipient, EntityId sender, long id)
 		{
-			DataController.Instance.RemoveFromFile<MessageData>(Path(receipient), m => m.mId == id && m.sId == sender);
+			DataController.Instance.RemoveFromFile<CommandData>(Path(receipient), m => m.MessageId == id && m.SenderId == sender);
 		}
 
 
@@ -56,12 +56,12 @@ namespace Coflnet
 		/// Gets all Messages and tries to send them
 		/// </summary>
 		/// <returns></returns>
-		public virtual IEnumerable<MessageData> GetAllUnsent()
+		public virtual IEnumerable<CommandData> GetAllUnsent()
 		{
 			yield break;
 		}
 
-		private string Path(SourceReference rId)
+		private string Path(EntityId rId)
 		{
 			return "datas/" + rId.ToString();
 		}

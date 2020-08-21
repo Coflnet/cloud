@@ -10,7 +10,7 @@ namespace Coflnet.Client
 
 		public static new ServerController Instance { get; }
 
-		public void SendToServer(MessageData data)
+		public void SendToServer(CommandData data)
 		{
 			SendCommandToServer(data, managingServerId);
 		}

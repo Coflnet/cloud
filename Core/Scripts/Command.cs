@@ -3,7 +3,7 @@ using MessagePack;
 namespace Coflnet
 {
     public abstract class Command {
-		public delegate void CommandMethod (MessageData messageData);
+		public delegate void CommandMethod (CommandData commandData);
 
 		private CommandSettings _settings;
 
@@ -23,7 +23,7 @@ namespace Coflnet
 		/// Invokes the actual code to do some logic
 		/// </summary>
 		/// <param name="data">Data.</param>
-		public abstract void Execute (MessageData data);
+		public abstract void Execute (CommandData data);
 		/// <summary>
 		/// Returns an unique identifier for this command.
 		/// Usually the namespace + the class name if not too long.
@@ -48,7 +48,7 @@ namespace Coflnet
 		/// <param name="data">Data.</param>
 		/// <param name="type">Type.</param>
 		public void SendToServer (byte[] data, string type) {
-			//ServerController.Instance.SendCommandToServer(new MessageData(type,data), server);
+			//ServerController.Instance.SendCommandToServer(new CommandData(type,data), server);
 		}
 
 		/// <summary>
@@ -58,7 +58,7 @@ namespace Coflnet
 		/// <param name="data">Data.</param>
 		/// <param name="type">Type.</param>
 		public void SendToServer (long serverId, byte[] data, string type) {
-			ServerController.Instance.SendCommandToServer (new MessageData (type, data), serverId);
+			ServerController.Instance.SendCommandToServer (new CommandData (type, data), serverId);
 		}
 
 		/// <summary>

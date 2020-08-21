@@ -25,7 +25,7 @@ namespace Coflnet.Core
 
 		private string parentAttributeName;
 
-		private Referenceable parent;
+		private Entity parent;
 
 		public RemoteObject()
 		{
@@ -47,7 +47,7 @@ namespace Coflnet.Core
 			this.parentAttributeName = remoteObject.parentAttributeName;
 		}
 
-		public RemoteObject(string nameOfAttribute, Referenceable parent)
+		public RemoteObject(string nameOfAttribute, Entity parent)
 		{
 			this.SetDetails(nameOfAttribute,parent);
 		}
@@ -59,7 +59,7 @@ namespace Coflnet.Core
         /// <param name="nameOfAttribute">The value of nameof() of the Attribute this objects coresponds to</param>
         /// <param name="parent">The parent object</param>
         /// <param name="update">If true, a `set` command will be generated and sent for the object</param>
-        public virtual void SetDetails(string nameOfAttribute, Referenceable parent, bool update = false)
+        public virtual void SetDetails(string nameOfAttribute, Entity parent, bool update = false)
 		{
 			this.parentAttributeName = nameOfAttribute;
 			this.parent = parent;
@@ -83,8 +83,8 @@ namespace Coflnet.Core
 		/// <param name="onAfterUpdate">Invoked when update completed</param>
 		public void GetUpdate(Action onAfterUpdate = null )
 		{
-			var data = new MessageData(parent.Id);
-			data.type = $"get{parentAttributeName}";
+			var data = new CommandData(parent.Id);
+			data.Type = $"get{parentAttributeName}";
 			CoflnetCore.Instance.SendGetCommand(data,m=>{
 				Value = m.GetAs<T>();
 				onAfterUpdate?.Invoke();
@@ -118,11 +118,11 @@ namespace Coflnet.Core
 		/// <typeparam name="R">The type of the content</typeparam>
 		protected void Send<R>(string commandName,R content)
 		{
-			var data = new MessageData(parent.Id);
+			var data = new CommandData(parent.Id);
 			// don't serialize it if it is the default value
 			if( !EqualityComparer<T>.Default.Equals(Value, default(T)))
 				data.SerializeAndSet(content);
-			data.type = $"{commandName}{parentAttributeName}";
+			data.Type = $"{commandName}{parentAttributeName}";
 			CoflnetCore.Instance.SendCommand(data);
 		}
 
@@ -132,7 +132,7 @@ namespace Coflnet.Core
             return @object != null &&
                    (EqualityComparer<T>.Default.Equals(Value, @object.Value) || @object.Value == null || Value == null) &&
                    parentAttributeName == @object.parentAttributeName &&
-                   EqualityComparer<Referenceable>.Default.Equals(parent, @object.parent);
+                   EqualityComparer<Entity>.Default.Equals(parent, @object.parent);
         }
 
 
@@ -142,7 +142,7 @@ namespace Coflnet.Core
 			// do not use the content for the hash
             //hashCode = hashCode * -1521134295 + EqualityComparer<T>.Default.GetHashCode(Value);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(parentAttributeName);
-            hashCode = hashCode * -1521134295 + EqualityComparer<SourceReference>.Default.GetHashCode(parent.Id);
+            hashCode = hashCode * -1521134295 + EqualityComparer<EntityId>.Default.GetHashCode(parent.Id);
             return hashCode;
         }
 
@@ -161,7 +161,7 @@ namespace Coflnet.Core
 		/// <param name="nameOfAttribute"></param>
 		/// <param name="getter"></param>
 		/// <param name="setter"></param>
-		public static void AddCommands(CommandController controller,string nameOfAttribute, Func<MessageData,T> getter,Action<MessageData,T> setter)
+		public static void AddCommands(CommandController controller,string nameOfAttribute, Func<CommandData,T> getter,Action<CommandData,T> setter)
 		{
 			controller.RegisterCommand(new SetCommand(nameOfAttribute,setter));
 			controller.RegisterCommand(new GetCommand(nameOfAttribute,getter));
@@ -182,11 +182,11 @@ namespace Coflnet.Core
 
 		public class SetCommand : Command
 		{
-			protected Action<MessageData,T> valueSetter;
+			protected Action<CommandData,T> valueSetter;
 
 			protected string nameOfAttribute;
 
-			public SetCommand(string nameOfAttribute,Action<MessageData,T> valueSetter )
+			public SetCommand(string nameOfAttribute,Action<CommandData,T> valueSetter )
 			{
 				this.nameOfAttribute = nameOfAttribute;
 				this.valueSetter = valueSetter;
@@ -195,8 +195,8 @@ namespace Coflnet.Core
 			/// <summary>
 			/// Execute the command logic with specified data.
 			/// </summary>
-			/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-			public override void Execute(MessageData data)
+			/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+			public override void Execute(CommandData data)
 			{
 				valueSetter.Invoke(data,data.GetAs<T>());
 			}
@@ -219,11 +219,11 @@ namespace Coflnet.Core
 
 		public class GetCommand : ReturnCommand
 		{
-			protected Func<MessageData,T> valueGetter;
+			protected Func<CommandData,T> valueGetter;
 
 			protected string nameOfAttribute;
 
-			public GetCommand(string nameOfAttribute,Func<MessageData,T> valueGetter )
+			public GetCommand(string nameOfAttribute,Func<CommandData,T> valueGetter )
 			{
 				this.nameOfAttribute = nameOfAttribute;
 				this.valueGetter = valueGetter;
@@ -232,8 +232,8 @@ namespace Coflnet.Core
 			/// <summary>
 			/// Execute the command logic with specified data.
 			/// </summary>
-			/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-			public override void Execute(MessageData data)
+			/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+			public override void Execute(CommandData data)
 			{
 				
 			}
@@ -247,7 +247,7 @@ namespace Coflnet.Core
 				return new CommandSettings(false,true,false,true,ReadPermission.Instance);
 			}
 
-            public override MessageData ExecuteWithReturn(MessageData data)
+            public override CommandData ExecuteWithReturn(CommandData data)
             {
                 return data.SerializeAndSet(valueGetter.Invoke(data));
             }
@@ -268,7 +268,7 @@ namespace Coflnet.Core
     public class RemoteString : RemoteObject<String>
     {
 
-        public RemoteString(string nameOfAttribute, Referenceable parent) : base(nameOfAttribute, parent)
+        public RemoteString(string nameOfAttribute, Entity parent) : base(nameOfAttribute, parent)
         {
 			
         }

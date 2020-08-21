@@ -32,7 +32,7 @@ namespace Coflnet
 
 
 
-		public void SendCommandToServer(MessageData data, long serverId = 0)
+		public void SendCommandToServer(CommandData data, long serverId = 0)
 		{
 			
 			if (serverId == 0)
@@ -61,19 +61,19 @@ namespace Coflnet
 		public void SendCommandToServer<T>(Command command, T data, long serverId)
 		{
 
-			MessageData message = new MessageData(command.Slug,
+			CommandData message = new CommandData(command.Slug,
 												 MessagePack.MessagePackSerializer.Serialize<T>(data));
 			SendCommandToServer(message, serverId);
 		}
 
-		public void SendCommand<T, Y>(SourceReference to, Y data,SourceReference sender = default(SourceReference)) where T : Command
+		public void SendCommand<T, Y>(EntityId to, Y data,EntityId sender = default(EntityId)) where T : Command
 		{
 			var serialized = MessagePack.MessagePackSerializer.Serialize(data);
 			
 			SendCommand<T>(to, serialized,sender);
 		}
 
-		public void SendCommand<C>(SourceReference to, byte[] data,SourceReference sender = default(SourceReference)) where C : Command
+		public void SendCommand<C>(EntityId to, byte[] data,EntityId sender = default(EntityId)) where C : Command
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
@@ -87,9 +87,9 @@ namespace Coflnet
 			{
 				bytes = data;
 			}
-			var message = new MessageData(to, bytes, commandInstance.Slug)
+			var message = new CommandData(to, bytes, commandInstance.Slug)
 			{
-				sId = sender
+				SenderId = sender
 			};
 
 
@@ -101,7 +101,7 @@ namespace Coflnet
 			}
 
 
-			SendCommandToServer(message,message.rId.ServerId);
+			SendCommandToServer(message,message.Recipient.ServerId);
 		}
 
 
@@ -110,7 +110,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data">Data.</param>
 		/// <param name="server">Server.</param>
-		public void SendCommandToServer(MessageData data, CoflnetServer server)
+		public void SendCommandToServer(CommandData data, CoflnetServer server)
 		{
 			var connection = server.GetOrCreateConnection();
 			connection.SendCommand(data);

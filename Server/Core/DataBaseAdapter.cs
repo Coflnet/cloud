@@ -42,7 +42,7 @@ public class DBList<T> where T : IDatabaseable
 /// <summary>
 /// Represents messages for a specific user
 /// </summary>
-public class MessageList : Dictionary<long, MessageData>
+public class MessageList : Dictionary<long, CommandData>
 {
 	public CoflnetUser user;
 	private static RestClient messageEndpoint = new RestClient("/localhost/api/v1/messages");
@@ -52,7 +52,7 @@ public class MessageList : Dictionary<long, MessageData>
 		// TODO: send it to the DB
 	}
 
-	public MessageData Get(long id)
+	public CommandData Get(long id)
 	{
 		// search the cached first
 		if (this.ContainsKey(id))
@@ -65,12 +65,12 @@ public class MessageList : Dictionary<long, MessageData>
 		request.AddHeader("Authorization", user.AuthToken);
 		request.AddHeader("messageId", id.ToString());
 		var result = messageEndpoint.Execute(request);
-		return MessagePack.MessagePackSerializer.Deserialize<MessageData>(result.RawBytes);
+		return MessagePack.MessagePackSerializer.Deserialize<CommandData>(result.RawBytes);
 	}
 
-	public void Add(MessageData data)
+	public void Add(CommandData data)
 	{
-		this.Add(data.mId, data);
+		this.Add(data.MessageId, data);
 	}
 }
 

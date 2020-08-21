@@ -10,7 +10,7 @@ namespace Coflnet.Client {
 	/// Also has the Id of the client installation.
 	/// </summary>
 	public class ClientCore : CoflnetCore {
-		static void HandleReceiveMessageData (MessageData data) { }
+		static void HandleReceiveCommandData (CommandData data) { }
 
 		private CommandController commandController;
 
@@ -42,15 +42,15 @@ namespace Coflnet.Client {
 
 		public ClientCore () : this (new CommandController (CoreCommands), ClientSocket.Instance) { }
 
-		public ClientCore (CommandController commandController, ClientSocket socket) : this(commandController,socket,ReferenceManager.Instance) {
+		public ClientCore (CommandController commandController, ClientSocket socket) : this(commandController,socket,EntityManager.Instance) {
 		}
 
-		public ClientCore (CommandController commandController, ClientSocket socket, ReferenceManager manager) {
+		public ClientCore (CommandController commandController, ClientSocket socket, EntityManager manager) {
 			this.commandController = commandController;
 			this.socket = socket;
 			socket.AddCallback(OnMessage);
-			this.ReferenceManager = manager;
-			this.ReferenceManager.coreInstance = this;
+			this.EntityManager = manager;
+			this.EntityManager.coreInstance = this;
 		}
 
 
@@ -68,7 +68,7 @@ namespace Coflnet.Client {
 		/// Enables alle Commands from extentions
 		/// </summary>
 		public void SetCommandsLive () {
-			commandController.RegisterCommand<ReferenceManager.UpdateResourceCommand>();
+			commandController.RegisterCommand<EntityManager.UpdateEntityCommand>();
 
 			foreach (var item in CoreExtentions.Commands)
 			{
@@ -80,23 +80,23 @@ namespace Coflnet.Client {
 			}
 
 			// add commands behind the device
-			if(this.ReferenceManager.Exists(this.Id))
+			if(this.EntityManager.Exists(this.Id))
 			{
 				// only add it if it is a device (not null)
-				ReferenceManager.GetResource<Device>(this.Id)
+				EntityManager.GetEntity<Device>(this.Id)
 					?
 					.GetCommandController()
-					.AddBackfall(GetCommandController());
+					.AddFallback(GetCommandController());
 			} else 
 			{
-								ReferenceManager.AddReference (this);
+								EntityManager.AddReference (this);
 			}
 		}
 
 
 		public void CheckInstallation () {
 			if (ConfigController.UserSettings != null &&
-				ConfigController.UserSettings.userId.ResourceId != 0) {
+				ConfigController.UserSettings.userId.LocalId != 0) {
 				// we are registered
 				return;
 			}
@@ -126,26 +126,26 @@ namespace Coflnet.Client {
 			ConfigController.UserSettings.managingServers.AddRange (serverIds);
 		}
 
-		public void OnMessage (MessageData data) {
+		public void OnMessage (CommandData data) {
 			// special case before we are logged in 
-			if (data.rId == SourceReference.Default) {
+			if (data.Recipient == EntityId.Default) {
 				ExecuteCommand (data);
 			}
-			ReferenceManager.ExecuteForReference (data);
+			EntityManager.ExecuteForReference (data);
 		}
 
 		/// <summary>
-		/// Executes the command found in the <see cref="MessageData.type"/>
+		/// Executes the command found in the <see cref="CommandData.Type"/>
 		/// Returns the <see cref="Command"/> when done
 		/// </summary>
 		/// <returns>The command.</returns>
 		/// <param name="data">Data.</param>
-		public override Command ExecuteCommand (MessageData data) {
+		public override Command ExecuteCommand (CommandData data) {
 
 			// special case: command targets user itself 
 
 			var controller = GetCommandController ();
-			var command = controller.GetCommand (data.type);
+			var command = controller.GetCommand (data.Type);
 
 			controller.ExecuteCommand (command, data, this);
 
@@ -156,19 +156,19 @@ namespace Coflnet.Client {
 			return CommandController;
 		}
 
-		public override void SendCommand (MessageData data, long serverId = 0) {
+		public override void SendCommand (CommandData data, long serverId = 0) {
 			// persist data
-			MessageDataPersistence.Instance.SaveMessage (data);
+			CommandDataPersistence.Instance.SaveMessage (data);
 
 			// if the sender is a local one try to update it (the server may block the command otherwise)
-			if(data.sId.IsLocal && data.sId  != default(SourceReference))
+			if(data.SenderId.IsLocal && data.SenderId  != default(EntityId))
 			{
-				Referenceable res;
+				Entity res;
 				// getting the object from the old id will be redirected to the new object with new id (if exists)
-				this.ReferenceManager.TryGetResource<Referenceable>(data.sId,out res);
+				this.EntityManager.TryGetEntity<Entity>(data.SenderId,out res);
 				if(res != null)
 				{
-					data.sId = res.Id;
+					data.SenderId = res.Id;
 				}
 			}
 
@@ -182,11 +182,11 @@ namespace Coflnet.Client {
 			}
 		}
 
-		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0,SourceReference sender = default(SourceReference)) {
+		public override void SendCommand<C, T> (EntityId receipient, T data, long id = 0,EntityId sender = default(EntityId)) {
 			ServerController.Instance.SendCommand<C, T> (receipient, data,sender);
 		}
 
-		public override void SendCommand<C> (SourceReference receipient, byte[] data) {
+		public override void SendCommand<C> (EntityId receipient, byte[] data) {
 			ServerController.Instance.SendCommand<C> (receipient, data);
 		}
 
@@ -195,7 +195,7 @@ namespace Coflnet.Client {
 		/// </summary>
 		/// <param name="idString">Identifier.</param>
 		public void SetApplicationId (string idString) {
-			var id = new SourceReference (idString);
+			var id = new EntityId (idString);
 			if (ConfigController.UserSettings.managingServers.Count == 0) {
 				ConfigController.UserSettings.managingServers.Add (id.ServerId);
 			}
@@ -208,10 +208,10 @@ namespace Coflnet.Client {
 		/// Creates a new Object on the server that doesn't need extra params for creation
 		/// </summary>
 		/// <typeparam name="C">Command that creates the resource</typeparam>
-		/// <returns>Proxy Referenceable</returns>
-		public Referenceable CreateResource<C>(SourceReference owner = default(SourceReference)) where C : CreationCommand
+		/// <returns>Proxy <see cref="Entity"/></returns>
+		public Entity CreateEntity<C>(EntityId owner = default(EntityId)) where C : CreationCommand
 		{
-			return this.CreateResource<C,CreationCommand.CreationParamsBase>(new CreationCommand.CreationParamsBase(),owner);
+			return this.CreateEntity<C,CreationCommand.CreationParamsBase>(new CreationCommand.CreationParamsBase(),owner);
 		}
 
 
@@ -223,31 +223,31 @@ namespace Coflnet.Client {
 		/// <param name="options">Options to pass along</param>
 		/// <typeparam name="C"></typeparam>
 		/// <returns>Temporary proxy object storing executed commands</returns>
-		public Referenceable CreateResource<C,T>(T options, SourceReference sender = default(SourceReference)) 
+		public Entity CreateEntity<C,T>(T options, EntityId sender = default(EntityId)) 
 									where C : CreationCommand where T:CreationCommand.CreationParamsBase
 		{
-			options.options.OldId = SourceReference.NextLocalId;
+			options.options.OldId = EntityId.NextLocalId;
 
 			var ownerId = this.Id;
-			if(ownerId == default(SourceReference))
+			if(ownerId == default(EntityId))
 			{
 				ownerId = ConfigController.ManagingServer;
 			}
 
 			// create it locally
-			// first craft MessageData
-			var normaldata = MessageData.CreateMessageData<C,T>(ownerId,options,0,this.Id);
+			// first craft CommandData
+			var normaldata = CommandData.CreateCommandData<C,T>(ownerId,options,0,this.Id);
 
 			// wrap it in a special message data that captures the id
-			var data = new CreationMessageData(normaldata);
+			var data = new CreationCommandData(normaldata);
 			var core = this;//new CreationCore(){ReferenceManager=this.ReferenceManager};
 			//core.SetCommandsLive();
 
 			data.CoreInstance = this;
 
 			// execute it on the owner resource if possible
-			if(ReferenceManager.Exists(sender))
-				ReferenceManager.GetResource(sender).ExecuteCommand(data);
+			if(EntityManager.Exists(sender))
+				EntityManager.GetResource(sender).ExecuteCommand(data);
 			else {
 				Logger.Log("oh shot");
 				core.ExecuteCommand(data);
@@ -256,40 +256,40 @@ namespace Coflnet.Client {
 			// exeute it
 			//core.ExecuteCommand(data);
 			
-			// remove the RedirectReferenceable again (todo)
+			// remove the Redirect<see cref="Entity"/> again (todo)
 
 			options.options.OldId = data.createdId;
 			
 			// create it on the server
 			SendCommand<C,T>(ownerId,options,0,sender);
 
-			return ReferenceManager.GetResource<Referenceable>(data.createdId);
+			return EntityManager.GetEntity<Entity>(data.createdId);
 		}
 
 		private class CreationCore : ClientCore
 		{
-			public SourceReference createdId;
+			public EntityId createdId;
 
-			public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference))
+			public override void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId))
 			{
 				// this only exists as a "callback" 
-				createdId = ((KeyValuePair<SourceReference,SourceReference>)((object)data)).Value;
+				createdId = ((KeyValuePair<EntityId,EntityId>)((object)data)).Value;
 
 							}
 
 		
 		}
 
-		private class CreationMessageData : MessageData
+		private class CreationCommandData : CommandData
 		{
-			public SourceReference createdId;
+			public EntityId createdId;
 
-			public override void SendBack(MessageData data)
+			public override void SendBack(CommandData data)
 			{
-				createdId = data.GetAs<KeyValuePair<SourceReference,SourceReference>>().Value;
+				createdId = data.GetAs<KeyValuePair<EntityId,EntityId>>().Value;
 							}
 
-			public CreationMessageData(MessageData data) : base(data)
+			public CreationCommandData(CommandData data) : base(data)
 			{
 
 			}
@@ -305,7 +305,7 @@ namespace Coflnet.Client {
                 throw new NotImplementedException();
             }
 
-            public override void SendCommand(MessageData data, long serverId = 0)
+            public override void SendCommand(CommandData data, long serverId = 0)
             {
                 if(data.t == "creationResponse")
 				{
@@ -326,27 +326,27 @@ namespace Coflnet.Client {
         /// <typeparam name="C"></typeparam>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public Referenceable CreateResource<C,T>(T options, Action<T> afterCreate) where C : CreationCommand where T:CreationCommand.CreationParamsBase
+        public Entity CreateEntity<C,T>(T options, Action<T> afterCreate) where C : CreationCommand where T:CreationCommand.CreationParamsBase
 		{
-			var temp =  CreateResource<C,T>(options);
+			var temp =  CreateEntity<C,T>(options);
 
-			ReturnCommandService.Instance.AddCallback(temp.Id.ResourceId,
+			ReturnCommandService.Instance.AddCallback(temp.Id.LocalId,
 				d=>{
 					// clone the resource
-					ReferenceManager.Instance.GetResource(d.GetAs<SourceReference>());
+					EntityManager.Instance.GetResource(d.GetAs<EntityId>());
 					afterCreate.Invoke(d.GetAs<T>());
 				});
 
 			return temp;
 		}
 
-		public override void CloneAndSubscribe(SourceReference id, Action<Referenceable> afterClone = null)
+		public override void CloneAndSubscribe(EntityId id, Action<Entity> afterClone = null)
 		{
 			// create temporary proxy to receive commands bevore cloning is finished
-			ReferenceManager.AddReference(new SubscribeProxy(id));
+			EntityManager.AddReference(new SubscribeProxy(id));
 
 			// this is different on server sides
-			SendCommand<Sub2Command,SourceReference>(ConfigController.ManagingServer,id,0,this.Id);
+			SendCommand<Sub2Command,EntityId>(ConfigController.ManagingServer,id,0,this.Id);
 			
 			// now clone it
 			FinishSubscribing(id,afterClone);

@@ -3,7 +3,7 @@ using Coflnet;
 
 public class ReferenceManagerTests {
 
-    class TestResource : Referenceable
+    class TestResource : Entity
     {
         public override CommandController GetCommandController()
         {
@@ -32,16 +32,16 @@ public class ReferenceManagerTests {
     [Test]
     public void ReferenceManagerTestsSimplePasses() {
         // Use the Assert class to test conditions.
-        new ReferenceManager();
+        new EntityManager();
     }
 
     [Test]
     public void AddIdAndRedirect() {
         // Use the Assert class to test conditions.
-        var manager = new ReferenceManager();
+        var manager = new EntityManager();
         var res = new TestResource();
         res.AssignId(manager);
-        var newId = new SourceReference(1,12354);
+        var newId = new EntityId(1,12354);
 
         manager.UpdateIdAndAddRedirect(res.Id,newId);
 
@@ -52,11 +52,11 @@ public class ReferenceManagerTests {
     [Test]
     public void AddIdAndRedirectSaveAndLoad() {
         // Use the Assert class to test conditions.
-        var manager = new ReferenceManager();
+        var manager = new EntityManager();
         var res = new TestResource();
         res.AssignId(manager);
         var oldId = res.Id;
-        var newId = new SourceReference(1,12354);
+        var newId = new EntityId(1,12354);
 
         manager.UpdateIdAndAddRedirect(res.Id,newId);
 

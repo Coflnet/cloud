@@ -10,17 +10,17 @@ namespace Coflnet.Dev
         }
 
         public Device Device { get;set; }
-        public List<SourceReference> AuthenticatedIds { get;set; }
+        public List<EntityId> AuthenticatedIds { get;set; }
 
         public CoflnetEncoder Encoder => CoflnetEncoder.Instance;
 
-        public Dictionary<SourceReference, Token> Tokens{get;set;}
+        public Dictionary<EntityId, Token> Tokens{get;set;}
 
-        public void SendBack(MessageData data)
+        public void SendBack(CommandData data)
         {
-			var temp = data.rId;
-			data.rId = data.sId;
-			data.sId = temp;
+			var temp = data.Recipient;
+			data.Recipient = data.SenderId;
+			data.SenderId = temp;
 			            DevCore.Instance.SendCommand(data);
         }
     }

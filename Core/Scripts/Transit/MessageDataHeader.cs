@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 
 namespace Coflnet
 {
-    public class MessageDataHeader : Dictionary<int,byte[]>
+    public class CommandDataHeader : Dictionary<int,byte[]>
 	{
 		public enum Type
 		{

@@ -20,15 +20,15 @@ public class EncryptionController {
 
 	public static EncryptionController Instance;
 
-	private Dictionary<SourceReference, Encrypt> encryptionInstances;
-	private Dictionary<SourceReference, EndToEndEncrypt> endToEndEncryptInstances;
-	private Dictionary<ValueTuple<SourceReference, SourceReference>, EndToEndEncrypt> groupEndToEndEncryptInstances;
+	private Dictionary<EntityId, Encrypt> encryptionInstances;
+	private Dictionary<EntityId, EndToEndEncrypt> endToEndEncryptInstances;
+	private Dictionary<ValueTuple<EntityId, EntityId>, EndToEndEncrypt> groupEndToEndEncryptInstances;
 	private UserKeys ownKeys;
 	private UserKeys oldOwnKeys;
-	private LinkedList<SourceReference> userIdDownloadChain;
-	private Dictionary<SourceReference, long> userTimeouts;
+	private LinkedList<EntityId> userIdDownloadChain;
+	private Dictionary<EntityId, long> userTimeouts;
 
-	public delegate void DecryptedMessageCallback (SourceReference from, string message);
+	public delegate void DecryptedMessageCallback (EntityId from, string message);
 
 	private string keyPairString;
 
@@ -39,9 +39,9 @@ public class EncryptionController {
 
 	public EncryptionController () {
 
-		encryptionInstances = new Dictionary<SourceReference, Encrypt> ();
-		userTimeouts = new Dictionary<SourceReference, long> ();
-		userIdDownloadChain = new LinkedList<SourceReference> ();
+		encryptionInstances = new Dictionary<EntityId, Encrypt> ();
+		userTimeouts = new Dictionary<EntityId, long> ();
+		userIdDownloadChain = new LinkedList<EntityId> ();
 	}
 
 	static EncryptionController () {
@@ -60,7 +60,7 @@ public class EncryptionController {
 	/// </summary>
 	/// <returns>The end to end encrypt.</returns>
 	/// <param name="partner">Partner.</param>
-	public EndToEndEncrypt GetEndToEndEncrypt (SourceReference partner) {
+	public EndToEndEncrypt GetEndToEndEncrypt (EntityId partner) {
 		if (endToEndEncryptInstances.ContainsKey (partner))
 			return endToEndEncryptInstances[partner];
 		if (!DataController.encryptionLoaded) {
@@ -80,8 +80,8 @@ public class EncryptionController {
 	/// <returns>The end to end encrypt.</returns>
 	/// <param name="partner">Partner.</param>
 	/// <param name="group">Group .</param>
-	public EndToEndEncrypt GetEndToEndEncrypt (SourceReference partner, SourceReference group) {
-		var key = new ValueTuple<SourceReference, SourceReference> (partner, group);
+	public EndToEndEncrypt GetEndToEndEncrypt (EntityId partner, EntityId group) {
+		var key = new ValueTuple<EntityId, EntityId> (partner, group);
 		if (groupEndToEndEncryptInstances.ContainsKey (key))
 			return groupEndToEndEncryptInstances[key];
 		if (!DataController.encryptionLoaded) {
@@ -116,7 +116,7 @@ public class EncryptionController {
 	/// </summary>
 	/// <param name="encryptInstance">Encrypt instance.</param>
 	private void SaveEndToEndEncrypt (GroupEndToEndEncryption encryptInstance) {
-		var key = new ValueTuple<SourceReference, SourceReference> (encryptInstance.Identifier, encryptInstance.GroupId);
+		var key = new ValueTuple<EntityId, EntityId> (encryptInstance.Identifier, encryptInstance.GroupId);
 		DataController.Instance.SaveObject (encryptInstance.Identifier.ToString (), encryptInstance);
 	}
 
@@ -136,7 +136,7 @@ public class EncryptionController {
 	/// <param name="from">From.</param>
 	/// <param name="message">Message.</param>
 	/// <param name="callback">Callback to pass the message to.</param>
-	public void ReceiveMessage (SourceReference from, string message, DecryptedMessageCallback callback = null) {
+	public void ReceiveMessage (EntityId from, string message, DecryptedMessageCallback callback = null) {
 		string decryptedMessage = DecryptFriendMessage (from, message);
 		if (callback != null && decryptedMessage != null)
 			callback (from, decryptedMessage);
@@ -148,11 +148,11 @@ public class EncryptionController {
 	/// <returns>The newly encrypted message for friend.</returns>
 	/// <param name="to">To.</param>
 	/// <param name="message">ServerMessageOb.</param>
-	public MessageData EncryptMessageForFriend (SourceReference to, MessageData message) {
-		var encryptedMessageOb = new MessageData (message);
+	public CommandData EncryptMessageForFriend (EntityId to, CommandData message) {
+		var encryptedMessageOb = new CommandData (message);
 		Encrypt partner = GetEncrypt (to);
 		if (partner.GetIdentKey () == null || !partner.HasSessionKeys ()) {
-			to.ExecuteForResource<CoflnetUser.GetPublicKeys, string> ("");
+			to.ExecuteForEntity<CoflnetUser.GetPublicKeys, string> ("");
 
 			throw new Exception ("Partner keys aren't loaded yet");
 		}
@@ -173,7 +173,7 @@ public class EncryptionController {
 	/// <returns>The decrypted message from friend.</returns>
 	/// <param name="from">From.</param>
 	/// <param name="message">Message.</param>
-	public MessageData DecryptMessageFromFriend (SourceReference from, MessageData message) {
+	public CommandData DecryptMessageFromFriend (EntityId from, CommandData message) {
 		Encrypt partner = GetEncrypt (from);
 
 		// if the setup hasn't been receive, friend keys aren't present or 
@@ -199,11 +199,11 @@ public class EncryptionController {
 	/// Receives the session setup.
 	/// </summary>
 	/// <param name="data">Data.</param>
-	public void ReceiveSessionSetup (MessageData data) {
-		ReceiveSessionSetup (data.sId, data.GetAs<ChatSetupHeader> ());
+	public void ReceiveSessionSetup (CommandData data) {
+		ReceiveSessionSetup (data.SenderId, data.GetAs<ChatSetupHeader> ());
 	}
 
-	public void ReceiveSessionSetup (SourceReference from, ChatSetupHeader header) {
+	public void ReceiveSessionSetup (EntityId from, ChatSetupHeader header) {
 		var partner = GetEncrypt (from);
 		var p2 = new LibsodiumEncryption ();
 
@@ -218,15 +218,15 @@ public class EncryptionController {
 			// save that we received the session, prevents resending requests
 			partner.ReceivedSetup ();
 			// deriving was successful, send confirmation
-			SendCommand<ReceivedSetup, SourceReference> (from, from);
+			SendCommand<ReceivedSetup, EntityId> (from, from);
 		} else {
 			throw new Exception ("key deriviation failed");
 		}
 	}
 
 	public class SessionSetup : Command {
-		public override void Execute (MessageData data) {
-			var encrypt = Instance.GetEndToEndEncrypt (data.sId);
+		public override void Execute (CommandData data) {
+			var encrypt = Instance.GetEndToEndEncrypt (data.SenderId);
 			var setup = data.GetAs<ChatSetupHeader> ();
 			var ephermeralKeyPair = KeyPairManager.Instance.GetKeyPair (setup.publicOneTimeKey);
 
@@ -234,7 +234,7 @@ public class EncryptionController {
 
 			if (result) {
 				// deriving was successful, send confirmation
-				ServerController.Instance.SendCommand<ReceivedSetup, SourceReference> (data.sId, data.sId);
+				ServerController.Instance.SendCommand<ReceivedSetup, EntityId> (data.SenderId, data.SenderId);
 			} else {
 				throw new Exception ("key deriviation failed");
 			}
@@ -253,8 +253,8 @@ public class EncryptionController {
 	}
 
 	public class ResendSetup : Command {
-		public override void Execute (MessageData data) {
-			Instance.SendSetup (data.sId);
+		public override void Execute (CommandData data) {
+			Instance.SendSetup (data.SenderId);
 		}
 
 		protected override CommandSettings GetSettings () {
@@ -269,15 +269,15 @@ public class EncryptionController {
 		}
 	}
 
-	public SourceReference Me {
+	public EntityId Me {
 		get {
 			return ConfigController.UserSettings.userId;
 		}
 	}
 
 	public class ReceivedSetup : Command {
-		public override void Execute (MessageData data) {
-			if (new SourceReference (data.Data) != Instance.Me) {
+		public override void Execute (CommandData data) {
+			if (new EntityId (data.Data) != Instance.Me) {
 				Track.instance.SendTrackingRequest ("session setup failed userId info is: " + data.Data);
 
 				// this is unexpected
@@ -288,7 +288,7 @@ public class EncryptionController {
 				// To avoid destroying current session none of them will happen
 			}
 
-			Instance.GetEndToEndEncrypt (data.sId).DestroyTempKeys ();
+			Instance.GetEndToEndEncrypt (data.SenderId).DestroyTempKeys ();
 		}
 
 		protected override CommandSettings GetSettings () {
@@ -308,41 +308,41 @@ public class EncryptionController {
 	/// </summary>
 	/// <returns>The decrypted group message.</returns>
 	/// <param name="message">encrypted message sent from the server.</param>
-	public MessageData DecryptGroupMessage (MessageData message) {
-		var decryptedMessage = new MessageData (message);
+	public CommandData DecryptGroupMessage (CommandData message) {
+		var decryptedMessage = new CommandData (message);
 		var messageContent = message.GetAs<EncryptedChatMessage> ();
-		var chatEncrypt = GetEndToEndEncrypt (messageContent.Sender, message.sId);
+		var chatEncrypt = GetEndToEndEncrypt (messageContent.Sender, message.SenderId);
 		decryptedMessage.message = chatEncrypt.DecryptWithSessionKey (messageContent.EncryptedMessage);
-		decryptedMessage.sId = messageContent.Sender;
+		decryptedMessage.SenderId = messageContent.Sender;
 		return decryptedMessage;
 	}
 
 	[MessagePack.MessagePackObject]
 	public class EncryptedChatMessage {
 		[MessagePack.Key (1)]
-		public SourceReference Sender;
+		public EntityId Sender;
 		[MessagePack.Key (2)]
 		public byte[] EncryptedMessage;
 	}
 
 	/// <summary>
 	/// Encrypts a message for a group resource.
-	/// Requires that the receiverId of the messagedata has been set to the receiverid of the group
+	/// Requires that the receiverId of the <see cref="CommandData"/> has been set to the receiverid of the group
 	/// </summary>
 	/// <returns>The group message.</returns>
 	/// <param name="messageOb">Message to encrypt.</param>
-	public MessageData EncryptGroupMessage (MessageData messageOb) {
+	public CommandData EncryptGroupMessage (CommandData messageOb) {
 		var myId = ConfigController.UserSettings.userId;
-		var encrypt = GetEndToEndEncrypt (myId, messageOb.rId);
+		var encrypt = GetEndToEndEncrypt (myId, messageOb.Recipient);
 
 		var encryptedMessage = new EncryptedChatMessage ();
 		encryptedMessage.EncryptedMessage = encrypt.EncryptWithSessionKey (messageOb.message);
 		encryptedMessage.Sender = myId;
 		// create and return encrypted object
-		var encryptedMessageData = new MessageData (messageOb);
-		encryptedMessageData.SerializeAndSet (encryptedMessage);
+		var encryptedCommandData = new CommandData (messageOb);
+		encryptedCommandData.SerializeAndSet (encryptedMessage);
 
-		return encryptedMessageData;
+		return encryptedCommandData;
 	}
 
 	/// <summary>
@@ -352,7 +352,7 @@ public class EncryptionController {
 	/// <param name="data">Data.</param>
 	/// <typeparam name="T">The 1st type parameter.</typeparam>
 	/// <typeparam name="Y">The 2nd type parameter.</typeparam>
-	public void SendCommand<T, Y> (SourceReference to, Y data) where T : Command {
+	public void SendCommand<T, Y> (EntityId to, Y data) where T : Command {
 		ServerController.Instance.SendCommand<T, Y> (to, data);
 	}
 
@@ -361,7 +361,7 @@ public class EncryptionController {
 	/// </summary>
 	/// <returns>The for resource.</returns>
 	/// <param name="data">The data to encrypt</param>
-	public byte[] EncryptForResource (SourceReference to, byte[] data) {
+	public byte[] EncryptForResource (EntityId to, byte[] data) {
 		var partner = GetEndToEndEncrypt (to);
 		return partner.EncryptWithSessionKey (data);
 	}
@@ -371,15 +371,15 @@ public class EncryptionController {
 	/// </summary>
 	/// <returns>The decrypted command data.</returns>
 	/// <param name="data">Encrypted command data Object as json.</param>
-	public void ReceiveEncryptedCommand (Command command, MessageData data) {
-		Encrypt partner = GetEncrypt (data.sId);
+	public void ReceiveEncryptedCommand (Command command, CommandData data) {
+		Encrypt partner = GetEncrypt (data.SenderId);
 		if (!partner.HasSessionKeys ()) {
-			data.sId.ExecuteForResource<ResendSetup, char> (' ');
+			data.SenderId.ExecuteForEntity<ResendSetup, char> (' ');
 			throw new EncryptionKeyIsMissingException ("session keys are currently missing");
 		}
 
-		SecureMessageData secureMessageData = new SecureMessageData (data.Data);
-		data.message = partner.DecryptWithSessionKey (secureMessageData.encMsg, secureMessageData.msgIndex);
+		SecureCommandData secureCommandData = new SecureCommandData (data.Data);
+		data.message = partner.DecryptWithSessionKey (secureCommandData.encMsg, secureCommandData.msgIndex);
 		command.Execute (data);
 	}
 
@@ -412,7 +412,7 @@ public class EncryptionController {
 		return null;
 	}
 
-	public string DecryptFriendMessage (SourceReference from, string message) {
+	public string DecryptFriendMessage (EntityId from, string message) {
 		Encrypt enc = GetEncrypt (from);
 		try {
 
@@ -516,30 +516,30 @@ public class EncryptionController {
 		});
 	}
 
-	public void RequestResendSetup (MessageData data) {
-		SendSetup (data.sId);
+	public void RequestResendSetup (CommandData data) {
+		SendSetup (data.SenderId);
 	}
 
-	public void SendSetup (SourceReference sId) {
+	public void SendSetup (EntityId sId) {
 		// this should be secure as the keys are set to null after receive confirmation
-		sId.ExecuteForResource<ReceivedSetup, ChatSetupHeader> (
+		sId.ExecuteForEntity<ReceivedSetup, ChatSetupHeader> (
 			GetEndToEndEncrypt (sId).GetSessionSetupHeaders ());
 	}
 
-	private string GetPublicKey (SourceReference userId) {
+	private string GetPublicKey (EntityId userId) {
 		return ValuesController.GetString (userId + "publicKey");
 	}
 
-	private void SaveEncInstance (SourceReference userId, Encrypt encryptInstance) {
+	private void SaveEncInstance (EntityId userId, Encrypt encryptInstance) {
 		FileController.SaveAs<Encrypt> (userId + "encrypt", encryptInstance);
 	}
 
-	public void SetKeyForInstall (SourceReference userId, string key) {
+	public void SetKeyForInstall (EntityId userId, string key) {
 		ValuesController.SetString (userId + "encKey", key);
 		GetEncrypt (userId).SetAESKey (key);
 	}
 
-	private Encrypt GetEncrypt (SourceReference userId) {
+	private Encrypt GetEncrypt (EntityId userId) {
 		if (encryptionInstances.ContainsKey (userId))
 			return encryptionInstances[userId];
 
@@ -556,7 +556,7 @@ public class EncryptionController {
 		return newEnc;
 	}
 
-	public void DeleteEnc (SourceReference userId) {
+	public void DeleteEnc (EntityId userId) {
 		if (encryptionInstances.ContainsKey (userId))
 			encryptionInstances.Remove (userId);
 
@@ -568,7 +568,7 @@ public class EncryptionController {
 	/// Instantiates a new encryption chanel if not present.
 	/// </summary>
 	public class ReceivePublicKeys : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			var args = data.GetAs<Arguments> ();
 
 			byte[] publicIdentKey = args.publicIdentKey;
@@ -602,7 +602,7 @@ public class EncryptionController {
 		}
 
 		public class Arguments {
-			public SourceReference id;
+			public EntityId id;
 			public byte[] publicIdentKey;
 			public byte[] publicPreKey;
 			public byte[] oneTimeKey;
@@ -613,7 +613,7 @@ public class EncryptionController {
 
 [System.Serializable]
 public class ChatKeys {
-	public SourceReference identifier;
+	public EntityId identifier;
 	public byte[] receiveKey;
 	/// <summary>
 	/// The current message chat identifier, aka index of the last message.
@@ -621,7 +621,7 @@ public class ChatKeys {
 	public int cmcid;
 	public bool isAdmin;
 
-	public ChatKeys (SourceReference identifier) {
+	public ChatKeys (EntityId identifier) {
 		this.identifier = identifier;
 	}
 	public ChatKeys () {
@@ -634,37 +634,37 @@ public class ChatKeys {
 /// </summary>
 [System.Serializable]
 [MessagePackObject]
-public class SecureMessageData {
+public class SecureCommandData {
 	[Key (0)]
 	public ulong msgIndex;
 	[Key (1)]
 	public byte[] encMsg;
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="T:SecureMessageData"/> class from data received from <see cref="this.ToString"/>
+	/// Initializes a new instance of the <see cref="T:SecureCommandData"/> class from data received from <see cref="this.ToString"/>
 	/// </summary>
 	/// <param name="msgAsString">Message as string.</param>
-	public SecureMessageData (string msgAsString) : this (Convert.FromBase64String (msgAsString)) {
+	public SecureCommandData (string msgAsString) : this (Convert.FromBase64String (msgAsString)) {
 
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="T:SecureMessageData"/> class.
+	/// Initializes a new instance of the <see cref="T:SecureCommandData"/> class.
 	/// Reverse of GetBytes();
 	/// </summary>
 	/// <param name="msgBytes">Message bytes.</param>
-	public SecureMessageData (byte[] msgBytes) {
+	public SecureCommandData (byte[] msgBytes) {
 		this.encMsg = new byte[msgBytes.Length - 8];
 		Array.Copy (msgBytes, 8, this.encMsg, 0, encMsg.Length);
 		this.msgIndex = BitConverter.ToUInt16 (msgBytes, 0);
 	}
 
-	public SecureMessageData (byte[] encMsg, ulong msgIndex) {
+	public SecureCommandData (byte[] encMsg, ulong msgIndex) {
 		this.encMsg = encMsg;
 		this.msgIndex = msgIndex;
 	}
 
-	public SecureMessageData (MessageData data) : this (data.message) {
+	public SecureCommandData (CommandData data) : this (data.message) {
 
 	}
 

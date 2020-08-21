@@ -6,11 +6,11 @@ using System.Runtime.Serialization;
 namespace Coflnet {
 	/// <summary>
 	/// Receiveable resource.
-	/// Represents a <see cref="Referenceable"/> that is capeable of receiving/sending commands on its own
+	/// Represents a <see cref="Entity"/> that is capeable of receiving/sending commands on its own
 	/// </summary>
 	[MessagePackObject]
 	[DataContract]
-	public abstract class ReceiveableResource : Referenceable {
+	public abstract class ReceiveableResource : Entity {
 		protected static CommandController persistenceCommands;
 
 		/// <summary>
@@ -31,7 +31,7 @@ namespace Coflnet {
 			persistenceCommands.RegisterCommand<ReceiveConfirm>();
 		}
 
-		public override Command ExecuteCommand (MessageData data) {
+		public override Command ExecuteCommand (CommandData data) {
 			// each incoming command will be forwarded to the resource
 			try {
 				var command = base.ExecuteCommand (data);
@@ -42,20 +42,20 @@ namespace Coflnet {
 			} catch (CommandUnknownException e) {
 				
 				// this command is unkown to the us, if we are not the target persist it and send it later
-				if(data.rId != data.CoreInstance.Id)
-					MessageDataPersistence.Instance.SaveMessage(data);
+				if(data.Recipient != data.CoreInstance.Id)
+					CommandDataPersistence.Instance.SaveMessage(data);
 
 			}
 			return null;
 		}
 
-		public ReceiveableResource (SourceReference owner) : base (owner) { }
+		public ReceiveableResource (EntityId owner) : base (owner) { }
 
 		public ReceiveableResource () : base () { }
 
 		public class GetMessages : Command {
-			public override void Execute (MessageData data) {
-				foreach (var item in MessageDataPersistence.Instance.GetMessagesFor (data.rId)) {
+			public override void Execute (CommandData data) {
+				foreach (var item in CommandDataPersistence.Instance.GetMessagesFor (data.Recipient)) {
 					data.SendBack (item);
 				}
 			}
@@ -74,11 +74,11 @@ namespace Coflnet {
 		}
 
 		/// <summary>
-		/// Will send the provided Command and replace the <see cref="MessageData.sId"/> with the id of the resource
+		/// Will send the provided Command and replace the <see cref="CommandData.SenderId"/> with the id of the resource
 		/// </summary>
 		/// <param name="data"></param>
-		public void SendCommand (MessageData data) {
-			data.sId = this.Id;
+		public void SendCommand (CommandData data) {
+			data.SenderId = this.Id;
 			data.CoreInstance.SendCommand (data);
 		}
 	}
@@ -101,10 +101,10 @@ namespace Coflnet {
 		/// </summary>
 		/// <param name="data">Data to test</param>
 		/// <returns><see cref="true"/> if it should be forwarded <see cref="false"/> otherwise</returns>
-		public virtual bool AcceptCommand(MessageData data)
+		public virtual bool AcceptCommand(CommandData data)
 		{
-			return IncludeNotExclude && CommandList.Contains(data.type) 
-			|| !IncludeNotExclude && !CommandList.Contains(data.type);
+			return IncludeNotExclude && CommandList.Contains(data.Type) 
+			|| !IncludeNotExclude && !CommandList.Contains(data.Type);
 		}
 	}
 }

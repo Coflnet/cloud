@@ -12,8 +12,8 @@ namespace Coflnet {
 			Instance = new IsSelfPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return data.sId == target.Id;
+		public override bool CheckPermission (CommandData data, Entity target) {
+			return data.SenderId == target.Id;
 		}
 
 		public override string Slug => "isSelf";

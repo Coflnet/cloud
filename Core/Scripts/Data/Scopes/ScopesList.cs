@@ -5,7 +5,7 @@ using System.Linq;
 namespace Coflnet.Core
 {
     /// <summary>
-    /// Collection of Scopes for some <see cref="Referenceable"/>
+    /// Collection of Scopes for some <see cref="Entity"/>
     /// </summary>
     public class ScopesList : ClassBasedDictionary<string,Scope>
     {

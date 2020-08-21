@@ -9,10 +9,10 @@ namespace Coflnet
 	/// Allows to reuse code server and client side.
 	/// Instance is set to the correct server or client version of the core.
 	/// </summary>
-	public abstract class CoflnetCore : Referenceable
+	public abstract class CoflnetCore : Entity
 	{
 		private static CoflnetCore _instance;
-		private static CommandController _coreCommands= new CommandController(Referenceable.globalCommands);
+		private static CommandController _coreCommands= new CommandController(Entity.globalCommands);
 
 		/// <summary>
 		/// Commands all cores share. Exists because core instance might not exist yet.
@@ -34,10 +34,10 @@ namespace Coflnet
 		public event Action OnApplicationExit;
 
 		/// <summary>
-		/// Instance of an <see cref="ReferenceManager"> used for executing commands
+		/// Instance of an <see cref="EntityManager"> used for executing commands
 		/// </summary>
 		/// <value></value>
-		public ReferenceManager ReferenceManager{get;set;}
+		public EntityManager EntityManager{get;set;}
 
 
 		/// <summary>
@@ -74,8 +74,8 @@ namespace Coflnet
 		/// <summary>
 		/// Adds a new Identity that this instance Represents and should accept Commands for
 		/// </summary>
-		/// <param name="id">The <see cref="SourceReference"/> of the Identity</param>
-		public void AddIdentity(SourceReference id)
+		/// <param name="id">The <see cref="EntityId"/> of the Identity</param>
+		public void AddIdentity(EntityId id)
 		{
 			// default accept is all so nothing to do here
 		}
@@ -87,41 +87,41 @@ namespace Coflnet
 		/// <param name="data">Command data received from eg. the network</param>
 
 		/// <param name="sender">The vertified sender of the command, controls if the command is executed right away or only sent to the managing server</param>
-		public void ReceiveCommand(MessageData data, SourceReference sender = default(SourceReference))
+		public void ReceiveCommand(CommandData data, EntityId sender = default(EntityId))
 		{
 			// validate the sender if possible
 			ReceiveableResource resource;
-			this.ReferenceManager.TryGetResource(data.sId,out resource);
+			this.EntityManager.TryGetEntity(data.SenderId,out resource);
 
 
 			if(resource != null && resource.publicKey != null)
 			{
 				if(!data.ValidateSignature(resource.publicKey))
 				{
-					throw new CoflnetException("invalid_signature",$"The signature of the message `{data.sId}:{data.mId}` could not be vertified");
+					throw new CoflnetException("invalid_signature",$"The signature of the message `{data.SenderId}:{data.MessageId}` could not be vertified");
 				}
 			}
 
 
 			
 
-			this.ReferenceManager.ExecuteForReference(data,sender);
+			this.EntityManager.ExecuteForReference(data,sender);
 			//SendCommand<ReceiveConfirm,ReceiveConfirmParams>(data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);
 		}
 
 
-		public abstract void SendCommand(MessageData data, long serverId = 0);
+		public abstract void SendCommand(CommandData data, long serverId = 0);
 		/// <summary>
 		/// Sends a command.
 		/// </summary>
 		/// <param name="receipient">Receipient to send to.</param>
 		/// <param name="data">Data to send.</param>
 		/// <param name="id">Unique Identifier of the message.</param>
-		/// <param name="sender">Optional sender, if not sent the core will attempt to replace with active Referenceable eg CoflnetUser.</param>
+		/// <param name="sender">Optional sender, if not sent the core will attempt to replace with active <see cref="Entity"/> eg CoflnetUser.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public abstract void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) where C : Command;
-		public abstract void SendCommand<C>(SourceReference receipient, byte[] data) where C : Command;
+		public abstract void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId)) where C : Command;
+		public abstract void SendCommand<C>(EntityId receipient, byte[] data) where C : Command;
 
 
 		/// <summary>
@@ -131,7 +131,7 @@ namespace Coflnet
 		/// <param name="id">ID of the message (optional)</param>
 		/// <param name="sender">As who to send the command, required for permission checking</param>
 		/// <typeparam name="C">Command class to send</typeparam>
-		public void SendCommand<C>(SourceReference receipient,long id = 0, SourceReference sender = default(SourceReference)) where C:Command
+		public void SendCommand<C>(EntityId receipient,long id = 0, EntityId sender = default(EntityId)) where C:Command
 		{
 			SendCommand<C,short>(receipient,0,id,sender);
 		}
@@ -145,9 +145,9 @@ namespace Coflnet
 		/// <param name="callback">Callback to be executed when the response is received.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public void SendCommand<C, T>(SourceReference receipient, T data, Command.CommandMethod callback) where C : ReturnCommand
+		public void SendCommand<C, T>(EntityId receipient, T data, Command.CommandMethod callback) where C : ReturnCommand
 		{
-			SendCommand<C,T>(receipient,data,default(SourceReference),callback);
+			SendCommand<C,T>(receipient,data,default(EntityId),callback);
 		}
 
 
@@ -160,12 +160,12 @@ namespace Coflnet
 		/// <param name="callback">Callback to be executed when the response is received.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public void SendCommand<C, T>(SourceReference receipient, T data, SourceReference sender, Command.CommandMethod callback) where C : ReturnCommand
+		public void SendCommand<C, T>(EntityId receipient, T data, EntityId sender, Command.CommandMethod callback) where C : ReturnCommand
 		{
 			long id = ThreadSaveIdGenerator.NextId;
 			ReturnCommandService.Instance.AddCallback(id, callback);
 
-			if(sender == default(SourceReference))
+			if(sender == default(EntityId))
 			{
 				sender = this.Id;
 			}
@@ -181,9 +181,9 @@ namespace Coflnet
 		/// <param name="data"></param>
 		/// <param name="callback"></param>
 		/// <typeparam name="T"></typeparam>
-		public void SendGetCommand(MessageData data, Command.CommandMethod callback) 
+		public void SendGetCommand(CommandData data, Command.CommandMethod callback) 
 		{
-			if(String.IsNullOrEmpty(data.type))
+			if(String.IsNullOrEmpty(data.Type))
 			{
 				throw new ArgumentException("Command identifier has not been set");
 			}
@@ -191,9 +191,9 @@ namespace Coflnet
 			long id = ThreadSaveIdGenerator.NextId;
 			ReturnCommandService.Instance.AddCallback(id, callback);
 
-			if(data.sId == default(SourceReference))
+			if(data.SenderId == default(EntityId))
 			{
-				data.sId = this.Id;
+				data.SenderId = this.Id;
 			}
 
 			SendCommand(data);
@@ -210,18 +210,18 @@ namespace Coflnet
 		/// <typeparam name="C"></typeparam>
 		/// <typeparam name="T"></typeparam>
 
-		public void ExecuteCommand<C,T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference)) where C :Command
+		public void ExecuteCommand<C,T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId)) where C :Command
 		{
 
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
- 			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.Slug, id);
+ 			var commandData = CommandData.SerializeCommandData<T>(data, commandInstance.Slug, id);
 
-			messageData.rId = receipient;
-			messageData.sId = sender;
+			commandData.Recipient = receipient;
+			commandData.SenderId = sender;
 
 
-			ReferenceManager.Instance.ExecuteForReference(messageData);
+			EntityManager.Instance.ExecuteForReference(commandData);
 		}
 
 
@@ -230,17 +230,17 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="resourceId">Id of the resource to clone</param>
 		/// <param name="afterClone">Callback invoked when cloning is done</param>
-		public virtual void CloneAndSubscribe(SourceReference resourceId, Action<Referenceable> afterClone = null)
+		public virtual void CloneAndSubscribe(EntityId resourceId, Action<Entity> afterClone = null)
 		{
 			// if it already exists we are done here
-			if(ReferenceManager.Exists(resourceId))
+			if(EntityManager.Exists(resourceId))
 			{
-				afterClone?.Invoke(ReferenceManager.GetResource<Referenceable>(resourceId));
+				afterClone?.Invoke(EntityManager.GetEntity<Entity>(resourceId));
 				return;
 			}
 
 			// create temporary proxy to receive commands bevore cloning is finished
-			ReferenceManager.AddReference(new SubscribeProxy(resourceId));
+			EntityManager.AddReference(new SubscribeProxy(resourceId));
 
 
 			// this is different on client sides
@@ -251,18 +251,18 @@ namespace Coflnet
 			FinishSubscribing(resourceId,afterClone);
 		}
 
-		protected void FinishSubscribing(SourceReference resourceId, Action<Referenceable> afterClone)
+		protected void FinishSubscribing(EntityId resourceId, Action<Entity> afterClone)
 		{
 			SendCommand<GetResourceCommand,short>(resourceId,0,o =>{
-				var resource = MessagePack.MessagePackSerializer.Typeless.Deserialize(o.message) as Referenceable;
+				var resource = MessagePack.MessagePackSerializer.Typeless.Deserialize(o.message) as Entity;
 
 				// detach the old proxy
-				var proxy = ReferenceManager.GetResource<SubscribeProxy>(resourceId);
+				var proxy = EntityManager.GetEntity<SubscribeProxy>(resourceId);
 
 				// replace it
-				ReferenceManager.ReplaceResource(resource);
+				EntityManager.ReplaceResource(resource);
 
-				var test = ReferenceManager.GetResource<Referenceable>(resourceId);
+				var test = EntityManager.GetEntity<Entity>(resourceId);
 
 
 				// replay messages

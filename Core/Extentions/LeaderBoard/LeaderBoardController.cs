@@ -5,7 +5,7 @@ using System.Linq;
 namespace Coflnet.Server {
 	public class LeaderBoardController : IRegisterCommands {
 		public static LeaderBoardController Instance;
-		Dictionary<SourceReference, Leaderboard> leaderboards = new Dictionary<SourceReference, Leaderboard> ();
+		Dictionary<EntityId, Leaderboard> leaderboards = new Dictionary<EntityId, Leaderboard> ();
 
 		static LeaderBoardController () {
 			Instance = new LeaderBoardController ();
@@ -17,9 +17,9 @@ namespace Coflnet.Server {
 
 		public class GetCurrentScore : DefaultServerCommand {
 
-			public override void Execute (MessageData data) {
-				Reference<CoflnetUser> user = new Reference<CoflnetUser> (new SourceReference ());
-				int currentScore = LeaderBoardController.Instance.leaderboards[data.GetAs<SourceReference> ()].scores[user].score;
+			public override void Execute (CommandData data) {
+				Reference<CoflnetUser> user = new Reference<CoflnetUser> (new EntityId ());
+				int currentScore = LeaderBoardController.Instance.leaderboards[data.GetAs<EntityId> ()].scores[user].score;
 				SendBack (data, currentScore);
 			}
 
@@ -34,7 +34,7 @@ namespace Coflnet.Server {
 
 	}
 
-	public class Leaderboard : Referenceable {
+	public class Leaderboard : Entity {
 		public string publicId;
 		public string name;
 		public bool smallerIsBetter;

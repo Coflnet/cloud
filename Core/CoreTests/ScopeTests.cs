@@ -12,7 +12,7 @@ public class ScopeTests {
     public void ScopeCopyFieldsTest() {
         // Use the Assert class to test conditions.
         var resText = "Protected text";
-        var Id = new SourceReference(5,3);
+        var Id = new EntityId(5,3);
 
         var res = new ScopeRes();
         res.Text.Value = resText;
@@ -37,7 +37,7 @@ public class ScopeTests {
     public void ScopeCommandsTest() {
         // Use the Assert class to test conditions.
         var resText = "Protected text";
-        var Id = new SourceReference(5,3);
+        var Id = new EntityId(5,3);
 
         var res = new ScopeRes();
         res.Text.Value = resText;
@@ -54,7 +54,7 @@ public class ScopeTests {
     public void ScopeCommandsUnauthorizedTest() {
         // Use the Assert class to test conditions.
         var resText = "Protected text";
-        var Id = new SourceReference(5,3);
+        var Id = new EntityId(5,3);
 
         var res = new ScopeRes();
         res.Text.Value = resText;
@@ -71,7 +71,7 @@ public class ScopeTests {
 
 
 
-    public class ScopeRes : Referenceable, IHasScopes,IMessagePackSerializationCallbackReceiver
+    public class ScopeRes : Entity, IHasScopes,IMessagePackSerializationCallbackReceiver
     {
         private static ScopesList scopes;
         private static CommandController commands;

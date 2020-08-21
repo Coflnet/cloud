@@ -5,9 +5,9 @@ namespace Coflnet.Server
 	public class LoginUser : Coflnet.LoginUser
 	{
 
-		public override void Execute(MessageData data)
+		public override void Execute(CommandData data)
 		{
-			var serverMessage = data as ServerMessageData;
+			var serverMessage = data as ServerCommandData;
 			if (serverMessage == null || serverMessage.Connection == null)
 			{
 				throw new CoflnetException("connection_invalid", "Nothing connected");
@@ -16,7 +16,7 @@ namespace Coflnet.Server
 			var options = serverMessage.GetAs<LoginParams>();
 
 
-			var user = data.CoreInstance.ReferenceManager.GetResource<CoflnetUser>(options.id);
+			var user = data.CoreInstance.EntityManager.GetEntity<CoflnetUser>(options.id);
 
 			if (user.Secret == null || options.secret == null || !user.Secret.SequenceEqual(options.secret))
 			{
@@ -24,8 +24,8 @@ namespace Coflnet.Server
 			}
 						serverMessage.Connection.User = user;
 
-			var response = MessageData.CreateMessageData<LoginUserResponse, SourceReference>(user.Id, user.Id);
-			response.sId = data.CoreInstance.Id;
+			var response = CommandData.CreateCommandData<LoginUserResponse, EntityId>(user.Id, user.Id);
+			response.SenderId = data.CoreInstance.Id;
 			data.SendBack(response);
 		}
 	}

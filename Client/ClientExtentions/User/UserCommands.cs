@@ -7,7 +7,7 @@ namespace Coflnet.Client
 	{
 		public class GetFilesInfo : Command
 		{
-			public override void Execute(MessageData data)
+			public override void Execute(CommandData data)
 			{
 				throw new System.NotImplementedException();
 			}
@@ -29,7 +29,7 @@ namespace Coflnet.Client
 
 		public class SetName : Command
 		{
-			public override void Execute(MessageData data)
+			public override void Execute(CommandData data)
 			{
 				throw new System.NotImplementedException();
 			}
@@ -52,7 +52,7 @@ namespace Coflnet.Client
 
 		public class GetName : Command
 		{
-			public override void Execute(MessageData data)
+			public override void Execute(CommandData data)
 			{
 				throw new System.NotImplementedException();
 			}
@@ -74,15 +74,15 @@ namespace Coflnet.Client
 
 
 
-		public void GetFileInfo(MessageData data)
+		public void GetFileInfo(CommandData data)
 		{
 
 			UserFile file = data.GetTargetAs<CoflnetUser>().Files[data.GetAs<long>()];
 		}
 
-		public void GetFileInfoByReference(MessageData data)
+		public void GetFileInfoByReference(CommandData data)
 		{
-			//UserFile file = ReferenceManager.Instance.GetResource<UserFile>(data.GetAs<long>());
+			//UserFile file = ReferenceManager.Instance.GetEntity<UserFile>(data.GetAs<long>());
 		}
 	}
 }

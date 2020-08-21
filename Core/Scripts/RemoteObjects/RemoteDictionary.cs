@@ -19,7 +19,7 @@ namespace Coflnet.Core
         {
         }
 
-        public RemoteDictionary(string nameOfAttribute, Referenceable parent) : base(nameOfAttribute, parent)
+        public RemoteDictionary(string nameOfAttribute, Entity parent) : base(nameOfAttribute, parent)
         {
         }
 
@@ -105,7 +105,7 @@ namespace Coflnet.Core
 
 
 
-        public static new void AddCommands(CommandController controller,string nameOfAttribute, Func<MessageData,IDictionary<TKey, TValue>> getter,Action<MessageData,IDictionary<TKey, TValue>> setter)
+        public static new void AddCommands(CommandController controller,string nameOfAttribute, Func<CommandData,IDictionary<TKey, TValue>> getter,Action<CommandData,IDictionary<TKey, TValue>> setter)
         {
             RemoteObject<IDictionary<TKey, TValue>>.AddCommands(controller,nameOfAttribute,getter,setter);
 
@@ -123,7 +123,7 @@ namespace Coflnet.Core
         /// <param name="nameOfAttribute">nameof() the attribute the getter will return</param>
         /// <param name="getter">A function to get the collection</param>
         /// <param name="applyLocal">wherether or not this command should be applied locally</param>
-        public RemoteCollectionClearCommand(string nameOfAttribute, Func<MessageData, ICollection<TContent>> getter, bool applyLocal = false) 
+        public RemoteCollectionClearCommand(string nameOfAttribute, Func<CommandData, ICollection<TContent>> getter, bool applyLocal = false) 
         : base("clear"+nameOfAttribute, getter, applyLocal)
         {
         }
@@ -132,8 +132,8 @@ namespace Coflnet.Core
         /// <summary>
         /// Execute the command logic with specified data.
         /// </summary>
-        /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-        public override void Execute(MessageData data)
+        /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+        public override void Execute(CommandData data)
         {
             getter.Invoke(data).Clear();
         }
@@ -148,7 +148,7 @@ namespace Coflnet.Core
         /// <param name="nameOfAttribute">nameof() the attribute the getter will return</param>
         /// <param name="getter">A function to get the collection</param>
         /// <param name="applyLocal">wherether or not this command should be applied locally</param>
-        public RemoteCollectionAddCommand(string nameOfAttribute, Func<MessageData, ICollection<TContent>> getter, bool applyLocal = false) 
+        public RemoteCollectionAddCommand(string nameOfAttribute, Func<CommandData, ICollection<TContent>> getter, bool applyLocal = false) 
         : base("add"+nameOfAttribute, getter, applyLocal)
         {
         }
@@ -157,8 +157,8 @@ namespace Coflnet.Core
         /// <summary>
         /// Execute the command logic with specified data.
         /// </summary>
-        /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-        public override void Execute(MessageData data)
+        /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+        public override void Execute(CommandData data)
         {
             getter.Invoke(data).Add(data.GetAs<TContent>());
         }

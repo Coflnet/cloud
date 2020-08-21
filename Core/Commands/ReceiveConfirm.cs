@@ -11,10 +11,10 @@ namespace Coflnet {
 		/// </summary>
 		public static string CommandSlug => "receivedCommand";
 
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			var dataParams = data.GetAs<ReceiveConfirmParams> ();
 
-			MessageDataPersistence.Instance.Remove (data.sId, dataParams.sender, dataParams.messageId);
+			CommandDataPersistence.Instance.Remove (data.SenderId, dataParams.sender, dataParams.messageId);
 		}
 
 		protected override CommandSettings GetSettings () {
@@ -28,11 +28,11 @@ namespace Coflnet {
 	[MessagePackObject]
 	public class ReceiveConfirmParams {
 		[Key (0)]
-		public SourceReference sender;
+		public EntityId sender;
 		[Key (1)]
 		public long messageId;
 
-		public ReceiveConfirmParams (SourceReference sender, long messageId) {
+		public ReceiveConfirmParams (EntityId sender, long messageId) {
 			this.sender = sender;
 			this.messageId = messageId;
 		}

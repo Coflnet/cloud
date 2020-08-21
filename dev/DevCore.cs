@@ -17,19 +17,19 @@ namespace Coflnet.Dev {
 		/// <summary>
 		/// This is the user and the serverid simulated
 		/// </summary>
-		private SourceReference userId;
+		private EntityId userId;
 
 		private SimulationInstance lastAddedClient;
 
 		/// <summary>
 		/// Cotains all simulated devices/server/users
 		/// </summary>
-		public Dictionary<SourceReference, SimulationInstance> simulationInstances;
+		public Dictionary<EntityId, SimulationInstance> simulationInstances;
 
 		/// <summary>
 		/// All messages sent over the network previously
 		/// </summary>
-		public List<MessageData> pastMessages = new List<MessageData> ();
+		public List<CommandData> pastMessages = new List<CommandData> ();
 
 		public static DevCore DevInstance { get; private set; }
 
@@ -40,7 +40,7 @@ namespace Coflnet.Dev {
 		}
 
 		public DevCore () {
-			this.ReferenceManager = ReferenceManager.Instance;
+			this.EntityManager = EntityManager.Instance;
 		}
 
 		private class DummyPrivacyScreen : IPrivacyScreen {
@@ -64,7 +64,7 @@ namespace Coflnet.Dev {
 		/// <param name="id">Application/Server Id to use</param>
 		/// <param name="preventDefaultScreens"><c>true</c> when default settings (dummys) should NOT be set such as <see cref="DummyPrivacyScreen"/></param>
 		/// <param name="preventInit"><c>true</c> when The Inits of Client and Server-Cores should not be invoked and client should be prepared like a fresh install</param>
-		public static void Init (SourceReference id, bool preventDefaultScreens = false, bool preventInit = false) {
+		public static void Init (EntityId id, bool preventDefaultScreens = false, bool preventInit = false) {
 
 			//[Deprecated]
 			ConfigController.ActiveUserId = id;
@@ -80,7 +80,7 @@ namespace Coflnet.Dev {
 			var serverInstance = ServerCore.ServerInstance;
 			if (DevInstance == null) {
 				DevInstance = new DevCore ();
-				DevInstance.simulationInstances = new Dictionary<SourceReference, SimulationInstance> ();
+				DevInstance.simulationInstances = new Dictionary<EntityId, SimulationInstance> ();
 				CoflnetCore.Instance = DevInstance;
 			} else {
 				// reset if there was an devinstance bevore
@@ -93,7 +93,7 @@ namespace Coflnet.Dev {
 			if (!id.IsServer) {
 				DevInstance.AddClientCore (id);
 			} else {
-				DevInstance.AddClientCore (SourceReference.Default);
+				DevInstance.AddClientCore (EntityId.Default);
 			}
 
 			if (!preventInit) {
@@ -107,8 +107,8 @@ namespace Coflnet.Dev {
 		/// Adds a new Server to the simulation and initializes it.
 		/// </summary>
 		/// <param name="id">Id of the server</param>
-		public SimulationInstance AddServerCore (SourceReference id) {
-			var newServerCore = new ServerCoreProxy (new ReferenceManager ($"res{simulationInstances.Count}")) { Id = id };
+		public SimulationInstance AddServerCore (EntityId id) {
+			var newServerCore = new ServerCoreProxy (new EntityManager ($"res{simulationInstances.Count}")) { Id = id };
 			var simulationInstance = AddCore (newServerCore);
 
 			newServerCore.SetCommandsLive ();
@@ -122,7 +122,7 @@ namespace Coflnet.Dev {
 		/// </summary>
 		/// <param name="id">Id of the client</param>
 		/// <param name="createDevice">If an instance of <see cref="CoflnetUser"/> should be created on  the server as well</param>
-		public SimulationInstance AddClientCore (SourceReference id, bool createDevice = false) {
+		public SimulationInstance AddClientCore (EntityId id, bool createDevice = false) {
 			var newClientCore = new ClientCoreProxy (new CommandController (CoreCommands), ClientSocket.Instance, new ClientReferenceManager ($"res{simulationInstances.Count}")) { Id = id };
 
 			SetCoreForService (newClientCore);
@@ -136,9 +136,9 @@ namespace Coflnet.Dev {
 				var device = new Device () { Id = id };
 				SimulationInstance server;
 				if (simulationInstances.TryGetValue (id.FullServerId, out server)) {
-					server.core.ReferenceManager.AddReference (device);
+					server.core.EntityManager.AddReference (device);
 				}
-				if (!newClientCore.ReferenceManager.AddReference (device)) {
+				if (!newClientCore.EntityManager.AddReference (device)) {
 					throw new Exception ($"failed to add device {device.Id}");
 				}
 			}
@@ -175,21 +175,21 @@ namespace Coflnet.Dev {
 
 		private static int executionCount = 0;
 
-		private SourceReference lastExecutor;
+		private EntityId lastExecutor;
 
 		/// <summary>
 		/// Will execute commands on the simulated cores
 		/// </summary>
 		/// <param name="data">Data to send</param>
 		/// <param name="serverId">optional serverId, ignored in this implementation</param>
-		public override void SendCommand (MessageData data, long serverId = 0) {
+		public override void SendCommand (CommandData data, long serverId = 0) {
 
 			// record it
 			pastMessages.Add (data);
 
-			if (data.sId == data.rId) {
+			if (data.SenderId == data.Recipient) {
 				// resource is trying to send to itself
-				serverId = data.rId.ServerId;
+				serverId = data.Recipient.ServerId;
 			}
 
 			if (executionCount > 100) {
@@ -198,11 +198,11 @@ namespace Coflnet.Dev {
 			executionCount++;
 
 			// guess sender if there is none
-			if (data.rId == userId) {
-				data.sId = new SourceReference (data.rId.ServerId, 0);
+			if (data.Recipient == userId) {
+				data.SenderId = new EntityId (data.Recipient.ServerId, 0);
 			}
 
-			var devData = new DevMessageData (data);
+			var devData = new DevCommandData (data);
 			devData.Connection = new DevConnection ();
 			data = devData;
 
@@ -219,36 +219,36 @@ namespace Coflnet.Dev {
 			}*/
 
 			//			// search for the serverId first
-			if (serverId != 0 && simulationInstances.ContainsKey (new SourceReference (serverId, 0))) {
-				simulationInstances[new SourceReference (serverId, 0)].ReceiveCommand (devData);
-			} else if (simulationInstances.ContainsKey (data.rId)) {
+			if (serverId != 0 && simulationInstances.ContainsKey (new EntityId (serverId, 0))) {
+				simulationInstances[new EntityId (serverId, 0)].ReceiveCommand (devData);
+			} else if (simulationInstances.ContainsKey (data.Recipient)) {
 				// the receiver is known, send it to him
-				simulationInstances[data.rId].ReceiveCommand (devData);
+				simulationInstances[data.Recipient].ReceiveCommand (devData);
 
-			} else if (simulationInstances.ContainsKey (SourceReference.Default) ||
-				simulationInstances.Where (i => i.Value.core.Id == data.rId).Any ()) // && simulationInstances[SourceReference.Default].core.Id == data.rId)
+			} else if (simulationInstances.ContainsKey (EntityId.Default) ||
+				simulationInstances.Where (i => i.Value.core.Id == data.Recipient).Any ()) // && simulationInstances[SourceReference.Default].core.Id == data.rId)
 			{
 				// the receiver is unknown but is asigned the last added client since it hasn't got an ID yet
 				SimulationInstance value;
 
-				if (!simulationInstances.TryGetValue (default (SourceReference), out value)) {
-					value = simulationInstances.Where (i => i.Value.core.Id == data.rId).First ().Value;
+				if (!simulationInstances.TryGetValue (default (EntityId), out value)) {
+					value = simulationInstances.Where (i => i.Value.core.Id == data.Recipient).First ().Value;
 				}
 
-				simulationInstances[data.rId] = value;
-				simulationInstances[data.rId].ReceiveCommand (devData);
+				simulationInstances[data.Recipient] = value;
+				simulationInstances[data.Recipient].ReceiveCommand (devData);
 
-				simulationInstances.Remove (SourceReference.Default);
+				simulationInstances.Remove (EntityId.Default);
 
-			} else if (simulationInstances.ContainsKey (data.rId.FullServerId)) {
+			} else if (simulationInstances.ContainsKey (data.Recipient.FullServerId)) {
 				// the receiver itself doesn't exist, but the server for it does
-				simulationInstances[data.rId.FullServerId].ReceiveCommand (devData);
+				simulationInstances[data.Recipient.FullServerId].ReceiveCommand (devData);
 
-			} else if (data is DevMessageData && (data as DevMessageData).sender != null) {
+			} else if (data is DevCommandData && (data as DevCommandData).sender != null) {
 				// no idea what id this is supposed to go but the container has a sender
-				(data as DevMessageData).sender.core.ReferenceManager.ExecuteForReference (data);
+				(data as DevCommandData).sender.core.EntityManager.ExecuteForReference (data);
 			} else {
-				throw new Exception ($"the target {data.rId} is not registered in the development enviroment {data.type}");
+				throw new Exception ($"the target {data.Recipient} is not registered in the development enviroment {data.Type}");
 			}
 
 			/* 
@@ -260,31 +260,31 @@ namespace Coflnet.Dev {
 		}
 
 		/// <summary>
-		/// Messagedata used within the development enviroment.
+		/// <see cref="CommandData"/> used within the development enviroment.
 		/// Useful for knowing who sent int in the simulated  enviroment before ids are set
 		/// </summary>
 
-		public override void SendCommand<C, T> (SourceReference receipient, T data, long id = 0, SourceReference sender = default (SourceReference)) {
+		public override void SendCommand<C, T> (EntityId receipient, T data, long id = 0, EntityId sender = default (EntityId)) {
 			var commandInstance = ((C) Activator.CreateInstance (typeof (C)));
 
-			var messageData = MessageData.SerializeMessageData<T> (data, commandInstance.Slug, id);
+			var commandData = CommandData.SerializeCommandData<T> (data, commandInstance.Slug, id);
 
-			messageData.rId = receipient;
-			messageData.sId = sender;
+			commandData.Recipient = receipient;
+			commandData.SenderId = sender;
 
 			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation) {
-				messageData.CoreInstance = simulationInstances[messageData.rId].core;
-				ThreadController.Instance.ExecuteCommand (commandInstance, messageData);
+				commandData.CoreInstance = simulationInstances[commandData.Recipient].core;
+				ThreadController.Instance.ExecuteCommand (commandInstance, commandData);
 			}
 
-			SendCommand (messageData);
+			SendCommand (commandData);
 		}
 
-		public override void SendCommand<C> (SourceReference receipient, byte[] data) {
+		public override void SendCommand<C> (EntityId receipient, byte[] data) {
 			var commandInstance = ((C) Activator.CreateInstance (typeof (C)));
-			var messageData = new MessageData (receipient, data, commandInstance.Slug);
+			var commandData = new CommandData (receipient, data, commandInstance.Slug);
 
-			SendCommand (messageData);
+			SendCommand (commandData);
 		}
 	}
 

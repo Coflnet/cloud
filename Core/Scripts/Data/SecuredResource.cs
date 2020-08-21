@@ -3,7 +3,7 @@
 namespace Coflnet
 {
 	[DataContract]
-	public abstract class SecuredResource : Referenceable
+	public abstract class SecuredResource : Entity
 	{
 		/// <summary>
 		/// Incoming commands may have to have a valid token signed with the private part of this <see cref="KeyPair"/>

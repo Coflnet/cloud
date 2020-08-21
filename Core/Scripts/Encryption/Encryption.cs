@@ -631,14 +631,14 @@ namespace Coflnet
 
 	public class GroupEndToEndEncryption : EndToEndEncrypt
 	{
-		public SourceReference GroupId;
+		public EntityId GroupId;
 
-		public GroupEndToEndEncryption(ChainKey sessionReceiveKey, ChainKey sessionSendKey, SourceReference identifier, bool isServer, bool hasReceived, SourceReference groupId) : base(sessionReceiveKey, sessionSendKey, identifier, isServer, hasReceived)
+		public GroupEndToEndEncryption(ChainKey sessionReceiveKey, ChainKey sessionSendKey, EntityId identifier, bool isServer, bool hasReceived, EntityId groupId) : base(sessionReceiveKey, sessionSendKey, identifier, isServer, hasReceived)
 		{
 			GroupId = groupId;
 		}
 
-		public GroupEndToEndEncryption(SourceReference identifier, SourceReference groupId) : base(identifier)
+		public GroupEndToEndEncryption(EntityId identifier, EntityId groupId) : base(identifier)
 		{
 			GroupId = groupId;
 		}

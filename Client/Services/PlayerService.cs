@@ -15,9 +15,9 @@ namespace Coflnet.Client
 			Instance = new PlayerService();
 		}
 
-		public PublicUserInfo GetProfileOf(SourceReference id)
+		public PublicUserInfo GetProfileOf(EntityId id)
 		{
-			return ReferenceManager.Instance.GetResource<PublicUserInfo>(id);
+			return EntityManager.Instance.GetEntity<PublicUserInfo>(id);
 		}
 
 		/// <summary>
@@ -30,12 +30,12 @@ namespace Coflnet.Client
 			return currentUser.Friends.ConvertAll((Reference<CoflnetUser> input) =>
 			{
 				PublicUserInfo userInfo;
-				ReferenceManager.Instance.TryGetResource<PublicUserInfo>(input.ReferenceId, out userInfo);
+				EntityManager.Instance.TryGetEntity<PublicUserInfo>(input.EntityId, out userInfo);
 				if (userInfo == null)
 				{
 					userInfo = new PublicUserInfo()
 					{
-						Id = input.ReferenceId,
+						Id = input.EntityId,
 						userName = "unknown"
 					};
 				}

@@ -271,7 +271,7 @@ namespace Coflnet {
 		private ulong receiveKeyIndex = 0;
 		private byte[] sessionSendKey;
 		private ulong sendKeyIndex = 0;
-		private SourceReference identifier;
+		private EntityId identifier;
 		// we are server if we didn't send the first message
 		private bool isServer;
 		// has the partner received the setup information?
@@ -310,7 +310,7 @@ namespace Coflnet {
 		/// <param name="ephemeralKeyPair">Ephemeral key pair.</param>
 		/// <param name="publicOneTimeKey">Public one time key.</param>
 		/// <param name="publicIdentKey">public ident key.</param>
-		public Encrypt (byte[] publicKey, SourceReference identifier, bool isServer = false, byte[] sessionReceiveKey = null,
+		public Encrypt (byte[] publicKey, EntityId identifier, bool isServer = false, byte[] sessionReceiveKey = null,
 			byte[] sessionSendKey = null, byte[] publicPreKey = null, KeyPair ephemeralKeyPair = null, byte[] publicOneTimeKey = null, byte[] publicIdentKey = null) {
 			this.publicIdentKey = publicKey;
 			this.identifier = identifier;
@@ -803,7 +803,7 @@ namespace Coflnet {
 			return isServer;
 		}
 
-		public SourceReference GetIdentifier () {
+		public EntityId GetIdentifier () {
 			return this.identifier;
 		}
 

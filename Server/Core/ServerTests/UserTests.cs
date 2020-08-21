@@ -16,7 +16,7 @@ public class CoflnetUserTests {
 		ConfigController.ApplicationSettings.id = new SourceReference (1, 1, 1, 0);
 		ServerCore.Init ();
 		ClientSocket.Instance.Reconnect ();
-		MessageData response = null;
+		CommandData response = null;
 		ClientSocket.Instance.AddCallback (data => {
 			response = data;
 		});
@@ -30,7 +30,7 @@ public class CoflnetUserTests {
 
 		// send the command
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
+			CommandData.CreateCommandData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
 
 		// await response
 		yield return new UnityEngine.WaitForSeconds (0.5f);
@@ -43,8 +43,8 @@ public class CoflnetUserTests {
 	}
 
 	public class TestCommandWithPermission : Command {
-		public override void Execute (MessageData data) {
-			data.SendBack (MessageData.SerializeMessageData (5, "success"));
+		public override void Execute (CommandData data) {
+			data.SendBack (CommandData.SerializeCommandData (5, "success"));
 		}
 
 		protected override CommandSettings GetSettings () {
@@ -62,7 +62,7 @@ public class CoflnetUserTests {
 		// tell the server his id
 		ConfigController.ApplicationSettings.id = new SourceReference (1, 1, 1, 0);
 		ServerCore.Init ();
-		MessageData response = null;
+		CommandData response = null;
 		ClientSocket.Instance.AddCallback (data => {
 			response = data;
 		});
@@ -76,7 +76,7 @@ public class CoflnetUserTests {
 
 		// send the command
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
+			CommandData.CreateCommandData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
 
 		// await response
 		yield return new UnityEngine.WaitForSeconds (0.5f);
@@ -84,7 +84,7 @@ public class CoflnetUserTests {
 				var login = response.GetAs<RegisterUserResponse> ();
 
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<Coflnet.LoginUser, LoginParams> (ConfigController.ApplicationSettings.id,
+			CommandData.CreateCommandData<Coflnet.LoginUser, LoginParams> (ConfigController.ApplicationSettings.id,
 				new LoginParams () {
 					id = login.id,
 						secret = login.secret
@@ -99,7 +99,7 @@ public class CoflnetUserTests {
 		(new CoflnetUser ()).GetCommandController ().OverwriteCommand<TestCommandWithPermission> ();
 
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<TestCommandWithPermission, int> (login.id, 1), true);
+			CommandData.CreateCommandData<TestCommandWithPermission, int> (login.id, 1), true);
 
 		yield return new WaitForSeconds (0.5f);
 
@@ -115,7 +115,7 @@ public class CoflnetUserTests {
 		// tell the server his id
 		ConfigController.ApplicationSettings.id = new SourceReference (1, 1, 1, 0);
 		ServerCore.Init ();
-		MessageData response = null;
+		CommandData response = null;
 		ClientSocket.Instance.Reconnect ();
 		ClientSocket.Instance.AddCallback (data => {
 			response = data;
@@ -132,7 +132,7 @@ public class CoflnetUserTests {
 
 		// send the command
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
+			CommandData.CreateCommandData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
 
 		// await response
 		yield return new UnityEngine.WaitForSeconds (0.5f);
@@ -140,7 +140,7 @@ public class CoflnetUserTests {
 		var login = response.GetAs<RegisterUserResponse> ();
 
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<Coflnet.LoginUser, LoginParams> (
+			CommandData.CreateCommandData<Coflnet.LoginUser, LoginParams> (
 				ConfigController.ApplicationSettings.id,
 				new LoginParams () {
 					id = login.id,
@@ -158,7 +158,7 @@ public class CoflnetUserTests {
 		//tell the client what user we are
 		ConfigController.ActiveUserId = login.id;
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<ChatMessageCommand, string> (receiverUser.Id, "hi"));
+			CommandData.CreateCommandData<ChatMessageCommand, string> (receiverUser.Id, "hi"));
 
 		yield return new WaitForSeconds (0.5f);
 
@@ -167,7 +167,7 @@ public class CoflnetUserTests {
 
 		// connect with the receiver
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<Coflnet.LoginUser, LoginParams> (
+			CommandData.CreateCommandData<Coflnet.LoginUser, LoginParams> (
 				ConfigController.ApplicationSettings.id,
 				new LoginParams () {
 					id = receiverUser.Id,
@@ -179,7 +179,7 @@ public class CoflnetUserTests {
 		ConfigController.ActiveUserId = receiverUser.Id;
 
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<Coflnet.ReceiveableResource.GetMessages, int> (receiverUser.Id, 0));
+			CommandData.CreateCommandData<Coflnet.ReceiveableResource.GetMessages, int> (receiverUser.Id, 0));
 
 		yield return new WaitForSeconds (0.5f);
 		Logger.Log (response.type);
@@ -194,7 +194,7 @@ public class CoflnetUserTests {
 	}
 
 	class ChatMessageCommand : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			Logger.Log ("executed");
 		}
 
@@ -212,7 +212,7 @@ public class CoflnetUserTests {
 		ConfigController.ApplicationSettings.id = new SourceReference (1, 1, 1, 0);
 		ServerCore.Init ();
 		ClientSocket.Instance.Reconnect ();
-		MessageData response = null;
+		CommandData response = null;
 		ClientSocket.Instance.AddCallback (data => {
 			response = data;
 		});
@@ -227,7 +227,7 @@ public class CoflnetUserTests {
 
 		// send the command
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
+			CommandData.CreateCommandData<RegisterUser, RegisterUserRequest> (ConfigController.ApplicationSettings.id, request));
 
 		// await response
 		yield return new UnityEngine.WaitForSeconds (0.5f);
@@ -235,7 +235,7 @@ public class CoflnetUserTests {
 		var login = response.GetAs<RegisterUserResponse> ();
 
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<Coflnet.LoginUser, LoginParams> (
+			CommandData.CreateCommandData<Coflnet.LoginUser, LoginParams> (
 				ConfigController.ApplicationSettings.id,
 				new LoginParams () {
 					id = login.id,
@@ -253,7 +253,7 @@ public class CoflnetUserTests {
 		(new CoflnetUser ()).GetCommandController ().OverwriteCommand<TestCommandWithPermission> ();
 
 		ClientSocket.Instance.SendCommand (
-			MessageData.CreateMessageData<ChatMessageCommand, string> (receiverUser.Id, "hi"));
+			CommandData.CreateCommandData<ChatMessageCommand, string> (receiverUser.Id, "hi"));
 
 		yield return new WaitForSeconds (0.5f);
 

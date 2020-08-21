@@ -7,21 +7,21 @@ public class CreationTests {
 
     [Test]
     public void CreationTestsSimplePasses() {
-		var userId = new SourceReference(1,1);
+		var userId = new EntityId(1,1);
 		DevCore.Init(userId);
 
 		var user = DevCore.DevInstance.simulationInstances[userId].core as ClientCoreProxy;
 		var server = DevCore.DevInstance.simulationInstances[userId.FullServerId].core as ServerCoreProxy;
 
 
-		Referenceable.globalCommands.OverwriteCommand<CreateTestCommand>();
+		Entity.globalCommands.OverwriteCommand<CreateTestCommand>();
 
 
-		var res = user.CreateResource<CreateTestCommand>();
+		var res = user.CreateEntity<CreateTestCommand>();
 
 		// the resource should now exist both on the client and server instance
 
-		var resource = user.ReferenceManager.GetResource<TestResource>(res.Id);
+		var resource = user.EntityManager.GetEntity<TestResource>(res.Id);
 
 		
 		// is the right type
@@ -29,7 +29,7 @@ public class CreationTests {
 		// has a nonlocal serverId
 		Assert.IsTrue(resource.Id.ServerId != 0);
 		// exists on the server
-		Assert.IsTrue(server.ReferenceManager.Exists(resource.Id));
+		Assert.IsTrue(server.EntityManager.Exists(resource.Id));
 		
     }
 
@@ -37,23 +37,23 @@ public class CreationTests {
 	public void CreationTestsWithOptions() {
 		var testValue =50;
 
-		var userId = new SourceReference(1,1);
+		var userId = new EntityId(1,1);
 		DevCore.Init(userId);
 
 		var user = DevCore.DevInstance.simulationInstances[userId].core as ClientCoreProxy;
 
 
-		Referenceable.globalCommands.OverwriteCommand<CreateTestWithOptionsCommand>();
+		Entity.globalCommands.OverwriteCommand<CreateTestWithOptionsCommand>();
 
 
-		var res = user.CreateResource<CreateTestWithOptionsCommand,CreateTestWithOptionsCommand.Options>(
+		var res = user.CreateEntity<CreateTestWithOptionsCommand,CreateTestWithOptionsCommand.Options>(
 			new CreateTestWithOptionsCommand.Options(){
 				Value=testValue
 			});
 
 		// the resource should now exist both on the client and server instance
 
-		var resource = user.ReferenceManager.GetResource<TestResource>(res.Id);
+		var resource = user.EntityManager.GetEntity<TestResource>(res.Id);
 
 		
 		Assert.AreEqual(testValue,resource.value);
@@ -61,7 +61,7 @@ public class CreationTests {
 
 
 	[DataContract]
-    public class TestResource : Referenceable
+    public class TestResource : Entity
     {
 		[DataMember]
 		public int value;
@@ -76,7 +76,7 @@ public class CreationTests {
     {
         public override string Slug => "createtestb";
 
-        public override Referenceable CreateResource(MessageData data)
+        public override Entity CreateResource(CommandData data)
         {
             return new TestResource();
         }
@@ -91,7 +91,7 @@ public class CreationTests {
     {
         public override string Slug => "createtestp";
 
-        public override Referenceable CreateResource(MessageData data)
+        public override Entity CreateResource(CommandData data)
         {
 			var options =data.GetAs<Options>();
             return new TestResource(){value=options.Value};

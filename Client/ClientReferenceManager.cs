@@ -3,7 +3,7 @@ using System;
 using Coflnet;
 
 namespace Coflnet.Client {
-	public class ClientReferenceManager : ReferenceManager
+	public class ClientReferenceManager : EntityManager
     {
 
         public ClientReferenceManager() : this("res")
@@ -15,17 +15,17 @@ namespace Coflnet.Client {
 		}
 
 
-		public override void ExecuteForReference(MessageData data, SourceReference sender = default(SourceReference))
+		public override void ExecuteForReference(CommandData data, EntityId sender = default(EntityId))
 		{
-			if (data.rId.ServerId == 0) {
+			if (data.Recipient.ServerId == 0) {
 				// special case it is myself (0 is local)
 				coreInstance.ExecuteCommand (data);
 				return;
 			}
 
 
-						InnerReference<Referenceable> reference;
-			TryGetReference (data.rId, out reference);
+						InnerReference<Entity> reference;
+			TryGetReference (data.Recipient, out reference);
 
 			if (reference == null || reference.Resource == null) {
 				// we dont't have it
@@ -35,10 +35,10 @@ namespace Coflnet.Client {
 			var command = reference
 						.Resource
 						.GetCommandController ()
-						.GetCommand (data.type);
+						.GetCommand (data.Type);
 
 			// execute the command if it is localPropagation or comming from the managing node
-			if(command.Settings.LocalPropagation || IsManagingNodeFor(data.sId,data.rId))
+			if(command.Settings.LocalPropagation || IsManagingNodeFor(data.SenderId,data.Recipient))
 			{
 				command.Execute(data);
 			}
@@ -49,20 +49,20 @@ namespace Coflnet.Client {
 		/// Creates a new reference.
 		/// </summary>
 		/// <returns>The reference identifier.</returns>
-		/// <param name="referenceable">Referencable object to store.</param>
-		public override SourceReference CreateReference(Referenceable referenceable, bool force = false)
+		/// <param name="entity">Referencable object to store.</param>
+		public override EntityId CreateReference(Entity entity, bool force = false)
 		{
 			// TODO: maybe initiate a request for an server generated unique id
 
 			long nextIndex = ThreadSaveIdGenerator.NextId;
             // as client we are unable to assing uuids so we use 0 indicating it isn't set
-			SourceReference newReference = new SourceReference(0, nextIndex);
+			EntityId newReference = new EntityId(0, nextIndex);
 
-			if (referenceable.Id != new SourceReference() && !force)
-				throw new Exception("The referenceable already had an id, it may already have been registered. Call with force = true to ignore");
-			referenceable.Id = newReference;
+			if (entity.Id != new EntityId() && !force)
+				throw new Exception("The entity already had an id, it may already have been registered. Call with force = true to ignore");
+			entity.Id = newReference;
 
-			InnerReference<Referenceable> referenceObject = new InnerReference<Referenceable>(referenceable);
+			InnerReference<Entity> referenceObject = new InnerReference<Entity>(entity);
 
 			if (!AddReference(referenceObject))
 				throw new Exception("adding failed");

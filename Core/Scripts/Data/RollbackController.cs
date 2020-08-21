@@ -12,9 +12,9 @@ namespace Coflnet.Core
 		/// <summary>
 		/// The <see cref="ReferenceManager"/> this controller should work with
 		/// </summary>
-		public ReferenceManager ReferenceManager;
+		public EntityManager ReferenceManager;
 
-		private ConcurrentDictionary<SourceReference,List<ObjectBackup>> backups;
+		private ConcurrentDictionary<EntityId,List<ObjectBackup>> backups;
 
 		/// <summary>
 		/// An instance of <see cref="RollbackController"/> class since usually only one is required.
@@ -30,7 +30,7 @@ namespace Coflnet.Core
 		/// </summary>
 		/// <param name="id">The id of the object to reverse</param>
 		/// <param name="msgId">The messageId of the command that failed executing on the server</param>
-		public void Rollback(SourceReference id, long msgId)
+		public void Rollback(EntityId id, long msgId)
 		{
 			List<ObjectBackup> list;
 
@@ -39,7 +39,7 @@ namespace Coflnet.Core
 				var lastState = list.Find(e=>e.msgId == msgId);
 
 				ReferenceManager.ReplaceResource(
-					ReferenceManager.GetResource<Referenceable>(
+					ReferenceManager.GetEntity<Entity>(
 						lastState.backupObject));
 			}
 		}
@@ -49,7 +49,7 @@ namespace Coflnet.Core
 		/// </summary>
 		/// <param name="object">The old object state to save</param>
 		/// <param name="msgId">The messageId of the command that will be executed next</param>
-		public void Add(Referenceable @object, long msgId)
+		public void Add(Entity @object, long msgId)
 		{
 			var copy = ReferenceManager.CopyResource(@object);
 
@@ -67,7 +67,7 @@ namespace Coflnet.Core
 		/// </summary>
 		/// <param name="id">The id of the target object</param>
 		/// <param name="msgId">The messageId of the command that got accepted by the server</param>
-		public void Remove(SourceReference id,long msgId)
+		public void Remove(EntityId id,long msgId)
 		{
 			List<ObjectBackup> list;
 			if(backups.TryGetValue(id,out list))
@@ -88,9 +88,9 @@ namespace Coflnet.Core
 		public RollbackController()
 		{
 			backups = DataController.Instance.LoadObject<
-						ConcurrentDictionary<SourceReference,List<ObjectBackup>>>(
+						ConcurrentDictionary<EntityId,List<ObjectBackup>>>(
 							"rollbackLedger",
-							()=>new ConcurrentDictionary<SourceReference,List<ObjectBackup>>());
+							()=>new ConcurrentDictionary<EntityId,List<ObjectBackup>>());
 			
 			DataController.Instance.RegisterSaveCallback(Save);
 		}
@@ -99,10 +99,10 @@ namespace Coflnet.Core
 		private class ObjectBackup
 		{
 			public long msgId;
-			public SourceReference targetObject;
-			public SourceReference backupObject;
+			public EntityId targetObject;
+			public EntityId backupObject;
 
-            public ObjectBackup(long msgId, SourceReference targetObject, SourceReference backupObject)
+            public ObjectBackup(long msgId, EntityId targetObject, EntityId backupObject)
             {
                 this.msgId = msgId;
                 this.targetObject = targetObject;

@@ -14,7 +14,7 @@ namespace Coflnet.Core.Scripts
 			Instance = new ConnectionManager ();
 		}
 
-		public ICommandTransmit GetOrCreateConnectionTo(SourceReference id)
+		public ICommandTransmit GetOrCreateConnectionTo(EntityId id)
 		{
 			return ClientSocket.Instance;
 		}

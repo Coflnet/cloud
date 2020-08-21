@@ -2,29 +2,29 @@
 
 namespace Coflnet.Server
 {
-	public static class MessageDataExtentions
+	public static class CommandDataExtentions
 	{
 		/// <summary>
-		/// Gets the resource target (receiver) of this <see cref="MessageData"/> if present on the server.
+		/// Gets the resource target (receiver) of this <see cref="CommandData"/> if present on the server.
 		/// This is the recomended way of implementing Serverside Commands
 		/// </summary>
 		/// <returns>The resource.</returns>
-		/// <param name="data">Messagedata .</param>
-		public static Referenceable GetResource(this MessageData data)
+		/// <param name="data"><see cref="CommandData"/> .</param>
+		public static Entity GetResource(this CommandData data)
 		{
-			return ReferenceManager.Instance.GetResource(data.rId);
+			return EntityManager.Instance.GetResource(data.Recipient);
 		}
 
 		/// <summary>
-		/// Gets the resource target (receiver) of this <see cref="MessageData"/> if present on the server.
+		/// Gets the resource target (receiver) of this <see cref="CommandData"/> if present on the server.
 		/// This is the recomended way of implementing Serverside Commands
 		/// </summary>
 		/// <returns>The resource.</returns>
 		/// <param name="data">Data.</param>
-		/// <typeparam name="T">What kind of <see cref="Referenceable"/> to get as.</typeparam>
-		public static T GetResource<T>(this MessageData data) where T : Referenceable
+		/// <typeparam name="T">What kind of <see cref="Entity"/> to get as.</typeparam>
+		public static T GetEntity<T>(this CommandData data) where T : Entity
 		{
-			return ReferenceManager.Instance.GetResource<T>(data.rId);
+			return EntityManager.Instance.GetEntity<T>(data.Recipient);
 		}
 	}
 }

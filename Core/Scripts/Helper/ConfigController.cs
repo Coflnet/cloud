@@ -8,10 +8,10 @@ namespace Coflnet
 	{
 		private static ApplicationSettings applicationSettings;
 
-		public static SourceReference DeviceId;
-		public static SourceReference InstallationId;
+		public static EntityId DeviceId;
+		public static EntityId InstallationId;
 
-		public static SourceReference ActiveUserId = SourceReference.Default;
+		public static EntityId ActiveUserId = EntityId.Default;
 
 		public static UserSettings UserSettings
 		{
@@ -27,7 +27,7 @@ namespace Coflnet
 
 		public static List<UserSettings> Users { get; private set; }
 
-		public static SourceReference ManagingServer
+		public static EntityId ManagingServer
 		{
 			get
 			{
@@ -78,16 +78,16 @@ namespace Coflnet
 		{
 			if (ValuesController.HasKey("currentUserIdentifier"))
 			{
-				ActiveUserId = ValuesController.GetValue<SourceReference>("currentUserIdentifier");
+				ActiveUserId = ValuesController.GetValue<EntityId>("currentUserIdentifier");
 			}
 
 			if (ValuesController.HasKey("deviceId"))
 			{
-				DeviceId = ValuesController.GetValue<SourceReference>("deviceId");
+				DeviceId = ValuesController.GetValue<EntityId>("deviceId");
 			}
 			if (ValuesController.HasKey("installId"))
 			{
-				InstallationId = ValuesController.GetValue<SourceReference>("installationId");
+				InstallationId = ValuesController.GetValue<EntityId>("installationId");
 			}
 
 			if (FileController.Exists("userSettings"))
@@ -117,7 +117,7 @@ namespace Coflnet
 
 			// serverId 1,1,* is reserved for development 
 			// also region 0 is development / not set
-			if (serverId <= (new SourceReference(1, 1, 1, 0)).ServerId)
+			if (serverId <= (new EntityId(1, 1, 1, 0)).ServerId)
 			{
 				return $"localhost:{port}";
 			}
@@ -143,9 +143,9 @@ namespace Coflnet
 		public static void Save()
 		{
 			FileController.WriteAllBytes("userSettings", MessagePackSerializer.Serialize(UserSettings));
-			ValuesController.SetValue<SourceReference>("currentUserIdentifier", ActiveUserId);
-			ValuesController.SetValue<SourceReference>("deviceId", DeviceId);
-			ValuesController.SetValue<SourceReference>("installationId", InstallationId);
+			ValuesController.SetValue<EntityId>("currentUserIdentifier", ActiveUserId);
+			ValuesController.SetValue<EntityId>("deviceId", DeviceId);
+			ValuesController.SetValue<EntityId>("installationId", InstallationId);
 		}
 
 		public static long PrimaryServer
@@ -169,7 +169,7 @@ namespace Coflnet
 		[Key(0)]
 		public List<long> managingServers;
 		[Key(1)]
-		public SourceReference userId;
+		public EntityId userId;
 		[Key(2)]
 		public byte[] userSecret;
 		[Key(3)]
@@ -182,7 +182,7 @@ namespace Coflnet
 			managingServers.Add(0);
 		}
 
-		public UserSettings(List<long> managingServers, SourceReference userId, byte[] userSecret, string locale = null)
+		public UserSettings(List<long> managingServers, EntityId userId, byte[] userSecret, string locale = null)
 		{
 			this.managingServers = managingServers;
 			this.userId = userId;
@@ -193,7 +193,7 @@ namespace Coflnet
 
 	public class ApplicationSettings
 	{
-		public SourceReference id;
+		public EntityId id;
 
 		public long serverId;
 	}

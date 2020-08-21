@@ -12,11 +12,11 @@ namespace Coflnet {
 			Instance = new IsManagingServerPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 
-			return data.sId == target.Id.FullServerId ||
-				ConfigController.Users.Where (u => u.managingServers != null && u.managingServers.Contains (data.rId.ServerId)).Count () != 0 &&
-				data.sId.ResourceId == 0;
+			return data.SenderId == target.Id.FullServerId ||
+				ConfigController.Users.Where (u => u.managingServers != null && u.managingServers.Contains (data.Recipient.ServerId)).Count () != 0 &&
+				data.SenderId.LocalId == 0;
 		}
 
 		public override string Slug {

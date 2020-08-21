@@ -7,7 +7,7 @@ public class ChatTests {
 
     [Test]
     public void AddChat() {
-        var chat =new Chat(new ChatMember(new SourceReference(5,4)));
+        var chat =new Chat(new ChatMember(new EntityId(5,4)));
 
         ChatService.Instance.AddChat(chat);
 
@@ -28,7 +28,7 @@ public class ChatTests {
     }
     [Test]
     public void RemoveChat() {
-        var chat =new Chat(new ChatMember(new SourceReference(5,4)));
+        var chat =new Chat(new ChatMember(new EntityId(5,4)));
         ChatService.Instance.AddChat(chat);
 
         ChatService.Instance.Save(DataController.Instance);

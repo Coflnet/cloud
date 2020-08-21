@@ -18,7 +18,7 @@ namespace Coflnet
 		/// What application type this device coresponds to
 		/// </summary>
 		[DataMember]
-		public SourceReference ApplicationId;
+		public EntityId ApplicationId;
 		/// <summary>
 		/// Device secret used for authentication purposes
 		/// </summary>
@@ -69,12 +69,12 @@ namespace Coflnet
 		/// <summary>
 		/// Messages in sending queue
 		/// </summary>
-		public List<MessageData> UnsentMessages;
+		public List<CommandData> UnsentMessages;
 
 
 
 
-		public Device(SourceReference owner) : base(owner)
+		public Device(EntityId owner) : base(owner)
 		{
 			
 		}
@@ -93,7 +93,7 @@ namespace Coflnet
 			// Add commands for the users list
 			RemoteList<Reference<CoflnetUser>>.AddCommands
 				(commandController,nameof(Users),m=>m.GetTargetAs<Device>().Users
-				,m=>new Reference<CoflnetUser>(m.GetAs<SourceReference>()));
+				,m=>new Reference<CoflnetUser>(m.GetAs<EntityId>()));
 				
 			// Add commands for the installed apps list
 			RemoteList<string>.AddCommands
@@ -112,7 +112,7 @@ namespace Coflnet
 		private static CommandController _commands;
 
 		[DataMember]
-		public SourceReference AppId;
+		public EntityId AppId;
 		[DataMember]
 		public Reference<Device> Device;
 		[DataMember]
@@ -139,11 +139,11 @@ namespace Coflnet
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute(MessageData data)
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute(CommandData data)
 		{
 			// execute it on the local user
-			data.CoreInstance.ReceiveCommand(data.GetAs<MessageData>());
+			data.CoreInstance.ReceiveCommand(data.GetAs<CommandData>());
 		}
 
 		/// <summary>

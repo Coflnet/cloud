@@ -8,8 +8,8 @@ namespace Coflnet {
 			Instance = new CanChangePermissionPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return target.IsAllowedAccess (data.sId, AccessMode.CHANGE_PERMISSIONS);
+		public override bool CheckPermission (CommandData data, Entity target) {
+			return target.IsAllowedAccess (data.SenderId, AccessMode.CHANGE_PERMISSIONS);
 
 		}
 

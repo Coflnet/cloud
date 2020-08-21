@@ -43,17 +43,17 @@ namespace Coflnet.Server
 			// get arround the serialization if the local server is the target
 			if (serverId == CurrentServer.ServerId)
 			{
-				CoflnetCore.Instance.GetCommandController().ExecuteCommand(command, new MessageData()
+				CoflnetCore.Instance.GetCommandController().ExecuteCommand(command, new CommandData()
 				{
 					DeSerialized = data
 				});
 				return;
 			}
 
-			MessageData message = new MessageData()
+			CommandData message = new CommandData()
 			{
 				message = MessagePack.MessagePackSerializer.Serialize<T>(data),
-				type = command.Slug
+				Type = command.Slug
 			};
 			SendCommandToServer(message, serverId);
 		}
@@ -63,7 +63,7 @@ namespace Coflnet.Server
 		/// </summary>
 		/// <param name="data">Data.</param>
 		/// <param name="server">Server.</param>
-		public new void SendCommandToServer(MessageData data, CoflnetServer server)
+		public new void SendCommandToServer(CommandData data, CoflnetServer server)
 		{
 			// if it is the current server add it to the stack
 			if (CurrentServer.PublicId == server.PublicId)

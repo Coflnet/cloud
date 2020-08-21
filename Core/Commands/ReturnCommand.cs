@@ -11,22 +11,22 @@ namespace Coflnet
 	/// </summary>
 	public abstract class ReturnCommand : Command
 	{
-		public override void Execute(MessageData data)
+		public override void Execute(CommandData data)
 		{
 			var returnData = ExecuteWithReturn(data);
 			// set headers
-			returnData.type = "response";
-			returnData.rId = data.sId;
-			returnData.sId = data.rId;
+			returnData.Type = "response";
+			returnData.Recipient = data.SenderId;
+			returnData.SenderId = data.Recipient;
 
 			// wrap it into a container so receiver knows to what request it coresponds to
-			returnData.message = IEncryption.ConcatBytes(BitConverter.GetBytes(data.mId), returnData.message);
+			returnData.message = IEncryption.ConcatBytes(BitConverter.GetBytes(data.MessageId), returnData.message);
 			data.SendBack(returnData);
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
 
 
-		public abstract MessageData ExecuteWithReturn(MessageData data);
+		public abstract CommandData ExecuteWithReturn(CommandData data);
 
 		protected override CommandSettings GetSettings()
 		{
@@ -44,8 +44,8 @@ namespace Coflnet
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute(MessageData data)
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute(CommandData data)
 		{
 			// The command may not be present anymore
 			long id = BitConverter.ToInt64(data.message, 0);
@@ -84,11 +84,11 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data"></param>
 		/// <returns></returns>
-		public abstract Referenceable CreateResource(MessageData data);
+		public abstract Entity CreateResource(CommandData data);
 
-		public override void Execute(MessageData data)
+		public override void Execute(CommandData data)
 		{
-			SourceReference oldId;
+			EntityId oldId;
 			try 
 			{
 				oldId = data.GetAs<CreationParamsBase>().options.OldId;
@@ -98,10 +98,10 @@ namespace Coflnet
 			}
 			var resource = CreateResource(data);
 
-			resource.AssignId(data.CoreInstance.ReferenceManager);
+			resource.AssignId(data.CoreInstance.EntityManager);
 
 			// make sure the owner is set
-			resource.GetAccess().Owner = data.rId;
+			resource.GetAccess().Owner = data.Recipient;
 
 			// add the size to any data cap limit (tracking module)
 			// TODO 
@@ -109,8 +109,8 @@ namespace Coflnet
 
 			// it is possible that the return will not be received by the target in case it gets offline
 
-			data.SendBack(MessageData.CreateMessageData<CreationResponseCommand,KeyValuePair<SourceReference,SourceReference>>
-				(data.sId,new KeyValuePair<SourceReference,SourceReference>(oldId,resource.Id)));
+			data.SendBack(CommandData.CreateCommandData<CreationResponseCommand,KeyValuePair<EntityId,EntityId>>
+				(data.SenderId,new KeyValuePair<EntityId,EntityId>(oldId,resource.Id)));
 		}
 
 		
@@ -142,13 +142,13 @@ namespace Coflnet
 				/// The temporarly client side assigned id 
 				/// </summary>
 				[Key(0)]
-				public SourceReference OldId;
+				public EntityId OldId;
 
 				/// <summary>
 				/// The prefered (nearest) Region of the client to host 
 				/// </summary>
 				[Key(1)]
-				public SourceReference preferedRegion;
+				public EntityId preferedRegion;
 			}
 
 			public CreationParamsBase()
@@ -161,14 +161,14 @@ namespace Coflnet
     public abstract class ReceivableCreationCommand : CreationCommand
     {
 
-        public override Referenceable CreateResource(MessageData data)
+        public override Entity CreateResource(CommandData data)
         {
             var res = CreateReceivable(data);
 			res.publicKey = data.GetAs<Params>().KeyPair.publicKey;
 			return res;
         }
 
-		protected abstract ReceiveableResource CreateReceivable(MessageData data);
+		protected abstract ReceiveableResource CreateReceivable(CommandData data);
 
 
 		[MessagePackObject]
@@ -185,11 +185,11 @@ namespace Coflnet
     {
         public override string Slug => "creationResponse";
 
-        public override void Execute(MessageData data)
+        public override void Execute(CommandData data)
         {
-			var pair = data.GetAs<KeyValuePair<SourceReference,SourceReference>>();
+			var pair = data.GetAs<KeyValuePair<EntityId,EntityId>>();
             
-			data.CoreInstance.ReferenceManager.UpdateIdAndAddRedirect(pair.Key,pair.Value);
+			data.CoreInstance.EntityManager.UpdateIdAndAddRedirect(pair.Key,pair.Value);
         }
 
         protected override CommandSettings GetSettings()

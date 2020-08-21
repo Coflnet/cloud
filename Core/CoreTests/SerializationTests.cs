@@ -14,13 +14,13 @@ public class SerializationTests {
 	[Test]
 	public void DependencyTest () {
 		var cc = new CommandController ();
-		var md = new MessageData ();
+		var md = new CommandData ();
 		Assert.IsNotNull (cc);
 		Assert.IsNotNull (md);
 	}
 
 	public class TestCommand : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			throw new TestException ();
 		}
 
@@ -59,13 +59,13 @@ public class SerializationTests {
 	}
 
 	[Test]
-	public void CommandControllerBackfall () {
+	public void CommandControllerFallback () {
 		var cc = new CommandController ();
 		cc.RegisterCommand<TestCommand> ();
 
 		var ccOuter = new CommandController (cc);
 		Assert.Throws<TestException> (() => {
-			ccOuter.ExecuteCommand (new MessageData (_TestCommandName));
+			ccOuter.ExecuteCommand (new CommandData (_TestCommandName));
 		});
 	}
 
@@ -74,14 +74,14 @@ public class SerializationTests {
 		var cc = new CommandController ();
 		var ccOuter = new CommandController (cc);
 		Assert.Throws<CommandUnknownException> (() => {
-			ccOuter.ExecuteCommand (new MessageData (_TestCommandName + "abc"));
+			ccOuter.ExecuteCommand (new CommandData (_TestCommandName + "abc"));
 		});
 	}
 
 	[Test]
 	public void UserCreate () {
 		var user1 = new CoflnetUser ();
-		var user2 = new CoflnetUser (new SourceReference ());
+		var user2 = new CoflnetUser (new EntityId ());
 
 		Assert.IsNotNull (user1);
 		Assert.IsNotNull (user2);
@@ -89,19 +89,19 @@ public class SerializationTests {
 
 	[Test]
 	public void SourceReferenceLocation () {
-		var sourceReference = new SourceReference (1, 2, 3, 0);
+		var sourceReference = new EntityId (1, 2, 3, 0);
 		Assert.AreEqual (2, sourceReference.LocationInRegion);
 	}
 
 	[Test]
 	public void SourceReferenceBigLocation () {
-		var sourceReference = new SourceReference (1, 1234567, 3, 0);
+		var sourceReference = new EntityId (1, 1234567, 3, 0);
 		Assert.AreEqual (1234567, sourceReference.LocationInRegion);
 	}
 
 	[Test]
 	public void SourceReferenceRegion () {
-		var sourceReference = new SourceReference (1, 2, 3, 0);
+		var sourceReference = new EntityId (1, 2, 3, 0);
 		Assert.AreEqual (1, sourceReference.Region);
 	}
 
@@ -187,7 +187,7 @@ public class SerializationTests {
 		user.OnlyFriendsMessage = true;
 		user.FirstName = "Bernd das Brot ist";
 		DataController.Instance.SaveData ($"res/{user.Id.ToString()}aaaa", MessagePackSerializer.Typeless.Serialize(user));
-		ReferenceManager.Instance.Save (user.Id, true);
+		EntityManager.Instance.Save (user.Id, true);
 	}
 
 	/// <summary>
@@ -203,9 +203,9 @@ public class SerializationTests {
 		user.FirstName = "Bernd das Brot";
 
 		DataController.Instance.SaveData ($"res/{user.Id.ToString()}aaaa", MessagePack.MessagePackSerializer.Typeless.Serialize (user));
-		ReferenceManager.Instance.Save (user.Id, true);
+		EntityManager.Instance.Save (user.Id, true);
 
-		var loadedUser = ReferenceManager.Instance.GetResource<CoflnetUser> (user.Id);
+		var loadedUser = EntityManager.Instance.GetEntity<CoflnetUser> (user.Id);
 		Assert.AreEqual (user.FirstName, loadedUser.FirstName);
 	}
 }

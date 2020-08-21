@@ -5,9 +5,9 @@ using System.Collections.Generic;
 namespace Coflnet.Server
 {
 	/// <summary>
-	/// Server version of <see cref="MessageDataPersistence"/> it is faster
+	/// Server version of <see cref="CommandDataPersistence"/> it is faster
 	/// </summary>
-	public class MessagePersistence : MessageDataPersistence
+	public class MessagePersistence : CommandDataPersistence
 	{
 
 		protected string subDirectory = "";
@@ -25,30 +25,30 @@ namespace Coflnet.Server
 		/// <summary>
 		/// Save the specified data. Will drop the data if the receiver and sender are the same.
 		/// </summary>
-		/// <param name="messageData">Data to save.</param>
-		public override void SaveMessage(MessageData messageData)
+		/// <param name="commandData">Data to save.</param>
+		public override void SaveMessage(CommandData commandData)
 		{
 			// messages to oneself won't be saved
-			if (messageData.sId == messageData.rId)
+			if (commandData.SenderId == commandData.Recipient)
 			{
 				return;
 			}
-			var serverData = messageData as ServerMessageData;
+			var serverData = commandData as ServerCommandData;
 			if (serverData == null)
 			{
-				serverData = new ServerMessageData(messageData);
+				serverData = new ServerCommandData(commandData);
 			}
-			FileController.AppendLineAs<ServerMessageData>(PathToSource(messageData.rId), serverData);
+			FileController.AppendLineAs<ServerCommandData>(PathToSource(commandData.Recipient), serverData);
 		}
 
-		public override IEnumerable<MessageData> GetMessagesFor(SourceReference id)
+		public override IEnumerable<CommandData> GetMessagesFor(EntityId id)
 		{
 			var path = PathToSource(id);
 			if (FileController.Exists(path))
 			{
-				foreach (var item in FileController.ReadLinesAs<MessageData>(PathToSource(id)))
+				foreach (var item in FileController.ReadLinesAs<CommandData>(PathToSource(id)))
 				{
-					if (item.rId == id)
+					if (item.Recipient == id)
 					{
 						yield return item;
 					}
@@ -59,24 +59,24 @@ namespace Coflnet.Server
 		}
 
 		/// <summary>
-		/// Deletes all messages for a given Referenceable
+		/// Deletes all messages for a given <see cref="Entity"/>
 		/// </summary>
 		/// <param name="id">Identifier.</param>
-		public void DeleteMessages(SourceReference id)
+		public void DeleteMessages(EntityId id)
 		{
 			FileController.Delete(PathToSource(id));
 		}
 
 
-		public override void Remove(SourceReference receipient, SourceReference sender, long id)
+		public override void Remove(EntityId receipient, EntityId sender, long id)
 		{
-			DataController.Instance.RemoveFromFile<MessageData>(PathToSource(receipient), m => m.mId != id && sender != m.sId);
+			DataController.Instance.RemoveFromFile<CommandData>(PathToSource(receipient), m => m.MessageId != id && sender != m.SenderId);
 		}
 
 
-		protected string PathToSource(SourceReference id)
+		protected string PathToSource(EntityId id)
 		{
-			return $"{id.Region}/{id.LocationInRegion}/{id.ServerRelativeToLocation}/{id.ResourceId}";
+			return $"{id.Region}/{id.LocationInRegion}/{id.ServerRelativeToLocation}/{id.LocalId}";
 		}
 	}
 }

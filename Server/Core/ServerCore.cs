@@ -33,19 +33,19 @@ namespace Coflnet.Server
 
 
 
-			// chang messagedata persistence
-			MessageDataPersistence.Instance = MessagePersistence.ServerInstance;
+			// chang <see cref="CommandData"/> persistence
+			CommandDataPersistence.Instance = MessagePersistence.ServerInstance;
 		}
 
-		public ServerCore() : this(ReferenceManager.Instance)
+		public ServerCore() : this(EntityManager.Instance)
 		{
 
 		}
 
-		public ServerCore(ReferenceManager referenceManager)
+		public ServerCore(EntityManager referenceManager)
 		{
-			this.ReferenceManager = referenceManager;
-			this.ReferenceManager.coreInstance = this;
+			this.EntityManager = referenceManager;
+			this.EntityManager.coreInstance = this;
 		}
 
 
@@ -64,7 +64,7 @@ namespace Coflnet.Server
 		/// Should be called on startup of the application will reset the server if called twice
 		/// </summary>
 		/// <param name="serverId">Server identifier.</param>
-		public static void Init(SourceReference serverId)
+		public static void Init(EntityId serverId)
 		{
 			ServerInstance.Id = serverId;
 			CoflnetSocket.socketServer.Start();
@@ -89,7 +89,7 @@ namespace Coflnet.Server
 			Commands.RemoveAllCommands();
 			//Commands.RegisterCommand<ReceiveConfirm>();
 			Commands.RegisterCommand<GetResourceCommand>();
-			Commands.RegisterCommand<ReferenceManager.UpdateResourceCommand>();
+			Commands.RegisterCommand<EntityManager.UpdateEntityCommand>();
 			Commands.RegisterCommand<Sub2Command>();
 
 			foreach (var item in CoreExtentions.Commands)
@@ -101,7 +101,7 @@ namespace Coflnet.Server
 			{
 				item.RegisterCommands(Commands);
 			}
-			this.ReferenceManager.AddReference(this);
+			this.EntityManager.AddReference(this);
 		}
 
 		public override CommandController GetCommandController()
@@ -110,7 +110,7 @@ namespace Coflnet.Server
 		}
 
 
-		public override void SendCommand(MessageData data, long serverId = 0)
+		public override void SendCommand(CommandData data, long serverId = 0)
 		{
 			if (CoflnetSocket.TrySendCommand(data, serverId))
 				return;
@@ -119,31 +119,31 @@ namespace Coflnet.Server
 			MessagePersistence.ServerInstance.SaveMessage(data);
 		}
 
-		public override void SendCommand<C, T>(SourceReference receipient, T data, long id = 0, SourceReference sender = default(SourceReference))
+		public override void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId))
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
-			var messageData = MessageData.SerializeMessageData<T>(data, commandInstance.Slug, id);
+			var commandData = CommandData.SerializeCommandData<T>(data, commandInstance.Slug, id);
 
-			messageData.rId = receipient;
-			messageData.sId = sender;
+			commandData.Recipient = receipient;
+			commandData.SenderId = sender;
 
 
 			if (receipient.ServerId == this.Id.ServerId && commandInstance.Settings.LocalPropagation)
 			{
 
-				ThreadController.Instance.ExecuteCommand(commandInstance, messageData);
+				ThreadController.Instance.ExecuteCommand(commandInstance, commandData);
 			}
 
-			SendCommand(messageData);
+			SendCommand(commandData);
 		}
 
-		public override void SendCommand<C>(SourceReference receipient, byte[] data)
+		public override void SendCommand<C>(EntityId receipient, byte[] data)
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
-			var messageData = new MessageData(receipient, data, commandInstance.Slug);
+			var commandData = new CommandData(receipient, data, commandInstance.Slug);
 
-			SendCommand(messageData);
+			SendCommand(commandData);
 		}
 
 

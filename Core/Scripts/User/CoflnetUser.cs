@@ -58,7 +58,7 @@ namespace Coflnet
 		/// References to App specific data. Eg settings or game Progress
 		/// </summary>
 		[Key("ad")]
-		public RemoteDictionary<SourceReference,Reference<ApplicationData>> appData;
+		public RemoteDictionary<EntityId,Reference<ApplicationData>> appData;
 
 		/// <summary>
 		/// The first name of the user.
@@ -144,7 +144,7 @@ namespace Coflnet
 		/// The profile image for this user
 		/// </summary>
 		[Key( "pi")]
-		public SourceReference ProfileImage;
+		public EntityId ProfileImage;
 
 		/// <summary>
 		/// Devices allowed to access this users data
@@ -244,7 +244,7 @@ namespace Coflnet
 			friends.Add (request.RequestingUser);
 
 			// tell his server to add him as well
-			request.RequestingUser.ExecuteForResource (new MessageData (this.Id, 0, "accepted_request"));
+			request.RequestingUser.ExecuteForEntity (new CommandData (this.Id, 0, "accepted_request"));
 		}
 
 		public void AcceptedFriendRequest (Reference<CoflnetUser> user) {
@@ -276,13 +276,13 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="creater">OauthClient creating this user.</param>
 		public CoflnetUser (Application creater) : base (creater.Id) {
-			this.Id = ReferenceManager.Instance.CreateReference (this);
+			this.Id = EntityManager.Instance.CreateReference (this);
 			this.blocked = new List<Reference<CoflnetUser>> ();
 			this.silent = new List<Reference<CoflnetUser>> ();
 			this.friends = new List<Reference<CoflnetUser>> ();
 		}
 
-		public CoflnetUser (SourceReference owner) : base (owner) {
+		public CoflnetUser (EntityId owner) : base (owner) {
 			this.blocked = new List<Reference<CoflnetUser>> ();
 			this.silent = new List<Reference<CoflnetUser>> ();
 			this.friends = new List<Reference<CoflnetUser>> ();
@@ -443,7 +443,7 @@ namespace Coflnet
 			return commandController;
 		}
 
-		public static CoflnetUser Generate (SourceReference owner, ReferenceManager referenceManager = null) {
+		public static CoflnetUser Generate (EntityId owner, EntityManager referenceManager = null) {
 			var user = new CoflnetUser (owner);
 			// generate a secret
 			user.Secret = unity.libsodium.StreamEncryption.GetRandomBytes (16);
@@ -452,9 +452,9 @@ namespace Coflnet
 		}
 
 		public class GetPublicKeys : Command {
-			public override void Execute (MessageData data) {
+			public override void Execute (CommandData data) {
 				// this is the current user
-				var user = ReferenceManager.Instance.GetResource<CoflnetUser> (data.rId);
+				var user = EntityManager.Instance.GetEntity<CoflnetUser> (data.Recipient);
 				var args = new EncryptionController.ReceivePublicKeys.Arguments () {
 					id = user.Id,
 						publicIdentKey = user.publicKey,
@@ -469,7 +469,7 @@ namespace Coflnet
 
 				ServerController.Instance.
 				SendCommand<EncryptionController.ReceivePublicKeys, EncryptionController.ReceivePublicKeys.Arguments> (
-					data.sId,
+					data.SenderId,
 					args);
 			}
 
@@ -490,13 +490,13 @@ namespace Coflnet
 	/// Gets a custom user key value.
 	/// </summary>
 	public class GetUserKeyValue : ReturnCommand {
-		public override MessageData ExecuteWithReturn (MessageData data) {
+		public override CommandData ExecuteWithReturn (CommandData data) {
 			String result;
 			data.GetTargetAs<CoflnetUser> ()
 				.KeyValues
 				.TryGetValue (data.GetAs<string> (), out result);
 
-			var returnData = new MessageData ();
+			var returnData = new CommandData ();
 			returnData.SerializeAndSet<String> (result);
 			return returnData;
 		}
@@ -518,12 +518,12 @@ namespace Coflnet
 	/// Sets an user key value.
 	/// </summary>
 	public class SetUserKeyValue : ValueSetter {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			var okay = data.GetAs<KeyValuePair<string, string>> ();
 
 
-			data.CoreInstance.ReferenceManager
-				.GetResource<CoflnetUser> (data.rId)
+			data.CoreInstance.EntityManager
+				.GetEntity<CoflnetUser> (data.Recipient)
 				.KeyValues[okay.Key] = okay.Value;
 		}
 
@@ -557,7 +557,7 @@ namespace Coflnet
 	}
 
 	public class GetUserName : ValueGetter {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			SendBack (data, data.Serialize<string> (data.GetTargetAs<CoflnetUser> ().UserName));
 		}
 
@@ -574,9 +574,9 @@ namespace Coflnet
     /// Get basic info about the user in one object
     /// </summary>
     public class GetBasicInfo : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			var result = new PublicUserInfo ();
-			var user = ReferenceManager.Instance.GetResource<CoflnetUser> (data.rId);
+			var user = EntityManager.Instance.GetEntity<CoflnetUser> (data.Recipient);
 
 			result.userName = user.UserName;
 			result.GetAccess().Owner = user.Id;
@@ -585,7 +585,7 @@ namespace Coflnet
 				result.profilePicture = user.ProfileImage;
 			}
 
-			data.SendBack (MessageData.CreateMessageData<BasicInfoResponse, PublicUserInfo> (data.sId, result));
+			data.SendBack (CommandData.CreateCommandData<BasicInfoResponse, PublicUserInfo> (data.SenderId, result));
 		}
 
 		protected override CommandSettings GetSettings () {
@@ -602,7 +602,7 @@ namespace Coflnet
 	}
 
 	public class BasicInfoResponse : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			throw new NotImplementedException ();
 		}
 

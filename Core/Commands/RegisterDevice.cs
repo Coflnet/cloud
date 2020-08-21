@@ -6,7 +6,7 @@ namespace Coflnet
 			return new CommandSettings ();
 		}
 
-        public override Referenceable CreateResource(MessageData data)
+        public override Entity CreateResource(CommandData data)
         {
             return new Device ();
         }

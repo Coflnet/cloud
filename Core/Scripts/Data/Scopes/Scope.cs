@@ -21,7 +21,7 @@ namespace Coflnet.Core
         public virtual void SetFields(IHasScopes newRes, in IHasScopes oldRes)
         {
             
-            RequireAs<Referenceable>(newRes).Id = RequireAs<Referenceable>(oldRes).Id;
+            RequireAs<Entity>(newRes).Id = RequireAs<Entity>(oldRes).Id;
         }
 
         /// <summary>

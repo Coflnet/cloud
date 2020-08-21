@@ -34,7 +34,7 @@ public class NetworkingTests
 			};
 
 		var secondClient = ClientSocket.NewInstance();
-		//secondClient.SendCommand(MessageData.CreateMessageData<Login>);
+		//secondClient.SendCommand(CommandData.CreateCommandData<Login>);
 
 
 		ClientSocket.Instance.Reconnect();
@@ -46,7 +46,7 @@ public class NetworkingTests
 		LogAssert.ignoreFailingMessages = true;
 
 
-		ClientSocket.Instance.SendCommand(new MessageData(newId), false);
+		ClientSocket.Instance.SendCommand(new CommandData(newId), false);
 
 		yield return new UnityEngine.WaitForSeconds(1);
 

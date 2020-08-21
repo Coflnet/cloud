@@ -69,12 +69,12 @@ namespace Coflnet
 		}
 
 
-		public void ExecuteCommand(Command command, MessageData data)
+		public void ExecuteCommand(Command command, CommandData data)
 		{
 			CommandItem comandWithData = new CommandItem(command, data);
 
 			// find worker
-			CoflnetThreadWorker worker = GetWorkerForUser(data.sId);
+			CoflnetThreadWorker worker = GetWorkerForUser(data.SenderId);
 			// stack commandItem on the worker
 			// it will be executed asyncronously
 			worker.queuedCommand.Enqueue(comandWithData);
@@ -92,9 +92,9 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data">Data passed from a connected device.</param>
 		/// <param name="controller">Controller to search for the command.</param>
-		public void ExecuteCommand(MessageData data, CommandController controller)
+		public void ExecuteCommand(CommandData data, CommandController controller)
 		{
-			ExecuteCommand(controller.GetCommand(data.type), data);
+			ExecuteCommand(controller.GetCommand(data.Type), data);
 		}
 
 
@@ -158,12 +158,12 @@ namespace Coflnet
 		/// However an user could get to another thread if the total amount of threads in/decreases
 		/// </summary>
 		/// <param name="userId">User identifier.</param>
-		public CoflnetThreadWorker GetWorkerForUser(SourceReference userId)
+		public CoflnetThreadWorker GetWorkerForUser(EntityId userId)
 		{
 			//ThreadPool.QueueUserWorkItem((object state) => { Logger.Log("hi"); });
 			//ThreadStart threadStart = new ThreadStart(Work);
 			//Thread thread = new Thread(threadStart, 1000);
-			byte[] idSlice = BitConverter.GetBytes(userId.ResourceId);
+			byte[] idSlice = BitConverter.GetBytes(userId.LocalId);
 			int id = Math.Abs(BitConverter.ToInt32(idSlice, 0)) % workers.Count;
 			return workers[id];
 		}
@@ -223,7 +223,7 @@ namespace Coflnet
 
 
 
-		public void Work(MessageData data)
+		public void Work(CommandData data)
 		{
 			int index = 0;
 			//var request = new RestRequest(Method.GET);
@@ -302,7 +302,7 @@ namespace Coflnet
 				}
 				catch (Exception ex)
 				{
-					Track.instance.Error(item.data.type, MessagePack.MessagePackSerializer.SerializeToJson(item), ex.ToString());
+					Track.instance.Error(item.data.Type, MessagePack.MessagePackSerializer.SerializeToJson(item), ex.ToString());
 				}
 			}
 			else
@@ -350,7 +350,7 @@ namespace Coflnet
 	/// </summary>
 	public class ThreadCommandResult
 	{
-		public SourceReference executer;
+		public EntityId executer;
 		public string commandSlug;
 		/// <summary>
 		/// The execution time in ms.
@@ -367,9 +367,9 @@ namespace Coflnet
 	public class CommandItem
 	{
 		public Command command;
-		public MessageData data;
+		public CommandData data;
 
-		public CommandItem(Command command, MessageData data)
+		public CommandItem(Command command, CommandData data)
 		{
 			this.command = command;
 			this.data = data;

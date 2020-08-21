@@ -3,7 +3,7 @@ namespace Coflnet.Client
 {
 	public class RegisteredUser : Coflnet.RegisteredUser
 	{
-		public override void Execute(MessageData data)
+		public override void Execute(CommandData data)
 		{
 			var response = data.GetAs<RegisterUserResponse>();
 
@@ -14,14 +14,14 @@ namespace Coflnet.Client
 			// all outdated the client core is a device not an user
 
 
-			data.CoreInstance.ReferenceManager
-			.UpdateIdAndAddRedirect(data.rId,response.id);
+			data.CoreInstance.EntityManager
+			.UpdateIdAndAddRedirect(data.Recipient,response.id);
 
 			// add the core behind
 			var user = data.GetTargetAs<CoflnetUser>();
 
 			user.GetCommandController()
-				.AddBackfall(data.CoreInstance.GetCommandController());
+				.AddFallback(data.CoreInstance.GetCommandController());
 
 			// The core itself also has the same id
 			data.CoreInstance.Id = response.id;
@@ -36,7 +36,7 @@ namespace Coflnet.Client
 
 
 			// Login
-			ClientCore.Instance.SendCommand<LoginUser, LoginParams>(new SourceReference(response.id.ServerId, 0),
+			ClientCore.Instance.SendCommand<LoginUser, LoginParams>(new EntityId(response.id.ServerId, 0),
 																	  new LoginParams(response.id, response.secret));
 		}
 

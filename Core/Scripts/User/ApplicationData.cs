@@ -7,12 +7,12 @@ namespace Coflnet
     /// Application specific data for some user
     /// </summary>
     [MessagePackObject]
-    public class ApplicationData : Referenceable,IMessagePackSerializationCallbackReceiver
+    public class ApplicationData : Entity,IMessagePackSerializationCallbackReceiver
     {
 		private static CommandController commands = new CommandController();
 
 		[Key("aId")]
-		public SourceReference ApplicationId;
+		public EntityId ApplicationId;
 
 		[Key("kv")]
 		public RemoteDictionary<string,string> KeyValues;
@@ -28,7 +28,7 @@ namespace Coflnet
 		/// Creates a new Instance of the <see cref="ApplicationData"/> class.
 		/// </summary>
 		/// <param name="applicationId">The application this data coresponds to</param>
-		public ApplicationData(SourceReference applicationId)
+		public ApplicationData(EntityId applicationId)
 		{
 			this.ApplicationId = applicationId;
 			KeyValues = new RemoteDictionary<string, string>();

@@ -33,7 +33,7 @@ namespace Coflnet.Client.Messaging
 		public Type type;
 
 		[MessagePack.IgnoreMember]
-		public SourceReference sender
+		public EntityId sender
 		{
 			get
 			{
@@ -91,7 +91,7 @@ namespace Coflnet.Client.Messaging
             hashCode = hashCode * -1521134295 + EqualityComparer<MessageReference>.Default.GetHashCode(refs);
             hashCode = hashCode * -1521134295 + EqualityComparer<MessageReference>.Default.GetHashCode(id);
             hashCode = hashCode * -1521134295 + type.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<SourceReference>.Default.GetHashCode(sender);
+            hashCode = hashCode * -1521134295 + EqualityComparer<EntityId>.Default.GetHashCode(sender);
             return hashCode;
         }
     }

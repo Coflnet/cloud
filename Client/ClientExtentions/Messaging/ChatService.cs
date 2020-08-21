@@ -45,7 +45,7 @@ namespace Coflnet.Client.Messaging
 
 		public event Action<ChatMessage> OnReceiveMessage;
 
-		public void ReceiveMessage(ChatMessage message,SourceReference chatId)
+		public void ReceiveMessage(ChatMessage message,EntityId chatId)
 		{
 			// this is the chat in which it was sent
 			var chat = ChatManager.GetChat(chatId);
@@ -95,23 +95,23 @@ namespace Coflnet.Client.Messaging
 			MessageManager.SaveMessage(message);
 		}
 
-		public void SendMessage(ChatMessage message, SourceReference target)
+		public void SendMessage(ChatMessage message, EntityId target)
 		{
 			CoflnetCore.Instance.SendCommand<ChatMessageCommand,ChatMessage>(target,message);
 			CoflnetCore.Instance.SendCommand<ChatMessageCommand,ChatMessage>(target,message);
 		}
 
 
-		public IChat CreatePivateChat(SourceReference partner)
+		public IChat CreatePivateChat(EntityId partner)
 		{
 			return new Chat(new ChatMember(partner));
 		}
 
-		public IChat CreateGroupChat(string name,params SourceReference[] partners)
+		public IChat CreateGroupChat(string name,params EntityId[] partners)
 		{
 			var options = new CreateGroupChat.Params(partners.ToList(),name);
 			var chatResource = ClientCore.ClientInstance
-								.CreateResource<CreateGroupChat,CreateGroupChat.Params>(options);
+								.CreateEntity<CreateGroupChat,CreateGroupChat.Params>(options);
 			
 			// return the chat with temporary local id
 			return new GroupChat(chatResource.Id);
@@ -134,7 +134,7 @@ namespace Coflnet.Client.Messaging
 			return ChatManager.GetChats();
 		}
 
-		public IChat GetChat(SourceReference chatId)
+		public IChat GetChat(EntityId chatId)
 		{
 			try {
 				return ChatManager.GetChat(chatId);
@@ -181,7 +181,7 @@ namespace Coflnet.Client.Messaging
 
 		}
 
-		public ChatNotFoundException(SourceReference chatId) : base($"The chat {chatId} wans't found")
+		public ChatNotFoundException(EntityId chatId) : base($"The chat {chatId} wans't found")
 		{
 
 		}
@@ -192,7 +192,7 @@ namespace Coflnet.Client.Messaging
 	{
 		IEnumerable<IChat> GetChats();
 
-		IChat GetChat(SourceReference chatId);
+		IChat GetChat(EntityId chatId);
 
 		void AddChat(IChat chat);
 
@@ -229,7 +229,7 @@ namespace Coflnet.Client.Messaging
 
     public class CoflnetChatManager : IChatManager
     {
-		Dictionary<SourceReference, IChat> chats;
+		Dictionary<EntityId, IChat> chats;
 
 		public CoflnetChatManager()
 		{
@@ -244,7 +244,7 @@ namespace Coflnet.Client.Messaging
 		
 
 
-        public IChat GetChat(SourceReference chatId)
+        public IChat GetChat(EntityId chatId)
         {
             return chats[chatId];
         }
@@ -256,8 +256,8 @@ namespace Coflnet.Client.Messaging
 
 		public void LoadChats()
 		{
-			chats = DataController.Instance.LoadObject<Dictionary<SourceReference,IChat>>("chats",
-			()=>new Dictionary<SourceReference, IChat>());
+			chats = DataController.Instance.LoadObject<Dictionary<EntityId,IChat>>("chats",
+			()=>new Dictionary<EntityId, IChat>());
 		}
 
         public void AddChat(IChat chat)
@@ -352,7 +352,7 @@ namespace Coflnet.Client.Messaging
             // does nothing, messages are always persisted
         }
 
-        private string FileName(SourceReference chatId,long messageIndex)
+        private string FileName(EntityId chatId,long messageIndex)
 		{
 			var index = messageIndex /GroupSize;
 			return $"messages/{UserService.Instance.CurrentUserId}{chatId}-{index}";
@@ -378,7 +378,7 @@ namespace Coflnet.Client.Messaging
 		}
 
 		[Key(10)]
-		Dictionary<SourceReference, Status> States;
+		Dictionary<EntityId, Status> States;
 
 		/// <summary>
 		/// Wherether or not the message as been sent
@@ -390,7 +390,7 @@ namespace Coflnet.Client.Messaging
 		/// The chat id this message coresponds to.
 		/// </summary>
 		[Key(12)]
-		public SourceReference chatId;
+		public EntityId chatId;
 
 
 		/// <summary>
@@ -402,7 +402,7 @@ namespace Coflnet.Client.Messaging
 
 
 
-		public LocalChatMessage(string content, DateTime timetamp, MessageReference refs, MessageReference id, Type type, Dictionary<SourceReference, Status> states = null) : base(content, timetamp, refs, id, type)
+		public LocalChatMessage(string content, DateTime timetamp, MessageReference refs, MessageReference id, Type type, Dictionary<EntityId, Status> states = null) : base(content, timetamp, refs, id, type)
 		{
 			States = states;
 		}

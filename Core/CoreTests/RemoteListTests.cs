@@ -11,17 +11,17 @@ public partial class RemoteListTests {
     /// </summary>
     [Test]
     public void RemoteListAdd() {
-        var owner = new SourceReference(5,3);
+        var owner = new EntityId(5,3);
 
         DummyCore.Init(owner);
 
         // create resource
         var list = new ResWithList(owner);
         // register it
-        list.AssignId(DummyCore.Instance.ReferenceManager);
+        list.AssignId(DummyCore.Instance.EntityManager);
 
         // Add (update) it with a new item
-        var listItem = new Reference<CoflnetUser>(new SourceReference(7,3));
+        var listItem = new Reference<CoflnetUser>(new EntityId(7,3));
         list.Users.Add(listItem);
 
         // Should be added remotely now
@@ -33,7 +33,7 @@ public partial class RemoteListTests {
 
         var reconstrated = MessagePackSerializer.Typeless.Deserialize(bytes) as ResWithList;
 
-        Assert.AreEqual(listItem.ReferenceId,reconstrated.Users[0].ReferenceId);
+        Assert.AreEqual(listItem.EntityId,reconstrated.Users[0].EntityId);
     }
 
 
@@ -42,14 +42,14 @@ public partial class RemoteListTests {
     /// </summary>
         [Test]
     public void RemoteListSeralizationTest() {
-        var owner = new SourceReference(5,3);
+        var owner = new EntityId(5,3);
 
         DummyCore.Init(owner);
 
         // create resource
         var list = new ResWithList(owner);
         // assing it an id
-        list.AssignId(DummyCore.Instance.ReferenceManager);
+        list.AssignId(DummyCore.Instance.EntityManager);
 
         var bytes= MessagePackSerializer.Typeless.Serialize(list);
 
@@ -66,16 +66,16 @@ public partial class RemoteListTests {
 
     [Test]
     public void RemoteListRemove() {
-        var owner = new SourceReference(5,3);
+        var owner = new EntityId(5,3);
 
         DummyCore.Init(owner);
 
         // create resource
         var list = new ResWithList(owner);
         // register it
-        list.AssignId(DummyCore.Instance.ReferenceManager);
+        list.AssignId(DummyCore.Instance.EntityManager);
 
-        var listItem = new Reference<CoflnetUser>(new SourceReference(7,3));
+        var listItem = new Reference<CoflnetUser>(new EntityId(7,3));
 
         // for testing add it directly
         list.Users.Add(listItem);
@@ -92,13 +92,13 @@ public partial class RemoteListTests {
 
     [Test]
     public void RemoteListResource() {
-        var owner = new SourceReference(5,3);
+        var owner = new EntityId(5,3);
 
 
         
 
-       // var list = new ListResource<SourceReference>(owner);
-        var stringList = new ListResource<string>(owner);
+       // var list = new ListEntity<SourceReference>(owner);
+        var stringList = new ListEntity<string>(owner);
 
 
         //var proxyData = GenerateAdd<SourceReference>(new SourceReference(5,54),owner,list);
@@ -119,7 +119,7 @@ public partial class RemoteListTests {
        // Logger.Log(MessagePackSerializer.ToJson(bytes));
     }
 
-    public class ResWithList : Referenceable, IMessagePackSerializationCallbackReceiver
+    public class ResWithList : Entity, IMessagePackSerializationCallbackReceiver
     {
         private static CommandController Commands = new CommandController();
 
@@ -138,7 +138,7 @@ public partial class RemoteListTests {
                     (Commands,nameof(Users),m=>m.GetTargetAs<ResWithList>().Users);
         }
 
-        public ResWithList(SourceReference owner) : base(owner)
+        public ResWithList(EntityId owner) : base(owner)
         {
             Users = new RemoteList<Reference<CoflnetUser>>(nameof(Users),this);
         }

@@ -15,18 +15,18 @@ namespace Coflnet
 	[MessagePackObject]
 	public struct MessageReference
 	{
-		private SourceReference source;
+		private EntityId source;
 		private long idfromSource;
 
 		[SerializationConstructor]
-		public MessageReference(SourceReference source, long idfromSource)
+		public MessageReference(EntityId source, long idfromSource)
 		{
 			this.source = source;
 			this.idfromSource = idfromSource;
 		}
 
 		[Key(0)]
-		public SourceReference Source
+		public EntityId Source
 		{
 			get
 			{

@@ -5,7 +5,7 @@ using MessagePack;
 namespace Coflnet
 {
 
-	public class UserFile : Referenceable
+	public class UserFile : Entity
 	{
 		protected Application application;
 		/// <summary>
@@ -21,7 +21,7 @@ namespace Coflnet
 		///              * 100 everybody (including friends can read)
 		///              * 000 only the uploader can read and write
 		/// </summary>
-		[Obsolete("got replaced by the Referenceable.Access Property")]
+		[Obsolete("got replaced by the Entity.Access Property")]
 		protected int access;
 
 
@@ -111,7 +111,7 @@ namespace Coflnet
 	}
 
 
-	public class Licence : Referenceable
+	public class Licence : Entity
 	{
 		protected string identifier;
 		protected string text;

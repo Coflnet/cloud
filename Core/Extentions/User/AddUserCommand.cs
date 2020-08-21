@@ -10,10 +10,10 @@ namespace Coflnet.Core.DeviceCommands
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute(MessageData data)
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute(CommandData data)
 		{
-			data.GetTargetAs<Device>().Users.Add(new Reference<CoflnetUser>(data.GetAs<SourceReference>()));
+			data.GetTargetAs<Device>().Users.Add(new Reference<CoflnetUser>(data.GetAs<EntityId>()));
 		}
 
 		/// <summary>
@@ -40,10 +40,10 @@ namespace Coflnet.Core.DeviceCommands
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute(MessageData data)
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute(CommandData data)
 		{
-			data.GetTargetAs<Device>().Users.Remove(new Reference<CoflnetUser>(data.GetAs<SourceReference>()));
+			data.GetTargetAs<Device>().Users.Remove(new Reference<CoflnetUser>(data.GetAs<EntityId>()));
 		}
 
 		/// <summary>

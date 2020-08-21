@@ -7,9 +7,9 @@ namespace Coflnet.Core.Commands
     {
         public override string Slug => "sub";
 
-        public override void Execute(MessageData data)
+        public override void Execute(CommandData data)
         {
-            data.GetTargetAs<Referenceable>().GetAccess().Subscribe(data.sId);
+            data.GetTargetAs<Entity>().GetAccess().Subscribe(data.SenderId);
         }
 
         protected override CommandSettings GetSettings()
@@ -26,15 +26,15 @@ namespace Coflnet.Core.Commands
         /// <summary>
         /// Execute the command logic with specified data.
         /// </summary>
-        /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-        public override void Execute(MessageData data)
+        /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+        public override void Execute(CommandData data)
         {
             // who do we want to subscribe to
-            data.CoreInstance.CloneAndSubscribe(data.GetAs<SourceReference>(),r => {
+            data.CoreInstance.CloneAndSubscribe(data.GetAs<EntityId>(),r => {
                 // send it back further
 
                 // add the client to subscriber list
-                r.GetAccess().Subscribe(data.sId);
+                r.GetAccess().Subscribe(data.SenderId);
             });
         }
 

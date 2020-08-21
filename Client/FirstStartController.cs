@@ -40,12 +40,12 @@ namespace Coflnet.Client
 				return;
 
 			// get a device Id if we haven't yet
-			if(ConfigController.DeviceId == default(SourceReference))
+			if(ConfigController.DeviceId == default(EntityId))
 			{
 				DeviceService.Instance.Setup();
 			}
 			// make an install if we haven't yet
-			if(ConfigController.InstallationId == default(SourceReference))
+			if(ConfigController.InstallationId == default(EntityId))
 			{
 				InstallService.Instance.Setup(ConfigController.DeviceId);
 			}
@@ -57,7 +57,7 @@ namespace Coflnet.Client
 
 		public void Done()
 		{
-			//ReferenceManager.Instance.GetResource<CoflnetUser>(new SourceReference()).
+			//ReferenceManager.Instance.GetEntity<CoflnetUser>(new SourceReference()).
 			UserService.Instance.CreateUser(PrivacyService.Instance.Settings);
 
 
@@ -75,9 +75,9 @@ namespace Coflnet.Client
 	/// </summary>
 	class OnlineIdResolver
 	{
-		private SourceReference _id;
+		private EntityId _id;
 
-		public SourceReference Id
+		public EntityId Id
 		{
 			get 
 			{

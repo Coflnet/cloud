@@ -9,7 +9,7 @@ namespace Coflnet
 		: base ("permission_not_met", message, userMessage, 403, null, msgId) { }
 	
 	
-		public PermissionNotMetException(string permissionSlug,SourceReference targetId,SourceReference senderId,string commandSlug,long messageId = -1) 
+		public PermissionNotMetException(string permissionSlug,EntityId targetId,EntityId senderId,string commandSlug,long messageId = -1) 
 		: base("permission_not_met", $"The permission {permissionSlug} required for executing the command {commandSlug} on {targetId} wasn't met by {senderId}","No permission",403,null,messageId)
 		{}
 	}

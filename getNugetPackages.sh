@@ -1,0 +1,1 @@
+dotnet add package MessagePack --version 2.1.165

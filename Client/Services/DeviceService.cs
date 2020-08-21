@@ -33,25 +33,25 @@ namespace Coflent.Client
 		/// </summary>
 		public void Setup()
 		{
-			ConfigController.DeviceId = clientCoreInstance.CreateResource<RegisterDevice>().Id;
+			ConfigController.DeviceId = clientCoreInstance.CreateEntity<RegisterDevice>().Id;
 		}
 
 		/// <summary>
 		/// The Id of the current active device running the software
 		/// </summary>
 		/// <value>Device Id</value>
-		public SourceReference CurrentDeviceId
+		public EntityId CurrentDeviceId
 		{
 			get
 			{
-				if(ConfigController.DeviceId == default(SourceReference))
+				if(ConfigController.DeviceId == default(EntityId))
 				{
 					Setup();
 				} else if(ConfigController.DeviceId.IsLocal)
 				{
 					// update the device id to the server generated one
-					ConfigController.DeviceId = clientCoreInstance.ReferenceManager.
-													GetResource<Device>(ConfigController.DeviceId).Id;
+					ConfigController.DeviceId = clientCoreInstance.EntityManager.
+													GetEntity<Device>(ConfigController.DeviceId).Id;
 				}
 				return ConfigController.DeviceId;
 			}

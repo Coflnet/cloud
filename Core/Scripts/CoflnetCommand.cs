@@ -4,7 +4,7 @@ namespace Coflnet
 {
     [Obsolete ("You should now derive from the abstract class 'Command'")]
 	public class CoflnetCommand {
-		public delegate void Command (MessageData messageData);
+		public delegate void Command (CommandData commandData);
 		private string slug;
 		private Command command;
 		private bool threadAble;

@@ -7,7 +7,7 @@ namespace Coflnet
 	/// Represents a serverside Application code that is capeable of managing resources or other tasks
 	/// </summary>
 	[MessagePackObject]
-	public class Application : Referenceable
+	public class Application : Entity
 	{
 		[IgnoreMember]
 		public CommandController commandController

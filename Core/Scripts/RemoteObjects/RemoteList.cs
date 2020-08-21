@@ -17,7 +17,7 @@ namespace Coflnet
 	/// <typeparam name="T"></typeparam>
 	public class RemoteList<T> : RemoteObject<List<T>>,IEnumerable<T>,IEnumerable,IList<T>,ICollection<T>
 	{
-		public RemoteList(string element,Referenceable parent)
+		public RemoteList(string element,Entity parent)
 		{
 			SetDetails(element,parent);
 		}
@@ -29,7 +29,7 @@ namespace Coflnet
 		/// <param name="nameOfAttribute"></param>
 		/// <param name="parent"></param>
 		/// <param name="update"></param>
-		public override void SetDetails(string nameOfAttribute, Referenceable parent, bool update = false)
+		public override void SetDetails(string nameOfAttribute, Entity parent, bool update = false)
 		{
 			base.SetDetails(nameOfAttribute.Trim('s'),parent,update);
 		}
@@ -152,16 +152,16 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Adds Add,AddRange,Remove,RemoveAt,RemoveRange,Insert,InsertRange and Clear commands for any list on any referenceables
+		/// Adds Add,AddRange,Remove,RemoveAt,RemoveRange,Insert,InsertRange and Clear commands for any list on any entitys
 		/// </summary>
-		/// <param name="controller">The controller of the <see cref="Referenceable"/> to add the commands to</param>
+		/// <param name="controller">The controller of the <see cref="Entity"/> to add the commands to</param>
 		/// <param name="prefix">The prefix for the commands, usually the attribute name</param>
-		///  <param name="ListGetter">A function that returns the actual list to operate on, given the target <see cref="Referenceable"/> </param>
-		/// <param name="Converter">A function that converts the data given in the <see cref="MessageData"/> content to the List type</param>
+		///  <param name="ListGetter">A function that returns the actual list to operate on, given the target <see cref="Entity"/> </param>
+		/// <param name="Converter">A function that converts the data given in the <see cref="CommandData"/> content to the List type</param>
 		/// <param name="localPropagation">Set to true if commands don't have to pass the managing server first to be applied locally</param>
-		/// <typeparam name="R">The target  <see cref="Referenceable"/> type</typeparam>
+		/// <typeparam name="R">The target  <see cref="Entity"/> type</typeparam>
 		/// <typeparam name="T">The type of the list elements</typeparam>
-		public static void AddCommands(CommandController controller,string prefix, Func<MessageData,List<T>> ListGetter, Func<MessageData,T> Converter = null,bool localPropagation = false)
+		public static void AddCommands(CommandController controller,string prefix, Func<CommandData,List<T>> ListGetter, Func<CommandData,T> Converter = null,bool localPropagation = false)
 		{
 			controller.RegisterCommand(new GetCommand(prefix,ListGetter));
 			// commands have no plural s
@@ -184,7 +184,7 @@ namespace Coflnet
 
 
 [DataContract]
-public class ListResource<T> : Referenceable,IListResource<T>
+public class ListEntity<T> : Entity,IListEntity<T>
 {
 	private static CommandController Commands = new CommandController();
 
@@ -197,14 +197,14 @@ public class ListResource<T> : Referenceable,IListResource<T>
         return Commands;
     }
 
-	public ListResource(SourceReference owner) : base(owner) {
+	public ListEntity(EntityId owner) : base(owner) {
 		Elements = new List<T>();
 	}
 
-	public ListResource(){}
+	public ListEntity(){}
 
 
-	static ListResource()
+	static ListEntity()
 	{
 		Commands.RegisterCommand<ListAddCommand<T>>();
 	}
@@ -217,8 +217,8 @@ public class ListResource<T> : Referenceable,IListResource<T>
 
 	public void Remove(T element)
 	{
-		var data = new MessageData(Access.Owner);
-		data.SerializeAndSet(MessageData.CreateMessageData<RemoteListRemoveCommand<T>,T>(this.Id,element));
+		var data = new CommandData(Access.Owner);
+		data.SerializeAndSet(CommandData.CreateCommandData<RemoteListRemoveCommand<T>,T>(this.Id,element));
 		
 		CoflnetCore.Instance.SendCommand(data);
 	}
@@ -242,11 +242,11 @@ public class ListAddCommand<T> : Command
 	/// <summary>
 	/// Execute the command logic with specified data.
 	/// </summary>
-	/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-	public override void Execute(MessageData data)
+	/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+	public override void Execute(CommandData data)
 	{
-		var obj = data.GetTargetAs<Referenceable>();
-		var list = obj as IListResource<T>;
+		var obj = data.GetTargetAs<Entity>();
+		var list = obj as IListEntity<T>;
 		list.Elements.Add(data.GetAs<T>());
 	}
 
@@ -267,7 +267,7 @@ public class ListAddCommand<T> : Command
 
 
 
-public interface IListResource<T>
+public interface IListEntity<T>
 {
 	List<T> Elements {get;set;}
 }
@@ -279,15 +279,15 @@ public class RemoteListCommand : Command
 	/// <summary>
 	/// Execute the command logic with specified data.
 	/// </summary>
-	/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-	public override void Execute(MessageData data)
+	/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+	public override void Execute(CommandData data)
 	{
-		//data.GetTargetAs<Referenceable>().ExecuteCommand()
-		var innerData= data.GetAs<MessageData>();
+		//data.GetTargetAs<<see cref="Entity"/>>().ExecuteCommand()
+		var innerData= data.GetAs<CommandData>();
 		// set the owning resource as sender
-		innerData.sId = data.rId;
+		innerData.SenderId = data.Recipient;
 		// execute the command
-		data.CoreInstance.ReferenceManager.ExecuteForReference(innerData);
+		data.CoreInstance.EntityManager.ExecuteForReference(innerData);
 	}
 
 	/// <summary>
@@ -307,7 +307,7 @@ public class RemoteListCommand : Command
 
 public abstract class RemoteChangeCommandBase<T> : Command
 {
-	protected Func<MessageData,T> getter;
+	protected Func<CommandData,T> getter;
 
 	protected bool applyLocal;
 
@@ -316,9 +316,9 @@ public abstract class RemoteChangeCommandBase<T> : Command
 	/// Creates a new Command instance
 	/// </summary>
 	/// <param name="nameOfAttribute">nameOf() attribute this command coresponds to and the getter returns</param>
-	/// <param name="getter">Function that given the Incoming <see cref="MessageData"/> returns the atrribute</param>
+	/// <param name="getter">Function that given the Incoming <see cref="CommandData"/> returns the atrribute</param>
 	/// <param name="applyLocal">If <see cref="true"/> change will be applied locally bevore being sent to server</param>
-	public RemoteChangeCommandBase(string nameOfAttribute,Func<MessageData,T> getter,bool applyLocal = false)
+	public RemoteChangeCommandBase(string nameOfAttribute,Func<CommandData,T> getter,bool applyLocal = false)
 	{
 		this.getter =getter;
 		this.Slug = nameOfAttribute;
@@ -350,17 +350,17 @@ public abstract class RemoteChangeCommandBase<T> : Command
 
 public abstract class RemoteListCommandBase<T> : Command
 {
-	protected Func<MessageData,List<T>> ListGetter;
-	protected Func<MessageData,T> Converter;
+	protected Func<CommandData,List<T>> ListGetter;
+	protected Func<CommandData,T> Converter;
 
-	public RemoteListCommandBase(string Slug,Func<MessageData,List<T>> ListGetter,Func<MessageData,T> Converter)
+	public RemoteListCommandBase(string Slug,Func<CommandData,List<T>> ListGetter,Func<CommandData,T> Converter)
 	{
 		this.ListGetter =ListGetter;
 		this.Slug = Slug;
 		this.Converter = Converter;
 	}
 
-	protected T GetElement(MessageData data)
+	protected T GetElement(CommandData data)
 	{
 		if(Converter == null)
 		{
@@ -390,7 +390,7 @@ public abstract class RemoteListCommandBase<T> : Command
 
 public class RemoteListAddCommand<T> : RemoteListCommandBase<T>
 {
-    public RemoteListAddCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T> Converter) 
+    public RemoteListAddCommand(string Slug, Func<CommandData, List<T>> ListGetter, Func<CommandData, T> Converter) 
 	: base("Add" + Slug, ListGetter, Converter)
     {
     }
@@ -398,8 +398,8 @@ public class RemoteListAddCommand<T> : RemoteListCommandBase<T>
     /// <summary>
     /// Execute the command logic with specified data.
     /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
+    /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+    public override void Execute(CommandData data)
 	{
 		ListGetter.Invoke(data).Add(GetElement(data));
 	}
@@ -409,7 +409,7 @@ public class RemoteListAddCommand<T> : RemoteListCommandBase<T>
 
 public class RemoteListRemoveCommand<T> : RemoteListCommandBase<T>
 {
-    public RemoteListRemoveCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T> Converter) 
+    public RemoteListRemoveCommand(string Slug, Func<CommandData, List<T>> ListGetter, Func<CommandData, T> Converter) 
 	: base("Remove" + Slug, ListGetter, Converter)
     {
     }
@@ -417,8 +417,8 @@ public class RemoteListRemoveCommand<T> : RemoteListCommandBase<T>
     /// <summary>
     /// Execute the command logic with specified data.
     /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
+    /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+    public override void Execute(CommandData data)
 	{
 		ListGetter.Invoke(data).Remove(GetElement(data));
 	}
@@ -428,9 +428,9 @@ public class RemoteListRemoveCommand<T> : RemoteListCommandBase<T>
 public class RemoteListAddRangeCommand<T> : RemoteListCommandBase<T>
 {
 
-	protected Func<MessageData,T[]> ConverterArray;
+	protected Func<CommandData,T[]> ConverterArray;
 
-    public RemoteListAddRangeCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T[]> Converter) 
+    public RemoteListAddRangeCommand(string Slug, Func<CommandData, List<T>> ListGetter, Func<CommandData, T[]> Converter) 
 	: base("AddRange" + Slug, ListGetter, null)
     {
 		ConverterArray = Converter;
@@ -439,8 +439,8 @@ public class RemoteListAddRangeCommand<T> : RemoteListCommandBase<T>
     /// <summary>
     /// Execute the command logic with specified data.
     /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
+    /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+    public override void Execute(CommandData data)
 	{
 		T[] values;
 		if(ConverterArray != null)
@@ -459,7 +459,7 @@ public class RemoteListAddRangeCommand<T> : RemoteListCommandBase<T>
 public class RemoteListRemoveRangeCommand<T> : RemoteListCommandBase<T>
 {
 
-    public RemoteListRemoveRangeCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T> Converter) 
+    public RemoteListRemoveRangeCommand(string Slug, Func<CommandData, List<T>> ListGetter, Func<CommandData, T> Converter) 
 	: base("RemoveRange" + Slug, ListGetter, Converter)
     {
     }
@@ -467,8 +467,8 @@ public class RemoteListRemoveRangeCommand<T> : RemoteListCommandBase<T>
     /// <summary>
     /// Execute the command logic with specified data.
     /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
+    /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+    public override void Execute(CommandData data)
 	{
 		var args = data.GetAs<ValueTuple<int,int>>();
 
@@ -479,7 +479,7 @@ public class RemoteListRemoveRangeCommand<T> : RemoteListCommandBase<T>
 public class RemoteListInsertRangeCommand<T> : RemoteListCommandBase<T>
 {
 
-    public RemoteListInsertRangeCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T> Converter) 
+    public RemoteListInsertRangeCommand(string Slug, Func<CommandData, List<T>> ListGetter, Func<CommandData, T> Converter) 
 	: base("InsertRange" + Slug, ListGetter, Converter)
     {
     }
@@ -487,8 +487,8 @@ public class RemoteListInsertRangeCommand<T> : RemoteListCommandBase<T>
     /// <summary>
     /// Execute the command logic with specified data.
     /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
+    /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+    public override void Execute(CommandData data)
 	{
 		var args = data.GetAs<KeyValuePair<int,T[]>>();
 
@@ -500,7 +500,7 @@ public class RemoteListInsertRangeCommand<T> : RemoteListCommandBase<T>
 public class RemoteListInsertCommand<T> : RemoteListCommandBase<T>
 {
 
-    public RemoteListInsertCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T> Converter) 
+    public RemoteListInsertCommand(string Slug, Func<CommandData, List<T>> ListGetter, Func<CommandData, T> Converter) 
 	: base("Insert" + Slug, ListGetter, Converter)
     {
     }
@@ -508,8 +508,8 @@ public class RemoteListInsertCommand<T> : RemoteListCommandBase<T>
     /// <summary>
     /// Execute the command logic with specified data.
     /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
+    /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+    public override void Execute(CommandData data)
 	{
 		var args = data.GetAs<KeyValuePair<int,T>>();
 
@@ -521,7 +521,7 @@ public class RemoteListInsertCommand<T> : RemoteListCommandBase<T>
 public class RemoteListRemoveAtCommand<T> : RemoteListCommandBase<T>
 {
 
-    public RemoteListRemoveAtCommand(string Slug, Func<MessageData, List<T>> ListGetter, Func<MessageData, T> Converter) 
+    public RemoteListRemoveAtCommand(string Slug, Func<CommandData, List<T>> ListGetter, Func<CommandData, T> Converter) 
 	: base("RemoveAt" + Slug, ListGetter, Converter)
     {
     }
@@ -529,8 +529,8 @@ public class RemoteListRemoveAtCommand<T> : RemoteListCommandBase<T>
     /// <summary>
     /// Execute the command logic with specified data.
     /// </summary>
-    /// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-    public override void Execute(MessageData data)
+    /// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+    public override void Execute(CommandData data)
 	{
 		ListGetter.Invoke(data).RemoveAt(data.GetAs<int>());
 	}

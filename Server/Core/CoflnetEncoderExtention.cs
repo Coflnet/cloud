@@ -10,9 +10,9 @@ public static class CoflnetEncoderExtention
 		return encoder.Deserialize<T>(args.RawData);
 	}
 
-	public static ServerMessageData Deserialize(this CoflnetEncoder encoder, MessageEventArgs args)
+	public static ServerCommandData Deserialize(this CoflnetEncoder encoder, MessageEventArgs args)
 	{
-		return encoder.Deserialize<ServerMessageData>(args.RawData);
+		return encoder.Deserialize<ServerCommandData>(args.RawData);
 	}
 
 	/// <summary>

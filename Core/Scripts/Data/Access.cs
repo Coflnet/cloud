@@ -7,7 +7,7 @@ namespace Coflnet
     [DataContract]
 	public class Access {
 		[DataMember]
-		public SourceReference Owner;
+		public EntityId Owner;
 
 		/// <summary>
 		/// enum values are given by
@@ -38,15 +38,15 @@ namespace Coflnet
 		[DataMember]
 		public GeneralAccess generalAccess;
 		[DataMember]
-		public Dictionary<SourceReference, AccessMode> resourceAccess;
+		public Dictionary<EntityId, AccessMode> resourceAccess;
 		/// <summary>
 		/// SourceReferences which want to be notified if this resource changes
 		/// </summary>
 		/// <value>The subscribers.</value>
 		[DataMember]
-		public List<SourceReference> Subscribers { get; set; }
+		public List<EntityId> Subscribers { get; set; }
 
-		public Access (SourceReference owner) {
+		public Access (EntityId owner) {
 			Owner = owner;
 		}
 
@@ -64,7 +64,7 @@ namespace Coflnet
 		/// <param name="mode">AccessMode.</param>
 		/// <param name="target">The resource in question</param>
 		/// <returns></returns>
-		public bool IsAllowedToAccess(SourceReference requestingReference,SourceReference target, AccessMode mode = AccessMode.READ)
+		public bool IsAllowedToAccess(EntityId requestingReference,EntityId target, AccessMode mode = AccessMode.READ)
 		{
 			return IsAllowedToAccess(requestingReference,mode,target);
 		}
@@ -76,10 +76,10 @@ namespace Coflnet
 		/// <param name="requestingReference">Requesting reference.</param>
 		/// <param name="mode">AccessMode.</param>
 		/// <param name="target">The resource in question, this may be required since since An Access can be used for multiple Resources.</param>
-		public bool IsAllowedToAccess (SourceReference requestingReference, AccessMode mode = AccessMode.READ,SourceReference target = default(SourceReference)) {
+		public bool IsAllowedToAccess (EntityId requestingReference, AccessMode mode = AccessMode.READ,EntityId target = default(EntityId)) {
 
 			// unauthorized senders can't access
-			if(requestingReference == default(SourceReference))
+			if(requestingReference == default(EntityId))
 			{
 				return false;
 			}
@@ -118,9 +118,9 @@ namespace Coflnet
 			return false;
 		}
 
-		public void Authorize (SourceReference sourceReference, AccessMode mode = AccessMode.READ) {
+		public void Authorize (EntityId sourceReference, AccessMode mode = AccessMode.READ) {
 			if (resourceAccess == null)
-				resourceAccess = new Dictionary<SourceReference, AccessMode> ();
+				resourceAccess = new Dictionary<EntityId, AccessMode> ();
 			resourceAccess[sourceReference] = mode;
 			// also authorize the server
 			AccessMode serverMode;
@@ -137,10 +137,10 @@ namespace Coflnet
 		/// Subscribes the resource to this one
 		/// </summary>
 		/// <param name="sourceReference"></param>
-		public void Subscribe(SourceReference sourceReference)
+		public void Subscribe(EntityId sourceReference)
 		{
 			if(Subscribers == null){
-				Subscribers = new List<SourceReference>();
+				Subscribers = new List<EntityId>();
 			}
 			if(Subscribers.Contains(sourceReference)){
 				// already subscribed
@@ -153,7 +153,7 @@ namespace Coflnet
 		/// Unsubscribes
 		/// </summary>
 		/// <param name="sourceReference"></param>
-		public void Unsubscribe(SourceReference sourceReference)
+		public void Unsubscribe(EntityId sourceReference)
 		{
 			if(Subscribers == null){
 				return;
@@ -183,11 +183,11 @@ namespace Coflnet
 		/// Returns the <see cref="resourceAccess"/> Attribute, will generate a new if it is currently null
 		/// </summary>
 		/// <returns></returns>
-		public Dictionary<SourceReference,AccessMode> GetSpecialCases()
+		public Dictionary<EntityId,AccessMode> GetSpecialCases()
 		{
 			if(resourceAccess == null)
 			{
-				resourceAccess = new Dictionary<SourceReference, AccessMode>();
+				resourceAccess = new Dictionary<EntityId, AccessMode>();
 			}
 			return resourceAccess;
 		}
@@ -196,19 +196,19 @@ namespace Coflnet
         {
             var access = obj as Access;
             return access != null &&
-                   EqualityComparer<SourceReference>.Default.Equals(Owner, access.Owner) &&
+                   EqualityComparer<EntityId>.Default.Equals(Owner, access.Owner) &&
                    generalAccess == access.generalAccess &&
-                   EqualityComparer<Dictionary<SourceReference, AccessMode>>.Default.Equals(resourceAccess, access.resourceAccess) &&
-                   EqualityComparer<List<SourceReference>>.Default.Equals(Subscribers, access.Subscribers);
+                   EqualityComparer<Dictionary<EntityId, AccessMode>>.Default.Equals(resourceAccess, access.resourceAccess) &&
+                   EqualityComparer<List<EntityId>>.Default.Equals(Subscribers, access.Subscribers);
         }
 
         public override int GetHashCode()
         {
             var hashCode = 2127058248;
-            hashCode = hashCode * -1521134295 + EqualityComparer<SourceReference>.Default.GetHashCode(Owner);
+            hashCode = hashCode * -1521134295 + EqualityComparer<EntityId>.Default.GetHashCode(Owner);
             hashCode = hashCode * -1521134295 + generalAccess.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<Dictionary<SourceReference, AccessMode>>.Default.GetHashCode(resourceAccess);
-            hashCode = hashCode * -1521134295 + EqualityComparer<List<SourceReference>>.Default.GetHashCode(Subscribers);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Dictionary<EntityId, AccessMode>>.Default.GetHashCode(resourceAccess);
+            hashCode = hashCode * -1521134295 + EqualityComparer<List<EntityId>>.Default.GetHashCode(Subscribers);
             return hashCode;
         }
     }

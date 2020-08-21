@@ -5,7 +5,7 @@ namespace Coflnet
 		#pragma warning disable 612, 618
 		CoflnetCommand oldCommand;
 
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			oldCommand.GetCommand ().Invoke (data);
 		}
 

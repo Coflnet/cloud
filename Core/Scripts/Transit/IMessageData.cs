@@ -1,6 +1,6 @@
 namespace Coflnet
 {
-    public interface IMessageData
+    public interface ICommandData
     {
         byte[] message { get; set; }
         string Data { get; }
@@ -12,10 +12,10 @@ namespace Coflnet
         bool Equals(object obj);
         T GetAs<T>();
         int GetHashCode();
-        T GetTargetAs<T>() where T : Referenceable;
-        void SendBack(MessageData data);
+        T GetTargetAs<T>() where T : Entity;
+        void SendBack(CommandData data);
         byte[] Serialize<T>(T ob);
-        MessageData SerializeAndSet<T>(T ob);
+        CommandData SerializeAndSet<T>(T ob);
         void SetCommand<C>() where C : Command, new();
         void Sign(KeyPair singKeyPair);
         string ToString();

@@ -16,7 +16,7 @@ namespace Coflnet
 		}
 
 
-		public override bool CheckPermission(MessageData data, Referenceable target)
+		public override bool CheckPermission(CommandData data, Entity target)
 		{
 			return IsManagingServerPermission.Instance.CheckPermission(data,target)|| IsSelfPermission.Instance.CheckPermission(data,target);
 		}

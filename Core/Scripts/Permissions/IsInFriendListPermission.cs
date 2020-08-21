@@ -8,7 +8,7 @@ namespace Coflnet {
 			Instance = new IsInFriendListPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			var user = target as CoflnetUser;
 			if (user == null) {
 				return false;
@@ -20,7 +20,7 @@ namespace Coflnet {
 			}
 
 			return user.Friends.Where (friend =>
-				friend.ReferenceId == data.sId
+				friend.EntityId == data.SenderId
 			).Any ();
 
 		}

@@ -8,7 +8,7 @@ namespace Coflnet
 	/// </summary>
 	public class PublicUserInfo : PublicInfo
 	{
-		public SourceReference profilePicture;
+		public EntityId profilePicture;
 		public string userName;
 		public string status;
 

@@ -11,7 +11,7 @@ public class MessageTests {
 
     [Test]
     public void StoreMessages() {
-        UserService.Instance.ChangeCurrentUser(new SourceReference(5,12));
+        UserService.Instance.ChangeCurrentUser(new EntityId(5,12));
         
         List<LocalChatMessage> messages = new List<LocalChatMessage>();
 
@@ -50,7 +50,7 @@ public class MessageTests {
     /// </summary>
         [Test]
     public void LoadMessagesWithOffsetSmal() {
-        UserService.Instance.ChangeCurrentUser(new SourceReference(5,12));
+        UserService.Instance.ChangeCurrentUser(new EntityId(5,12));
         List<LocalChatMessage> messages = new List<LocalChatMessage>();
         var chat = CreateChat();
         var messageCount = 20;
@@ -118,7 +118,7 @@ public class MessageTests {
         FileController.Delete("chats");
         ChatService.Instance.DeleteAll();
 
-        UserService.Instance.ChangeCurrentUser(new SourceReference(5,12));
+        UserService.Instance.ChangeCurrentUser(new EntityId(5,12));
         List<LocalChatMessage> messages = new List<LocalChatMessage>();
         var chat = CreateChat();
         var messageCount = 2000;
@@ -179,7 +179,7 @@ public class MessageTests {
 
     private Chat CreateChat()
     {
-        var chatId = new SourceReference(26,2);
+        var chatId = new EntityId(26,2);
         var chat = new Chat(new ChatMember(chatId));
         ChatService.Instance.AddChat(chat);
         return chat;

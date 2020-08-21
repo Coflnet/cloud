@@ -11,7 +11,7 @@ namespace Coflnet
 		public abstract ServerCommandSettings GetServerSettings ();
 
 		public new void SendToServer (long serverId, byte[] data, string type) {
-			ServerController.Instance.SendCommandToServer (new MessageData (type, data), serverId);
+			ServerController.Instance.SendCommandToServer (new CommandData (type, data), serverId);
 		}
 
 		/// <summary>
@@ -19,9 +19,9 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="original">Original message data pointer.</param>
 		/// <param name="data">Data.</param>
-		public void SendBack (MessageData original, byte[] data) {
-			byte[] withId = MessagePackSerializer.Serialize<Response> (new Response (original.mId, data));
-			original.sId.ExecuteForResource (new MessageData ("response", withId));
+		public void SendBack (CommandData original, byte[] data) {
+			byte[] withId = MessagePackSerializer.Serialize<Response> (new Response (original.MessageId, data));
+			original.SenderId.ExecuteForEntity (new CommandData ("response", withId));
 			//SendToUser(original.sId, withId, "response");
 		}
 
@@ -30,7 +30,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="original">Original message data.</param>
 		/// <param name="data">Data.</param>
-		public void SendBack (MessageData original, int data) {
+		public void SendBack (CommandData original, int data) {
 			SendBack (original, BitConverter.GetBytes (data));
 		}
 

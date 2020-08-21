@@ -5,7 +5,7 @@ namespace Coflnet.Core.Crypto
     using unity.libsodium;
 
     /// <summary>
-    /// Serializeable Signature for <see cref="MessageData"/>
+    /// Serializeable Signature for <see cref="CommandData"/>
     /// </summary>
     [MessagePackObject]
     [Union(1,typeof(LibsodiumSignature))]
@@ -19,7 +19,7 @@ namespace Coflnet.Core.Crypto
 		public abstract byte[] GenerateSignature(byte[] data,KeyPair keyPair);
 
         /// <summary>
-        /// Validates the signature on the <see cref="MessageData"/> 
+        /// Validates the signature on the <see cref="CommandData"/> 
         /// </summary>
         /// <param name="data">The data to validate</param>
         /// <param name="signature">The signature to validate for the data</param>

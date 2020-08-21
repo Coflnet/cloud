@@ -3,7 +3,7 @@ using MessagePack;
 
 namespace Coflnet {
 	public class RegisteredUser : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			var response = data.GetAs<RegisterUserResponse> ();
 			ConfigController.UserSettings.userId = response.id;
 			ConfigController.UserSettings.userSecret = response.secret;

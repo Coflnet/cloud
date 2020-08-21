@@ -15,7 +15,7 @@ public partial class CoflnetJsonEncoder
 	}
 */
     [MessagePackObject]
-	public class DevMessageData : ServerMessageData
+	public class DevCommandData : ServerCommandData
 	{
 		byte[] ausgelagert;
 
@@ -48,11 +48,11 @@ public partial class CoflnetJsonEncoder
 		}
 
 
-		public DevMessageData()
+		public DevCommandData()
 		{
 		}
 
-		public DevMessageData(MessageData data) : base(data)
+		public DevCommandData(CommandData data) : base(data)
 		{
 		}
 

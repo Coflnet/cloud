@@ -14,10 +14,10 @@ namespace Coflnet.Core.Permissions
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		/// <param name="target">The local <see cref="Referenceable"/> on which to test on .</param>
-		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return false;// data.CoreInstance.ReferenceManager.GetResource<Referecneable>(target.GetAccess().Owner).IsAllowedAccess (data.sId, AccessMode.READ);
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		/// <param name="target">The local <see cref="Entity"/> on which to test on .</param>
+		public override bool CheckPermission (CommandData data, Entity target) {
+			return false;// data.CoreInstance.ReferenceManager.GetEntity<Referecneable>(target.GetAccess().Owner).IsAllowedAccess (data.sId, AccessMode.READ);
 		}
 
 		public override string Slug => "SameAsOwnerPermission";

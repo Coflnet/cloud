@@ -15,7 +15,7 @@ namespace Coflnet
 		/// <summary>
 		/// (Signing) KeyPairs of different SourceReferences we have and can use
 		/// </summary>
-		private Dictionary<SourceReference,SigningKeyPair> signingKeyPairs;
+		private Dictionary<EntityId,SigningKeyPair> signingKeyPairs;
 
 		public static KeyPairManager Instance;
 
@@ -23,7 +23,7 @@ namespace Coflnet
 		{
 			Instance = new KeyPairManager();
 			Instance.keys = DataController.Instance.LoadObject<Dictionary<byte[], KeyWithTime>>("coflnet_keyPairs");
-			Instance.signingKeyPairs = DataController.Instance.LoadObject<Dictionary<SourceReference,SigningKeyPair>>("signingKeys");
+			Instance.signingKeyPairs = DataController.Instance.LoadObject<Dictionary<EntityId,SigningKeyPair>>("signingKeys");
 		}
 
 		/// <summary>
@@ -54,19 +54,19 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="owner">The owner of the keyPair</param>
 		/// <param name="keyPair"></param>
-		public void AddSigningKeyPair(SourceReference owner,SigningKeyPair keyPair)
+		public void AddSigningKeyPair(EntityId owner,SigningKeyPair keyPair)
 		{
 			signingKeyPairs.Add(owner,keyPair);
 		}
 
 		/// <summary>
-		/// Gets or creates a new <see cref="SigningKeyPair"/> for some <see cref="SourceReference"/>.
+		/// Gets or creates a new <see cref="SigningKeyPair"/> for some <see cref="EntityId"/>.
 		/// Uses the <see cref="EncryptionController.Instance.SigningAlgorythm"/> to create a new <see cref="SigningKeyPair"/> 
 		/// if there is none yet.
 		/// </summary>
 		/// <param name="owner"></param>
 		/// <returns>The existing or new <see cref="SigningKeyPair"/></returns>
-		public SigningKeyPair GetOrCreateSigningPair(SourceReference owner)
+		public SigningKeyPair GetOrCreateSigningPair(EntityId owner)
 		{
 			if(!signingKeyPairs.ContainsKey(owner))
 			{
@@ -76,11 +76,11 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Gets the <see cref="SigningKeyPair"/> for some <see cref="SourceReference"/>
+		/// Gets the <see cref="SigningKeyPair"/> for some <see cref="EntityId"/>
 		/// </summary>
-		/// <param name="owner">The <see cref="SourceReference"/> to get the <see cref="SigningKeyPair"/> for</param>
+		/// <param name="owner">The <see cref="EntityId"/> to get the <see cref="SigningKeyPair"/> for</param>
 		/// <returns>The <see cref="SigningKeyPair"/> for the <see cref="owner"/></returns>
-		public SigningKeyPair GetSigningKeyPair(SourceReference owner)
+		public SigningKeyPair GetSigningKeyPair(EntityId owner)
 		{
 			if(!signingKeyPairs.ContainsKey(owner))
 			{
@@ -92,9 +92,9 @@ namespace Coflnet
 		/// <summary>
 		/// Removes the <see cref="SigningKeyPair"/> if it existed
 		/// </summary>
-		/// <param name="owner">The <see cref="SourceReference"/> to remove the <see cref="SigningKeyPair"/> for</param>
+		/// <param name="owner">The <see cref="EntityId"/> to remove the <see cref="SigningKeyPair"/> for</param>
 		/// <returns><see cref="true"/> if removing was successful</returns>
-		public bool RemoveSigningKeyPair(SourceReference owner)
+		public bool RemoveSigningKeyPair(EntityId owner)
 		{
 			return signingKeyPairs.Remove(owner);
 		}
@@ -111,7 +111,7 @@ namespace Coflnet
 		/// <param name="issuer">The owner of the KeyPair</param>
 		/// <param name="algorythm">The Algorythm to search for. Each algorythm may need different keys</param>
 		/// <returns></returns>
-        public SigningKeyPair GetSigningPublicKey(SourceReference issuer,SigningAlgorythm algorythm = null)
+        public SigningKeyPair GetSigningPublicKey(EntityId issuer,SigningAlgorythm algorythm = null)
         {
             return GetSigningKeyPair(issuer);
         }

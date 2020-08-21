@@ -9,7 +9,7 @@ namespace Coflnet.Server
 
 	public class DeviceController
 	{
-		private ConcurrentDictionary<SourceReference, Device> devices;
+		private ConcurrentDictionary<EntityId, Device> devices;
 		public static DeviceController instance;
 
 
@@ -27,19 +27,19 @@ namespace Coflnet.Server
 			devices.TryAdd(device.Id, device);
 		}
 
-		public bool Exists(SourceReference id)
+		public bool Exists(EntityId id)
 		{
 			return devices.ContainsKey(id);
 		}
 
-		public Device GetDevice(SourceReference id)
+		public Device GetDevice(EntityId id)
 		{
 			Device device;
 			devices.TryGetValue(id, out device);
 			return device;
 		}
 
-		public void SendToDevice(MessageData data, SourceReference deviceId)
+		public void SendToDevice(CommandData data, EntityId deviceId)
 		{
 			GetDevice(deviceId).UnsentMessages.Add(data);
 		}

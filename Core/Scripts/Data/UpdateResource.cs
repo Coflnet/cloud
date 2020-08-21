@@ -1,15 +1,15 @@
 namespace Coflnet
 {
-    public partial class ReferenceManager {
-        public class UpdateResourceCommand : Command
+    public partial class EntityManager {
+        public class UpdateEntityCommand : Command
 			{
 				/// <summary>
 				/// Execute the command logic with specified data.
 				/// </summary>
-				/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-				public override void Execute(MessageData data)
+				/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+				public override void Execute(CommandData data)
 				{
-					data.CoreInstance.ReferenceManager.UpdateResource(data.GetAs<MessageData>(),data.sId);
+					data.CoreInstance.EntityManager.UpdateEntity(data.GetAs<CommandData>(),data.SenderId);
 				}
 		
 				/// <summary>
@@ -24,7 +24,7 @@ namespace Coflnet
 				/// The globally unique slug (short human readable id) for this command.
 				/// </summary>
 				/// <returns>The slug .</returns>
-				public override string Slug => "UpdateResource";
+				public override string Slug => "UpdateEntity";
 			}
 	}
 

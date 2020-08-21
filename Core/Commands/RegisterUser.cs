@@ -8,13 +8,13 @@ namespace Coflnet {
 	/// Can't be a ServerCommand because no user yet exists
 	/// </summary>
 	public class RegisterUser : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			RegisterUserRequest request = data.GetAs<RegisterUserRequest> ();
 
 			// validate captcha Token
 			// todo :)
 
-			CoflnetUser user = CoflnetUser.Generate (request.clientId, data.CoreInstance.ReferenceManager);
+			CoflnetUser user = CoflnetUser.Generate (request.clientId, data.CoreInstance.EntityManager);
 			user.PrivacySettings = request.privacySettings;
 
 			var response = new RegisterUserResponse ();
@@ -22,7 +22,7 @@ namespace Coflnet {
 			response.secret = user.Secret;
 
 
-			data.SendBack (MessageData.CreateMessageData<RegisteredUser, RegisterUserResponse> (data.sId, response));
+			data.SendBack (CommandData.CreateCommandData<RegisteredUser, RegisterUserResponse> (data.SenderId, response));
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
 
@@ -38,10 +38,10 @@ namespace Coflnet {
     {
         public override string Slug => "createuser";
 
-        public override Referenceable CreateResource(MessageData data)
+        public override Entity CreateResource(CommandData data)
         {
 			CreateUserRequest request = data.GetAs<CreateUserRequest> ();
-			var user = new CoflnetUser(data.sId);
+			var user = new CoflnetUser(data.SenderId);
 			user.PrivacySettings = request.privacySettings;
             return user;
         }
@@ -62,20 +62,20 @@ namespace Coflnet {
 		[Key (0)]
 		public string captchaToken;
 		[Key (1)]
-		public SourceReference clientId;
+		public EntityId clientId;
 		[Key (2)]
 		public Dictionary<string, bool> privacySettings;
 		/// <summary>
 		/// Temporary assigned local id
 		/// </summary>
 		[Key (3)]
-		public SourceReference localId;
+		public EntityId localId;
 	}
 
 	[MessagePackObject]
 	public class RegisterUserResponse {
 		[Key (0)]
-		public SourceReference id;
+		public EntityId id;
 		[Key (1)]
 		public byte[] secret;
 		[Key (2)]

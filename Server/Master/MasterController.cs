@@ -13,7 +13,7 @@ namespace Coflnet.Server.Master {
 		}
 
 		public class RegisterNewServer : Command {
-			public override void Execute (MessageData data) {
+			public override void Execute (CommandData data) {
 				RegisterRequest request = data.GetAs<RegisterRequest> ();
 
 			}
@@ -88,7 +88,7 @@ namespace Coflnet.Server {
 		private static readonly IsServerPermission instance;
 		public override string Slug => "isServer";
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			return true;
 		}
 
@@ -110,7 +110,7 @@ namespace Coflnet.Server {
 		/// </summary>
 		/// <returns><c>true</c>, if first element in the array and the value match, <c>false</c> otherwise.</returns>
 		/// <param name="options">Options.</param>
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			return true; //options[0].Equals(value);
 		}
 

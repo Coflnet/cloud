@@ -8,7 +8,7 @@ namespace Coflnet
 {
 
     /// <summary>
-    /// Messagedata represents a message, contains
+    /// <see cref="CommandData"/> represents a message, contains
     /// m = actual message
     /// d = delete timestamp // deprecated
     /// t = type (command slug)
@@ -19,26 +19,26 @@ namespace Coflnet
     /// </summary>
     [MessagePackObject]
     [DataContract]
-    public class MessageData : IMessageData
+    public class CommandData : ICommandData
     {
         /// <summary>
         /// The sender identifier.
         /// </summary>
         [Key("s")]
         [DataMember]
-        public SourceReference sId;
+        public EntityId SenderId;
         /// <summary>
         /// The recipient id
         /// </summary>
         [Key("r")]
         [DataMember]
-        public SourceReference rId;
+        public EntityId Recipient;
         /// <summary>
         /// The message identifier choosen by the sender
         /// </summary>
         [Key("i")]
         [DataMember]
-        public long mId;
+        public long MessageId;
         [Key("m")]
         [DataMember]
         public virtual byte[] message { get; set; }
@@ -47,24 +47,24 @@ namespace Coflnet
         /// </summary>
         [Key("t")]
         [DataMember]
-        public string type;
+        public string Type;
 
         [Key("h")]
         [DataMember]
-        public MessageDataHeader headers;
+        public CommandDataHeader Headers;
 
         /// <summary>
         /// senders signature of the message content Ed25519(m|t|s|r|i|h)
         /// </summary>
         [Key("x")]
         [DataMember]
-        public Signature signature;
+        public Signature Signature;
 
         /// <summary>
         /// Event invoked when message got send (or moved to the sending chain)
         /// Can be used to execute longer running tasks
         /// </summary>
-        public event Action<MessageData> AfterSend;
+        public event Action<CommandData> AfterSend;
 
         protected dynamic deserialized;
 
@@ -140,9 +140,9 @@ namespace Coflnet
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Coflnet.MessageData"/> class.
+        /// Initializes a new instance of the <see cref="T:Coflnet.CommandData"/> class.
         /// </summary>
-        public MessageData()
+        public CommandData()
         {
         }
 
@@ -154,9 +154,9 @@ namespace Coflnet
         /// <param name="type">Type.</param>
         /// <param name="m_id">M identifier.</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        public static MessageData SerializeMessageData<T>(T data, string type, long m_id = 0)
+        public static CommandData SerializeCommandData<T>(T data, string type, long m_id = 0)
         {
-            return new MessageData(new SourceReference(), m_id, MessagePackSerializer.Serialize<T>(data), type);
+            return new CommandData(new EntityId(), m_id, MessagePackSerializer.Serialize<T>(data), type);
         }
 
 
@@ -170,63 +170,63 @@ namespace Coflnet
         /// <param name="sender">Sender of the message.</param>
         /// <typeparam name="C">The 1st type parameter.</typeparam>
         /// <typeparam name="T">The 2nd type parameter.</typeparam>
-        public static MessageData CreateMessageData<C, T>(SourceReference target, T data, long m_id = 0, SourceReference sender = default(SourceReference)) where C : Command
+        public static CommandData CreateCommandData<C, T>(EntityId target, T data, long m_id = 0, EntityId sender = default(EntityId)) where C : Command
         {
-            return new MessageData(sender, target, m_id, System.Activator.CreateInstance<C>().Slug, MessagePackSerializer.Serialize<T>(data));
+            return new CommandData(sender, target, m_id, System.Activator.CreateInstance<C>().Slug, MessagePackSerializer.Serialize<T>(data));
         }
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Coflnet.MessageData"/> class.
+        /// Initializes a new instance of the <see cref="T:Coflnet.CommandData"/> class.
         /// </summary>
         /// <param name="rId">R identifier.</param>
         /// <param name="m_id">M identifier.</param>
         /// <param name="m">M.</param>
         /// <param name="type">Type.</param>
-        public MessageData(SourceReference rId, long m_id, byte[] m, string type)
+        public CommandData(EntityId rId, long m_id, byte[] m, string type)
         {
-            this.rId = rId;
+            this.Recipient = rId;
             if (m_id == 0)
-                this.mId = NextMsgId();
+                this.MessageId = NextMsgId();
             else
-                this.mId = m_id;
+                this.MessageId = m_id;
             this.message = m;
-            this.type = type;
+            this.Type = type;
         }
 
-        public MessageData(MessageData data) : this(data.rId, data.mId, data.message, data.type)
+        public CommandData(CommandData data) : this(data.Recipient, data.MessageId, data.message, data.Type)
         {
-            this.sId = data.sId;
+            this.SenderId = data.SenderId;
         }
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Coflnet.MessageData"/> class.
+        /// Initializes a new instance of the <see cref="T:Coflnet.CommandData"/> class.
         /// </summary>
         /// <param name="rId">Receiver identifier.</param>
         /// <param name="m_id">M identifier.</param>
         /// <param name="m">Message data content.</param>
         /// <param name="type">Type of content (command slug).</param>
-        public MessageData(SourceReference rId, long m_id = 0, string m = "", string type = "") : this(rId, m_id, Encoding.UTF8.GetBytes(m), type)
+        public CommandData(EntityId rId, long m_id = 0, string m = "", string type = "") : this(rId, m_id, Encoding.UTF8.GetBytes(m), type)
         {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Coflnet.MessageData"/> class.
+        /// Initializes a new instance of the <see cref="T:Coflnet.CommandData"/> class.
         /// </summary>
         /// <param name="command">Command object to send.</param>
         /// <param name="m">The command data to send with the command.</param>
         /// <param name="m_id">Message- identifier.</param>
-        public MessageData(Command command, byte[] m, long m_id = 0) : this(new SourceReference(), m_id, m, command.Slug)
+        public CommandData(Command command, byte[] m, long m_id = 0) : this(new EntityId(), m_id, m, command.Slug)
         {
 
         }
 
 
-        public MessageData(string type, byte[] data)
+        public CommandData(string type, byte[] data)
         {
-            this.type = type;
+            this.Type = type;
             this.message = data;
         }
 
@@ -236,16 +236,16 @@ namespace Coflnet
         /// <param name="type">The identifier of the command</param>
         /// <param name="data">The data to be passed</param>
         /// <returns></returns>
-        public MessageData(string type, string data = "") : this(type,Encoding.UTF8.GetBytes(data))
+        public CommandData(string type, string data = "") : this(type,Encoding.UTF8.GetBytes(data))
         {
 
         }
 
-        public MessageData(SourceReference rId, byte[] message, string t)
+        public CommandData(EntityId rId, byte[] message, string t)
         {
-            this.rId = rId;
+            this.Recipient = rId;
             this.message = message;
-            this.type = t;
+            this.Type = t;
         }
 
         #endregion
@@ -289,7 +289,7 @@ namespace Coflnet
         /// </summary>
         /// <param name="ob">The object to serialize</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        public MessageData SerializeAndSet<T>(T ob)
+        public CommandData SerializeAndSet<T>(T ob)
         {
             message = Serialize<T>(ob);
             return this;
@@ -308,47 +308,47 @@ namespace Coflnet
 
         public void SetCommand<C>() where C : Command, new()
         {
-            this.type = (new C()).Slug;
+            this.Type = (new C()).Slug;
         }
 
 
         public override bool Equals(object obj)
         {
-            var converted = obj as MessageData;
+            var converted = obj as CommandData;
 
             if (converted == null)
                 return false;
 
-            return converted.sId == this.sId
-                            && converted.mId == this.mId
-                            && converted.rId == this.rId;
+            return converted.SenderId == this.SenderId
+                            && converted.MessageId == this.MessageId
+                            && converted.Recipient == this.Recipient;
         }
 
         public override int GetHashCode()
         {
-            return (sId.GetHashCode() * mId).GetHashCode();
+            return (SenderId.GetHashCode() * MessageId).GetHashCode();
         }
 
         public override string ToString()
         {
-            return string.Format("[MessageData: sId={0}, rId={1}, mId={2}, t={3}, Data={4}]", sId, rId, mId, type, Data);
+            return string.Format("[CommandData: sId={0}, rId={1}, mId={2}, t={3}, Data={4}]", SenderId, Recipient, MessageId, Type, Data);
         }
 
         /// <summary>
         /// Sends the command back.
         /// </summary>
         /// <param name="data">Data.</param>
-        public virtual void SendBack(MessageData data)
+        public virtual void SendBack(CommandData data)
         {
-            data.rId = this.sId;
+            data.Recipient = this.SenderId;
             CoreInstance.SendCommand(data);
 
             AfterSend?.Invoke(this);
         }
 
-        public MessageData(SourceReference sId, SourceReference rId, long mId, string t, byte[] message) : this(rId, mId, message, t)
+        public CommandData(EntityId sId, EntityId rId, long mId, string t, byte[] message) : this(rId, mId, message, t)
         {
-            this.sId = sId;
+            this.SenderId = sId;
         }
 
         /// <summary>
@@ -356,21 +356,21 @@ namespace Coflnet
         /// </summary>
         /// <returns>The target as.</returns>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        public virtual T GetTargetAs<T>() where T : Referenceable
+        public virtual T GetTargetAs<T>() where T : Entity
         {
-            return CoreInstance.ReferenceManager.GetResource<T>(rId);
+            return CoreInstance.EntityManager.GetEntity<T>(Recipient);
         }
 
 
         /// <summary>
         /// Signs the message contents with the given keyPairs private key
         /// </summary>
-        /// <param name="singKeyPair">The keypair containing the private key of the advertised <see cref="sId"/></param>
+        /// <param name="singKeyPair">The keypair containing the private key of the advertised <see cref="SenderId"/></param>
         public void Sign(KeyPair singKeyPair)
         {
-            this.signature = new Signature()
+            this.Signature = new Signature()
             { algorythm = EncryptionController.Instance.SigningAlgorythm };
-            this.signature.GenerateSignature(SignableContent, singKeyPair);
+            this.Signature.GenerateSignature(SignableContent, singKeyPair);
         }
 
         /// <summary>
@@ -379,11 +379,11 @@ namespace Coflnet
         /// <param name="publicKey">The public key of the sending resource</param>
         public bool ValidateSignature(byte[] publicKey)
         {
-            if (signature == null)
+            if (Signature == null)
             {
                 throw new SignatureInvalidException("No signature was set");
             }
-            return this.signature.ValidateSignature(SignableContent, publicKey);
+            return this.Signature.ValidateSignature(SignableContent, publicKey);
         }
 
 
@@ -394,11 +394,11 @@ namespace Coflnet
             {
                 return IEncryption.ConcatBytes(
                     message,
-                    type != null ? Encoding.UTF8.GetBytes(type) : null,
-                    sId.AsByte,
-                    rId.AsByte,
-                    BitConverter.GetBytes(mId),
-                    headers?.Serialized
+                    Type != null ? Encoding.UTF8.GetBytes(Type) : null,
+                    SenderId.AsByte,
+                    Recipient.AsByte,
+                    BitConverter.GetBytes(MessageId),
+                    Headers?.Serialized
                     );
             }
         }

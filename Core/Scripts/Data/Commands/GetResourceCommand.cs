@@ -4,9 +4,9 @@ namespace Coflnet
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override MessageData ExecuteWithReturn (MessageData data) {
-			data.message = data.CoreInstance.ReferenceManager.SerializeWithoutLocalInfo (data.rId);
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override CommandData ExecuteWithReturn (CommandData data) {
+			data.message = data.CoreInstance.EntityManager.SerializeWithoutLocalInfo (data.Recipient);
 			
 			
 			return data;

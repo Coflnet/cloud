@@ -3,17 +3,17 @@ using MessagePack;
 
 namespace Coflnet.Server {
 	public class LoginServer : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			var loginParams = data.GetAs<ServerLoginToken> ();
 			if (loginParams == null) {
 				return;
 			}
-			var serverMessageData = data as ServerMessageData;
+			var serverCommandData = data as ServerCommandData;
 
-			var server = ReferenceManager.Instance.GetResource<CoflnetServer> (loginParams.OriginServerId);
+			var server = EntityManager.Instance.GetEntity<CoflnetServer> (loginParams.OriginServerId);
 			if (loginParams.Validate (server.PublicKey, ConfigController.ApplicationSettings.id)) {
 				// validation success
-				serverMessageData.Connection.AuthenticatedIds.Add (loginParams.OriginServerId);
+				serverCommandData.Connection.AuthenticatedIds.Add (loginParams.OriginServerId);
 				//data.SendBack()
 			}
 		}
@@ -32,7 +32,7 @@ namespace Coflnet.Server {
 		/// The origin server identifier trying to authenticate
 		/// </summary>
 		[Key (0)]
-		public SourceReference OriginServerId;
+		public EntityId OriginServerId;
 		[Key (1)]
 		public byte[] signature;
 		[Key (2)]
@@ -42,14 +42,14 @@ namespace Coflnet.Server {
 		/// Or the target server Identifier
 		/// </summary>
 		[Key (3)]
-		public SourceReference targetServerId;
+		public EntityId targetServerId;
 
 		/// <summary>
 		/// Validate the Token.
 		/// </summary>
 		/// <returns>The validate.</returns>
 		/// <param name="publicKey">Public key.</param>
-		public bool Validate (byte[] publicKey, SourceReference currentServer) {
+		public bool Validate (byte[] publicKey, EntityId currentServer) {
 			var TimeAmount = new TimeSpan (1, 0, 0);
 			if (time < DateTime.Now.Subtract (TimeAmount)) {
 				throw new LoginFailedException ($"The signed DateTime timed out, it is older than {TimeAmount.TotalMinutes} miniutes");
@@ -82,7 +82,7 @@ namespace Coflnet.Server {
 		/// <param name="OriginServerId">Server identifier.</param>
 		/// <param name="time">Time.</param>
 		/// <param name="keyPair">Key pair.</param>
-		public ServerLoginToken (SourceReference OriginServerId, DateTime time, KeyPair keyPair, SourceReference targetServerId) {
+		public ServerLoginToken (EntityId OriginServerId, DateTime time, KeyPair keyPair, EntityId targetServerId) {
 			this.OriginServerId = OriginServerId;
 			this.time = time;
 			this.targetServerId = targetServerId;
@@ -96,7 +96,7 @@ namespace Coflnet.Server {
 		/// <param name="serverId">Server identifier.</param>
 		/// <param name="time">Time.</param>
 		/// <param name="keyPair">Key pair.</param>
-		public ServerLoginToken (SourceReference serverId, DateTime time, KeyPair keyPair) : this (serverId, time, keyPair, ConfigController.ApplicationSettings.id) { }
+		public ServerLoginToken (EntityId serverId, DateTime time, KeyPair keyPair) : this (serverId, time, keyPair, ConfigController.ApplicationSettings.id) { }
 
 		public ServerLoginToken () { }
 

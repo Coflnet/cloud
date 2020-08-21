@@ -18,7 +18,7 @@ namespace Coflnet.Core
         }
 
 
-        public void Deliver(MessageData data)
+        public void Deliver(CommandData data)
         {
             if (data == null)
             {
@@ -26,20 +26,20 @@ namespace Coflnet.Core
             }
 
 
-            MessageDataPersistence.Instance.SaveMessage(data);
+            CommandDataPersistence.Instance.SaveMessage(data);
 
 
             Send(data);
         }
 
-        protected void Send(MessageData data)
+        protected void Send(CommandData data)
         {
             // differs from side to side
-            var referenceManager = data.CoreInstance.ReferenceManager;
+            var referenceManager = data.CoreInstance.EntityManager;
 
-            var target = referenceManager.ManagingNodeFor(data.rId);
+            var target = referenceManager.ManagingNodeFor(data.Recipient);
             CoflnetServer server;
-            referenceManager.TryGetResource(target,out server);
+            referenceManager.TryGetEntity(target,out server);
 
             if(server == null)
             {
@@ -57,7 +57,7 @@ namespace Coflnet.Core
 
         protected void RetrySend()
         {
-            foreach (var item in MessageDataPersistence.Instance.GetAllUnsent())
+            foreach (var item in CommandDataPersistence.Instance.GetAllUnsent())
             {
                 Send(item);
             }

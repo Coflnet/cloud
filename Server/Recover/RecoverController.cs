@@ -21,10 +21,10 @@ namespace Coflnet.Server.Recover
 		/// Collects referenced objects for one particular server.
 		/// </summary>
 		/// <param name="data">Message data from a recover controller containing the serverId that has to be recovered</param>
-		public void CollectReferencesCommand(MessageData data)
+		public void CollectReferencesCommand(CommandData data)
 		{
 			long serverId = data.GetAs<long>();
-			ServerController.Instance.SendCommandToServer(new MessageData("recover_response", new byte[0]), serverId);
+			ServerController.Instance.SendCommandToServer(new CommandData("recover_response", new byte[0]), serverId);
 		}
 
 	}
@@ -34,15 +34,15 @@ namespace Coflnet.Server.Recover
 		protected long lastTransactionIndex;
 		protected long currentTransactionIndex;
 
-		protected Dictionary<SourceReference, Reference<Referenceable>> references;
+		protected Dictionary<EntityId, Reference<Entity>> references;
 
-		public void Merge(List<Reference<Referenceable>> toMerge)
+		public void Merge(List<Reference<Entity>> toMerge)
 		{
 			foreach (var item in toMerge)
 			{
-				if (!references.ContainsKey(item.ReferenceId))
+				if (!references.ContainsKey(item.EntityId))
 				{
-					references.Add(item.ReferenceId, item);
+					references.Add(item.EntityId, item);
 				}
 			}
 		}
@@ -64,7 +64,7 @@ namespace Coflnet.Server.Recover
 			}
 		}
 
-		public Dictionary<SourceReference, Reference<Referenceable>> References
+		public Dictionary<EntityId, Reference<Entity>> References
 		{
 			get
 			{

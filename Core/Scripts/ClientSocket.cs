@@ -14,13 +14,13 @@ namespace Coflnet
 	{
 		private WebSocket webSocket;
 
-		private event ReceiveMessageData onMessage;
+		private event ReceiveCommandData onMessage;
 		public delegate void CoflnetExceptionEvent(CoflnetException coflnetException);
 		public event CoflnetExceptionEvent OnError;
 
 		public static ClientSocket Instance;
 
-		private SourceReference ConnectedServerId = ConfigController.ApplicationSettings.id;
+		private EntityId ConnectedServerId = ConfigController.ApplicationSettings.id;
 
 		static ClientSocket()
 		{
@@ -61,8 +61,8 @@ namespace Coflnet
 		{
 			try
 			{
-				var data = MessagePackSerializer.Deserialize<MessageData>(e.RawData);
-				if (data.type == "error")
+				var data = MessagePackSerializer.Deserialize<CommandData>(e.RawData);
+				if (data.Type == "error")
 				{
 					// errors contain aditional attributes 
 					var error = MessagePackSerializer.Deserialize<CoflnetExceptionTransmit>(e.RawData);
@@ -74,9 +74,9 @@ namespace Coflnet
 
 				// confirm receival
 				SendCommand(
-					MessageData.CreateMessageData<ReceiveConfirm, ReceiveConfirmParams>(
+					CommandData.CreateCommandData<ReceiveConfirm, ReceiveConfirmParams>(
 						ConnectedServerId,
-						new ReceiveConfirmParams(data.sId, data.mId)));
+						new ReceiveConfirmParams(data.SenderId, data.MessageId)));
 			}
 			catch (System.Exception ex)
 			{
@@ -94,16 +94,16 @@ namespace Coflnet
 		/// Sends a command to the connected server.
 		/// </summary>
 		/// <param name="data">Data.</param>
-		public bool SendCommand(MessageData data)
+		public bool SendCommand(CommandData data)
 		{
 			return SendCommand(data, true);
 		}
 
-		public bool SendCommand(MessageData data, bool changeSender)
+		public bool SendCommand(CommandData data, bool changeSender)
 		{
 			if (changeSender)
 				// add the userId if present as sender
-				data.sId = ConfigController.ActiveUserId;
+				data.SenderId = ConfigController.ActiveUserId;
 
 			if(!webSocket.IsConnected)
 			{
@@ -118,7 +118,7 @@ namespace Coflnet
 		/// Adds an on Message Callback
 		/// </summary>
 		/// <param name="callback">Callback.</param>
-		public void AddCallback(ReceiveMessageData callback)
+		public void AddCallback(ReceiveCommandData callback)
 		{
 			onMessage += callback;
 		}
@@ -127,7 +127,7 @@ namespace Coflnet
 		/// Removes an on Message Callback
 		/// </summary>
 		/// <param name="callback">Callback.</param>
-		public void RemoveCallback(ReceiveMessageData callback)
+		public void RemoveCallback(ReceiveCommandData callback)
 		{
 			onMessage -= callback;
 		}
@@ -136,7 +136,7 @@ namespace Coflnet
 		/// Invokes the on message event
 		/// </summary>
 		/// <param name="data">Data.</param>
-		protected void InvokeOnMessage(MessageData data)
+		protected void InvokeOnMessage(CommandData data)
 		{
 			onMessage?.Invoke(data);
 		}
@@ -162,16 +162,16 @@ namespace Coflnet
 	/// </summary>
 	public interface ICommandTransmit
 	{
-		bool SendCommand(MessageData data);
+		bool SendCommand(CommandData data);
 
 		/// <summary>
 		/// Bevore executing the callback the implementation has to make sure that 
-		/// the sender (<see cref="MessageData.sId"/>) is who he says
+		/// the sender (<see cref="CommandData.SenderId"/>) is who he says
 		/// </summary>
 		/// <param name="callback"></param>
-		void AddCallback(ReceiveMessageData callback);
+		void AddCallback(ReceiveCommandData callback);
 
 	}
 
-	public delegate void ReceiveMessageData(MessageData data);
+	public delegate void ReceiveCommandData(CommandData data);
 }

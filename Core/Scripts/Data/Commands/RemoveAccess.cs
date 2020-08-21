@@ -4,9 +4,9 @@ namespace Coflnet
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute (MessageData data) {
-			data.GetTargetAs<Referenceable> ().Access.Authorize (data.GetAs<SourceReference> (), AccessMode.NONE);
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute (CommandData data) {
+			data.GetTargetAs<Entity> ().Access.Authorize (data.GetAs<EntityId> (), AccessMode.NONE);
 		}
 
 		/// <summary>

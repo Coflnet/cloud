@@ -32,10 +32,10 @@ namespace Coflnet
 		/// <summary>
 		/// Adds a new token
 		/// </summary>
-		/// <param name="target">The target <see cref="Referenceable"/> this token can be used for</param>
+		/// <param name="target">The target <see cref="Entity"/> this token can be used for</param>
 		/// <param name="token">The actual token value</param>
 		/// <param name="sender"></param>
-		public void AddToken(SourceReference target, Token token,SourceReference sender = default(SourceReference))
+		public void AddToken(EntityId target, Token token,EntityId sender = default(EntityId))
 		{
 			AddToken(target,MessagePackSerializer.Serialize(token),sender);
 		}
@@ -46,9 +46,9 @@ namespace Coflnet
 		/// <param name="target"></param>
 		/// <param name="serializedToken"></param>
 		/// <param name="sender"></param>
-		public void AddToken(SourceReference target, byte[] serializedToken,SourceReference sender = default(SourceReference))
+		public void AddToken(EntityId target, byte[] serializedToken,EntityId sender = default(EntityId))
 		{
-			if(sender == default(SourceReference))
+			if(sender == default(EntityId))
 				tokens.Add(target.AsByte,serializedToken);
 			else
 			{
@@ -84,7 +84,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="target"></param>
 		/// <returns></returns>
-		public Token GetToken(SourceReference target,SourceReference sender = default(SourceReference))
+		public Token GetToken(EntityId target,EntityId sender = default(EntityId))
 		{
 			return MessagePackSerializer.Deserialize<Token>(GetInternalToken(target));
 		}
@@ -92,14 +92,14 @@ namespace Coflnet
 		/// <summary>
 		/// Tries to get the token
 		/// </summary>
-		/// <param name="target">The target <see cref="Referenceable"/> this token is made for</param>
+		/// <param name="target">The target <see cref="Entity"/> this token is made for</param>
 		/// <param name="token">The variable to pass the token to</param>
 		/// <param name="sender">Optional sender the token was made for</param>
 		/// <returns><see cref="true"/> if the token was found <see cref="false"/> otherwise</returns>
-		public bool TryGetToken(SourceReference target,out Token token, SourceReference sender= default(SourceReference))
+		public bool TryGetToken(EntityId target,out Token token, EntityId sender= default(EntityId))
 		{
 			var key = target.AsByte;
-			if(sender != default(SourceReference))
+			if(sender != default(EntityId))
 			{
 				key = key.Append(sender.AsByte);
 			}
@@ -114,9 +114,9 @@ namespace Coflnet
 			return false;
 		}
 
-		public byte[] GetInternalToken(SourceReference target,SourceReference sender = default(SourceReference))
+		public byte[] GetInternalToken(EntityId target,EntityId sender = default(EntityId))
 		{
-			if(sender == default(SourceReference))
+			if(sender == default(EntityId))
 				return tokens[target.AsByte];
 			return tokens[target.AsByte.Append(sender.AsByte)];
 		}
@@ -173,8 +173,8 @@ namespace Coflnet
 		/// <param name="claims">Optional additional claims to add to the token, may not be one of [iss,sub,id,iat] as these are already set</param>
 		/// <returns>The newly created and signed token</returns>
 		public Token GenerateNewToken(
-            SourceReference subject,
-            SourceReference issuer,
+            EntityId subject,
+            EntityId issuer,
             SigningKeyPair signingPair,
             params KeyValuePair<string, string>[] claims)
 		{
@@ -197,8 +197,8 @@ namespace Coflnet
 		/// <param name="claims">Optional additional claims to add to the token, may not be one of [iss,sub,id,iat] as these are already set</param>
 		/// <returns>The newly created and signed token</returns>
 		public Token GenerateNewToken(
-            SourceReference subject,
-            SourceReference issuer,
+            EntityId subject,
+            EntityId issuer,
             SigningKeyPair signingPair,
 			long expirationTime,
             params KeyValuePair<string, string>[] claims)
@@ -209,8 +209,8 @@ namespace Coflnet
 		}
 
 		private Token ConstructToken(
-			SourceReference subject,
-            SourceReference issuer,
+			EntityId subject,
+            EntityId issuer,
 			long expirationTime)
 			{
 				return new Token()
@@ -228,7 +228,7 @@ namespace Coflnet
 		/// <param name="target">The target tried to be accessed</param>
 		/// <param name="sender">The sender that is trying to access the target</param>
 		/// <returns><see cref="true"/> if token is valid for all given options and not invoked</returns>
-		public bool IsTokenValid(Token token,Referenceable target,SourceReference sender = default(SourceReference))
+		public bool IsTokenValid(Token token,Entity target,EntityId sender = default(EntityId))
 		{
 			// get the issuers key
 			var key = KeyPairManager.Instance.GetSigningPublicKey(token.Issuer,token.signature.algorythm);
@@ -245,11 +245,11 @@ namespace Coflnet
 				{
 					throw new CoflnetException(
 						"token_invalid",
-						$"The target {nameof(Referenceable)} id ({target.Id}) is not the one the token provides ({sub})");
+						$"The target {nameof(Entity)} id ({target.Id}) is not the one the token provides ({sub})");
 				}
 			}
 
-			if(sender != default(SourceReference))
+			if(sender != default(EntityId))
 			{
 				// validate the sender
 				var intendedAudience =  token.GetClaimSR("aud");
@@ -318,7 +318,7 @@ namespace Coflnet
         }
 
 		[IgnoreMember]
-		public SourceReference Issuer
+		public EntityId Issuer
 		{
 			get
 			{
@@ -414,16 +414,16 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Tries to get a specific claim as <see cref="SourceReference"/>
+		/// Tries to get a specific claim as <see cref="EntityId"/>
 		/// </summary>
 		/// <param name="key"></param>
 		/// <returns></returns>
-		public SourceReference GetClaimSR(string key)
+		public EntityId GetClaimSR(string key)
 		{
-			SourceReference result;
-			if(!SourceReference.TryParse(claims[key],out result))
+			EntityId result;
+			if(!EntityId.TryParse(claims[key],out result))
 			{
-				throw new CoflnetException("invalid_token",$"The {key} claim of the token is not a {nameof(SourceReference)}");
+				throw new CoflnetException("invalid_token",$"The {key} claim of the token is not a {nameof(EntityId)}");
 			}
 			return result;
 		}

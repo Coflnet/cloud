@@ -12,7 +12,7 @@ namespace Coflnet {
 			Instance = new IsUserPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			return target is CoflnetUser;
 		}
 
@@ -27,8 +27,8 @@ namespace Coflnet {
 			Instance = new IsOwnerPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return target.Access.Owner == data.sId;
+		public override bool CheckPermission (CommandData data, Entity target) {
+			return target.Access.Owner == data.SenderId;
 		}
 
 		public override string Slug => "isOwner";
@@ -42,8 +42,8 @@ namespace Coflnet {
 			Instance = new ReadPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return target.IsAllowedAccess (data.sId, AccessMode.READ);
+		public override bool CheckPermission (CommandData data, Entity target) {
+			return target.IsAllowedAccess (data.SenderId, AccessMode.READ);
 		}
 
 		public override string Slug => "readPermission";
@@ -57,8 +57,8 @@ namespace Coflnet {
 			Instance = new WritePermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return target != null && target.IsAllowedAccess (data.sId, AccessMode.WRITE);
+		public override bool CheckPermission (CommandData data, Entity target) {
+			return target != null && target.IsAllowedAccess (data.SenderId, AccessMode.WRITE);
 		}
 
 		public override string Slug => "writePermission";
@@ -73,7 +73,7 @@ namespace Coflnet {
 			Instance = new IsDevicePermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			return target is Device;
 		}
 
@@ -82,7 +82,7 @@ namespace Coflnet {
 	}
 
 	public class IsMasterPermission : Permission {
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			return true;
 		}
 
@@ -101,7 +101,7 @@ namespace Coflnet {
 		private Permission firstPermission;
 		private Permission secondPermission;
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			return firstPermission.CheckPermission (data, target) || secondPermission.CheckPermission (data, target);
 		}
 
@@ -124,8 +124,8 @@ namespace Coflnet {
 			Instance = new IsAuthenticatedPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
-			return data.sId.ServerId != 0;
+		public override bool CheckPermission (CommandData data, Entity target) {
+			return data.SenderId.ServerId != 0;
 		}
 
 		public override string Slug => "isAuthenticated";

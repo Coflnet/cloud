@@ -30,17 +30,17 @@ public class UserController
 
 
 
-	public CoflnetUser GetUser(SourceReference userId)
+	public CoflnetUser GetUser(EntityId userId)
 	{
-		if (ReferenceManager.Instance.Exists(userId))
-			return ReferenceManager.Instance.GetResource<CoflnetUser>(userId);
+		if (EntityManager.Instance.Exists(userId))
+			return EntityManager.Instance.GetEntity<CoflnetUser>(userId);
 		throw new Exception("User not found");
 	}
 
 
 	public void AddUser(CoflnetUser user)
 	{
-		ReferenceManager.Instance.CreateReference(user);
+		EntityManager.Instance.CreateReference(user);
 	}
 }
 

@@ -3,7 +3,7 @@ using MessagePack;
 
 namespace Coflnet {
 	public class LoginUser : Command {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			throw new CommandExistsOnServer ();
 		}
 
@@ -20,8 +20,8 @@ namespace Coflnet {
 	}
 
 	public class LoginUserResponse : Command {
-		public override void Execute (MessageData data) {
-			ConfigController.ActiveUserId = data.GetAs<SourceReference> ();
+		public override void Execute (CommandData data) {
+			ConfigController.ActiveUserId = data.GetAs<EntityId> ();
 		}
 
 		protected override CommandSettings GetSettings () {
@@ -39,11 +39,11 @@ namespace Coflnet {
 	[MessagePackObject]
 	public class LoginParams {
 		[Key (0)]
-		public SourceReference id;
+		public EntityId id;
 		[Key (1)]
 		public byte[] secret;
 
-		public LoginParams (SourceReference id, byte[] secret) {
+		public LoginParams (EntityId id, byte[] secret) {
 			this.id = id;
 			this.secret = secret;
 		}

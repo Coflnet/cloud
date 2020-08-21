@@ -9,10 +9,10 @@ namespace Coflnet
 			return new CommandSettings ();
 		}
 
-        public override Referenceable CreateResource(MessageData data)
+        public override Entity CreateResource(CommandData data)
         {
 			var install = new Installation ();
-			install.Device = new Reference<Device>(data.rId);
+			install.Device = new Reference<Device>(data.Recipient);
             return install;
         }
 

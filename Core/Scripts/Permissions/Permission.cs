@@ -16,7 +16,7 @@ namespace Coflnet
 		/// </summary>
 		/// <returns><c>true</c>, if permission was checked, <c>false</c> otherwise.</returns>
 		/// <param name="target">The target object</param>
-		public abstract bool CheckPermission(MessageData data, Referenceable target);
+		public abstract bool CheckPermission(CommandData data, Entity target);
 
 		public override bool Equals(object obj)
 		{

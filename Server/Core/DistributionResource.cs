@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace Coflnet {
 	
 	/// <summary>
-	/// Special <see cref="Referenceable"/> which Distributes everyCommand it receives to its members
+	/// Special <see cref="Entity"/> which Distributes everyCommand it receives to its members
 	/// </summary>
-	public class DistributionResource : Referenceable {
+	public class DistributionResource : Entity {
 		protected static CommandController _commandController;
 
 		public override CommandController GetCommandController () {
@@ -19,7 +19,7 @@ namespace Coflnet {
 		}
 
 		public class Distribute : Command {
-			public override void Execute (MessageData data) {
+			public override void Execute (CommandData data) {
 				throw new System.NotImplementedException ();
 			}
 
@@ -36,8 +36,8 @@ namespace Coflnet {
 /* 
 	namespace Coflnet.Server {
 		public class JoinChatImplementation : Coflnet.Chat.JoinChat {
-			public override void Execute (MessageData data) {
-				var chat = ReferenceManager.Instance.GetResource<Chat> (data.rId);
+			public override void Execute (CommandData data) {
+				var chat = ReferenceManager.Instance.GetEntity<Chat> (data.rId);
 				chat.Access.Subscribers.Add (data.sId);
 			}
 		}

@@ -13,7 +13,7 @@ public class CoreTests {
 
 	}
 
-	public class TestResource : Referenceable {
+	public class TestResource : Entity {
 		static CommandController commands;
 		public int value;
 
@@ -26,13 +26,13 @@ public class CoreTests {
 			return commands;
 		}
 
-		public TestResource () : base (new SourceReference ()) {
+		public TestResource () : base (new EntityId ()) {
 
 		}
 
 		public class TestCommand : Command {
-			public override void Execute (MessageData data) {
-				data.GetResource<TestResource> ().value = 5;
+			public override void Execute (CommandData data) {
+				data.GetEntity<TestResource> ().value = 5;
 			}
 
 			protected override CommandSettings GetSettings () {
@@ -43,8 +43,8 @@ public class CoreTests {
 
 		}
 		public class ReturnTestCommand : Coflnet.ServerCommand {
-			public override void Execute (MessageData data) {
-				SendBack (data, data.GetResource<TestResource> ().value);
+			public override void Execute (CommandData data) {
+				SendBack (data, data.GetEntity<TestResource> ().value);
 			}
 
 			public override ServerCommandSettings GetServerSettings () {
@@ -58,37 +58,37 @@ public class CoreTests {
 
 	[Test]
 	public void CreateResourceAndAddAccess () {
-		Referenceable referenceable = new TestResource ();
-		referenceable.Access = new Access (new SourceReference ());
+		Entity entity = new TestResource ();
+		entity.Access = new Access (new EntityId ());
 	}
 
 	[Test]
 	public void CreateAccessAndSetOwner () {
-		var access = new Access (new SourceReference ());
-		access.Owner = new SourceReference (12, 23);
+		var access = new Access (new EntityId ());
+		access.Owner = new EntityId (12, 23);
 	}
 
 	[Test]
 	public void AccessTestOwner () {
-		var access = new Access (new SourceReference ());
-		access.Owner = new SourceReference (12, 23);
+		var access = new Access (new EntityId ());
+		access.Owner = new EntityId (12, 23);
 
-		Assert.IsTrue (access.IsAllowedToAccess (new SourceReference (12, 23)));
+		Assert.IsTrue (access.IsAllowedToAccess (new EntityId (12, 23)));
 	}
 
 	[Test]
 	public void AccessTestCustom () {
-		var access = new Access (new SourceReference ());
-		access.Owner = new SourceReference (12, 23);
+		var access = new Access (new EntityId ());
+		access.Owner = new EntityId (12, 23);
 
-		Assert.IsTrue (access.IsAllowedToAccess (new SourceReference (12, 23)));
+		Assert.IsTrue (access.IsAllowedToAccess (new EntityId (12, 23)));
 	}
 
 	[Test]
 	public void StoreResourceInManager () {
 		var res = new TestResource ();
 		res.AssignId ();
-		Assert.IsTrue (ReferenceManager.Instance.Exists (res.Id));
+		Assert.IsTrue (EntityManager.Instance.Exists (res.Id));
 	}
 
 	[Test]
@@ -96,7 +96,7 @@ public class CoreTests {
 		var res = new TestResource ();
 		res.AssignId ();
 		res.value = 1111;
-		var retrivedRes = ReferenceManager.Instance.GetResource (res.Id);
+		var retrivedRes = EntityManager.Instance.GetResource (res.Id);
 		Assert.IsTrue (retrivedRes.Id == res.Id);
 	}
 
@@ -105,25 +105,25 @@ public class CoreTests {
 		var res = new TestResource ();
 		res.AssignId ();
 		res.value = 1111;
-		var retrivedRes = ReferenceManager.Instance.GetResource<TestResource> (res.Id);
+		var retrivedRes = EntityManager.Instance.GetEntity<TestResource> (res.Id);
 		Assert.IsTrue (retrivedRes.value == 1111);
 	}
 
 	[Test]
 	public void RecourceOverridePreventTest () {
 		var res = new TestResource ();
-		res.Id = new SourceReference (5, 2);
+		res.Id = new EntityId (5, 2);
 		Assert.Throws<Exception> (() => {
-			ReferenceManager.Instance.CreateReference (res);
+			EntityManager.Instance.CreateReference (res);
 		});
 	}
 
 	[Test]
 	public void RecourceOverridePreventForceTest () {
 		var res = new TestResource ();
-		res.Id = new SourceReference (5, 2);
-		var id = ReferenceManager.Instance.CreateReference (res, true);
-		Assert.AreNotEqual (id, new SourceReference ());
+		res.Id = new EntityId (5, 2);
+		var id = EntityManager.Instance.CreateReference (res, true);
+		Assert.AreNotEqual (id, new EntityId ());
 	}
 
 	[Test]
@@ -131,9 +131,9 @@ public class CoreTests {
 		var res = new TestResource ();
 		res.AssignId ();
 		var id = res.Id;
-		var retrivedRes = ReferenceManager.Instance.GetResource<TestResource> (id);
+		var retrivedRes = EntityManager.Instance.GetEntity<TestResource> (id);
 
-		retrivedRes.GetCommandController ().ExecuteCommand (new MessageData (id, null, "coreTest"));
+		retrivedRes.GetCommandController ().ExecuteCommand (new CommandData (id, null, "coreTest"));
 
 		Assert.IsTrue (res.value == 5);
 	}
@@ -159,9 +159,9 @@ public class CoreTests {
 
 		LogAssert.Expect (UnityEngine.LogType.Error,
 			new Regex ($".*There is no server with the id 0.*"));
-		ClientSocket.Instance.SendCommand (new MessageData ());
+		ClientSocket.Instance.SendCommand (new CommandData ());
 
-		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
+		//retrivedRes.GetCommandController().ExecuteCommand(new CommandData(id, null, "coreTest"));
 
 		yield return new UnityEngine.WaitForSeconds (0.5f);
 		ServerCore.Stop ();
@@ -189,7 +189,7 @@ public class CoreTests {
 		LogAssert.Expect (UnityEngine.LogType.Error,
 			new Regex ($".*{Regex.Escape(newId.ToString())}.*wasn't found on this server.*"));
 
-		ClientSocket.Instance.SendCommand (new MessageData (newId), false);
+		ClientSocket.Instance.SendCommand (new CommandData (newId), false);
 
 		yield return new UnityEngine.WaitForSeconds (1);
 
@@ -197,7 +197,7 @@ public class CoreTests {
 		Assert.AreEqual (returnValue, "object_not_found");
 
 		ServerCore.Stop ();
-		//retrivedRes.GetCommandController().ExecuteCommand(new MessageData(id, null, "coreTest"));
+		//retrivedRes.GetCommandController().ExecuteCommand(new CommandData(id, null, "coreTest"));
 	}
 
 	[UnityTest]
@@ -206,7 +206,7 @@ public class CoreTests {
 		// tell the server his id
 		ConfigController.ApplicationSettings.id = new SourceReference (1, 1, 1, 0);
 		ServerCore.Init ();
-		MessageData response = null;
+		CommandData response = null;
 		ClientSocket.Instance.Reconnect ();
 		ClientSocket.Instance.AddCallback (data => {
 			response = data;
@@ -220,7 +220,7 @@ public class CoreTests {
 
 		// send the command
 		ClientSocket.Instance.SendCommand (
-			new MessageData (ConfigController.ApplicationSettings.id, -1, "", "serverTestCommandGet"));
+			new CommandData (ConfigController.ApplicationSettings.id, -1, "", "serverTestCommandGet"));
 
 		// await response
 		yield return new UnityEngine.WaitForSeconds (1);
@@ -234,7 +234,7 @@ public class CoreTests {
 #endif
 
 	class ServerTestCommandGet : Coflnet.ServerCommand {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			//SendBack(data, 5);
 			data.SerializeAndSet<int> (4);
 			data.SendBack (data);
@@ -251,38 +251,38 @@ public class CoreTests {
 	[Test]
 	public void MessagePersistenceTest () {
 
-		var data = new MessageData (new SourceReference (0, 1, 2, 3),
+		var data = new CommandData (new EntityId (0, 1, 2, 3),
 			System.Text.Encoding.UTF8.GetBytes ("hi, I am a long text to get over 64 bytes and trigger the lz4 compresseion :)"),
 			"testCommand");
 		// manually assing an id, is usaly done in the sending process
-		data.mId = ThreadSaveIdGenerator.NextId;
+		data.MessageId = ThreadSaveIdGenerator.NextId;
 
-		MessagePersistence.ServerInstance.DeleteMessages (data.rId);
+		MessagePersistence.ServerInstance.DeleteMessages (data.Recipient);
 		MessagePersistence.ServerInstance.SaveMessage (data);
 
-		foreach (var item in MessagePersistence.ServerInstance.GetMessagesFor (data.rId)) {
+		foreach (var item in MessagePersistence.ServerInstance.GetMessagesFor (data.Recipient)) {
 			Assert.AreEqual (data, item);
 		}
 	}
 
 	[Test]
 	public void MessagePersistenceTestMultiple () {
-		var data = new MessageData (new SourceReference (0, 1, 2, 3),
+		var data = new CommandData (new EntityId (0, 1, 2, 3),
 			System.Text.Encoding.UTF8.GetBytes ("hi, I am a string that will be a byte array when it grows up"),
 			"testCommand");
 
 		// manually assing an id, is usaly done in the sending process
-		data.mId = ThreadSaveIdGenerator.NextId;
+		data.MessageId = ThreadSaveIdGenerator.NextId;
 
 		// reset
-		MessagePersistence.ServerInstance.DeleteMessages (data.rId);
+		MessagePersistence.ServerInstance.DeleteMessages (data.Recipient);
 		// save
 		MessagePersistence.ServerInstance.SaveMessage (data);
 		MessagePersistence.ServerInstance.SaveMessage (data);
 		MessagePersistence.ServerInstance.SaveMessage (data);
 		MessagePersistence.ServerInstance.SaveMessage (data);
 
-		foreach (var item in MessagePersistence.ServerInstance.GetMessagesFor (data.rId)) {
+		foreach (var item in MessagePersistence.ServerInstance.GetMessagesFor (data.Recipient)) {
 			Assert.AreEqual (data, item);
 		}
 	}

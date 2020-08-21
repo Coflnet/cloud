@@ -7,8 +7,8 @@ public class CloningTest {
 
     [Test]
     public void CloningTestSimplePasses() {
-        var aliceId = new SourceReference(2,3);
-        var bobId = new SourceReference(5,0);
+        var aliceId = new EntityId(2,3);
+        var bobId = new EntityId(5,0);
 
 
         DevCore.Init(aliceId,true);
@@ -19,29 +19,29 @@ public class CloningTest {
         var bob = DevCore.DevInstance.AddServerCore(bobId).core;
 
         
-        var resource = new TestResource();
+        var resource = new TestEntity();
         // register resource on Server2
-        resource.AssignId(bob.ReferenceManager);
+        resource.AssignId(bob.EntityManager);
         resource.specialNumber = 42;
         // authorize access
         resource.GetAccess().Authorize(aliceId);
 
         // make sure the resource is there
                 Assert.AreEqual(resource.specialNumber,
-        bob.ReferenceManager.GetResource<TestResource>(resource.Id).specialNumber);
+        bob.EntityManager.GetEntity<TestEntity>(resource.Id).specialNumber);
 
         
         // clone the resource to server1
-        alice.ReferenceManager.CloneResource(resource.Id,res=>{
-            Assert.AreEqual(42, (res as TestResource).specialNumber);
+        alice.EntityManager.CloneEntity(resource.Id,res=>{
+            Assert.AreEqual(42, (res as TestEntity).specialNumber);
         });
     }
 
 
         [Test]
     public void CloningCommandBufferTest() {
-        var aliceId = new SourceReference(2,3);
-        var bobId = new SourceReference(5,0);
+        var aliceId = new EntityId(2,3);
+        var bobId = new EntityId(5,0);
 
 
         DevCore.Init(aliceId,true);
@@ -49,9 +49,9 @@ public class CloningTest {
         var alice = DevCore.DevInstance.simulationInstances[aliceId.FullServerId].core;
         var bob = DevCore.DevInstance.AddServerCore(bobId).core;
 
-        var resource = new TestResource();
+        var resource = new TestEntity();
         // register resource on Server2
-        resource.AssignId(bob.ReferenceManager);
+        resource.AssignId(bob.EntityManager);
         resource.specialNumber = 42;
         // authorize access to the whole server
         resource.GetAccess().Authorize(aliceId.FullServerId);
@@ -63,9 +63,9 @@ public class CloningTest {
         bool calbackExecuted = false;
         
         // clone the resource to server1
-        alice.ReferenceManager.CloneResource(resource.Id,res=>{
+        alice.EntityManager.CloneEntity(resource.Id,res=>{
             calbackExecuted = true;
-            Assert.AreEqual(43, (res as TestResource).specialNumber);
+            Assert.AreEqual(43, (res as TestEntity).specialNumber);
             calbackExecuted = true;
         });
 
@@ -79,8 +79,8 @@ public class CloningTest {
     [Test]
     public void CloneAndSubscribeTest()
     {
-        var aliceId = new SourceReference(2,3);
-        var bobId = new SourceReference(5,0);
+        var aliceId = new EntityId(2,3);
+        var bobId = new EntityId(5,0);
 
 
         DevCore.Init(aliceId,true);
@@ -89,9 +89,9 @@ public class CloningTest {
         var aliceServer = DevCore.DevInstance.simulationInstances[aliceId.FullServerId].core;
         var bob = DevCore.DevInstance.AddServerCore(bobId).core;
 
-         var resource = new TestResource();
+         var resource = new TestEntity();
         // register resource on bob
-        resource.AssignId(bob.ReferenceManager);
+        resource.AssignId(bob.EntityManager);
         resource.specialNumber = 42;
         // authorize access to the whole server
         resource.GetAccess().Authorize(aliceId.FullServerId,AccessMode.WRITE);
@@ -106,14 +106,14 @@ public class CloningTest {
         bob.SendCommand<SimpleTestCommand,short>(resource.Id,0);
 
         // assert that update was distributed
-        Assert.AreEqual(43,aliceServer.ReferenceManager.GetResource<TestResource>(resource.Id).specialNumber);
-        Assert.AreEqual(43,alice.ReferenceManager.GetResource<TestResource>(resource.Id).specialNumber);
+        Assert.AreEqual(43,aliceServer.EntityManager.GetEntity<TestEntity>(resource.Id).specialNumber);
+        Assert.AreEqual(43,alice.EntityManager.GetEntity<TestEntity>(resource.Id).specialNumber);
 
     }
 
 
     [DataContract]
-    public class TestResource : Referenceable
+    public class TestEntity : Entity
     {
         [IgnoreDataMember]
         static CommandController commands = new CommandController(globalCommands);
@@ -121,7 +121,7 @@ public class CloningTest {
         [DataMember]
         public int specialNumber;
 
-        static TestResource()
+        static TestEntity()
         {
             commands.RegisterCommand<SimpleTestCommand>();
         }
@@ -138,15 +138,15 @@ public class CloningTest {
     {
         public override string Slug => "stcabc";
 
-        public override void Execute(MessageData data)
+        public override void Execute(CommandData data)
         {
-            var res = data.GetTargetAs<Referenceable>();
+            var res = data.GetTargetAs<Entity>();
             var access = res.GetAccess();
             foreach (var item in access.GetSpecialCases())
             {
-                Logger.Log($"{item.Key} has {item.Value} and {data.GetTargetAs<Referenceable>().Access.generalAccess}");   
+                Logger.Log($"{item.Key} has {item.Value} and {data.GetTargetAs<Entity>().Access.generalAccess}");   
             }
-            data.GetTargetAs<TestResource>().specialNumber++;
+            data.GetTargetAs<TestEntity>().specialNumber++;
         }
 
         protected override CommandSettings GetSettings()

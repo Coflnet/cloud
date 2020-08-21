@@ -1,21 +1,21 @@
 namespace Coflnet.Dev
 {
-    public class DevMessageData : ServerMessageData
+    public class DevCommandData : ServerCommandData
 		{
 			// TODO
 			public SimulationInstance sender;
 
-			public DevMessageData(MessageData normal,SimulationInstance sender = null) : base(normal)
+			public DevCommandData(CommandData normal,SimulationInstance sender = null) : base(normal)
 			{
 				this.sender = sender;
 			}
 
-			public override void SendBack(MessageData data)
+			public override void SendBack(CommandData data)
 			{
 				if(sender != null){
 										data.CoreInstance = sender.core;
-					data.sId = rId;//sender.core.Id;
-					sender.core.ReferenceManager.ExecuteForReference(data);
+					data.SenderId = Recipient;//sender.core.Id;
+					sender.core.EntityManager.ExecuteForReference(data);
 				} else {
 										base.SendBack(data);
 				}

@@ -26,12 +26,12 @@ namespace Coflnet.Client
 			get
 			{
 				var userId = ConfigController.UserSettings.userId;
-				if (userId == SourceReference.Default)
+				if (userId == EntityId.Default)
 				{
 					throw new System.Exception("No user registered yet");
 				}
 
-				return ReferenceManager.Instance.GetResource<CoflnetUser>(userId);
+				return EntityManager.Instance.GetEntity<CoflnetUser>(userId);
 			}
 		}
 
@@ -43,7 +43,7 @@ namespace Coflnet.Client
 		public bool TryGetUser(out CoflnetUser user)
 		{
 			var userId = ConfigController.UserSettings.userId;
-			return ReferenceManager.Instance.TryGetResource<CoflnetUser>(userId, out user);
+			return EntityManager.Instance.TryGetEntity<CoflnetUser>(userId, out user);
 		}
 
 		/// <summary>
@@ -63,7 +63,7 @@ namespace Coflnet.Client
 			var installId = ConfigController.InstallationId;
 			
 			// create the user locally and send the creation request to the server
-			var tempUserId = ClientCoreInstance.CreateResource<CreateUser,CreateUser.CreateUserRequest>(req,installId).Id;
+			var tempUserId = ClientCoreInstance.CreateEntity<CreateUser,CreateUser.CreateUserRequest>(req,installId).Id;
 
 			// Set the created user Active 
 			ChangeCurrentUser(tempUserId);
@@ -74,7 +74,7 @@ namespace Coflnet.Client
 		/// Changes the current user.
 		/// </summary>
 		/// <param name="id">Identifier.</param>
-		public void ChangeCurrentUser(SourceReference id)
+		public void ChangeCurrentUser(EntityId id)
 		{
 			CurrentUserId = id;
 		}
@@ -96,15 +96,15 @@ namespace Coflnet.Client
 		/// Gets or sets the current user identifier.
 		/// </summary>
 		/// <value>The current user identifier.</value>
-		public SourceReference CurrentUserId
+		public EntityId CurrentUserId
 		{
 			get
 			{
 				if(ConfigController.ActiveUserId.IsLocal)
 				{
 					// try to update the user id to the server generated one
-					ConfigController.ActiveUserId = ClientCoreInstance.ReferenceManager.
-													GetResource<CoflnetUser>(ConfigController.ActiveUserId).Id;
+					ConfigController.ActiveUserId = ClientCoreInstance.EntityManager.
+													GetEntity<CoflnetUser>(ConfigController.ActiveUserId).Id;
 				}
 				return ConfigController.ActiveUserId;
 			} 

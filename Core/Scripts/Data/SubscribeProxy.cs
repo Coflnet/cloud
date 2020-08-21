@@ -7,14 +7,14 @@ namespace Coflnet.Core
     /// Temporary proxy till cloning of resource is done
     /// </summary>
     [DataContract]
-    public class SubscribeProxy : Referenceable,IProxyReferenceable
+    public class SubscribeProxy : Entity,IProxyEntity
     {
         
 
         [DataMember]
-        public List<MessageData> buffer = new List<MessageData>();
+        public List<CommandData> buffer = new List<CommandData>();
 
-        public SubscribeProxy(SourceReference id)
+        public SubscribeProxy(EntityId id)
         {
             this.Id = id;
         }
@@ -24,7 +24,7 @@ namespace Coflnet.Core
             return new CommandController();
         }
 
-        public override Command ExecuteCommand(MessageData data)
+        public override Command ExecuteCommand(CommandData data)
         {
             buffer.Add(data);
 
@@ -35,9 +35,9 @@ namespace Coflnet.Core
         {
             public override string Slug => "proxy";
 
-            public override void Execute(MessageData data)
+            public override void Execute(CommandData data)
             {
-                data.GetTargetAs<Referenceable>().ExecuteCommand(data);
+                data.GetTargetAs<Entity>().ExecuteCommand(data);
             }
 
             protected override CommandSettings GetSettings()

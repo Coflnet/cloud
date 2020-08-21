@@ -25,7 +25,7 @@ namespace Coflnet
 		/// This commandController will be searched for commands
 		/// if a slug was not found in the current one
 		/// </summary>
-		public CommandController Backfall { get; set; }
+		public CommandController Fallback { get; set; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Coflnet.CommandController"/> class with no commands.
@@ -34,20 +34,20 @@ namespace Coflnet
 			this.commands = new Dictionary<string, Command> ();
 		}
 
-		public CommandController (CommandController backfall) : this () {
-			this.Backfall = backfall;
+		public CommandController (CommandController fallback) : this () {
+			this.Fallback = fallback;
 		}
 
 		/// <summary>
 		/// Adds additional <see cref="CommandController"> to search for commands.
-		/// Will shift other backfalls back.
+		/// Will shift other fallback back.
 		/// </summary>
-		/// <param name="backfall">Controller to add</param>
-		public void AddBackfall (CommandController backfall) {
-			if (Backfall != null) {
-				backfall.AddBackfall (Backfall);
+		/// <param name="fallback">Controller to add</param>
+		public void AddFallback (CommandController fallback) {
+			if (Fallback != null) {
+				fallback.AddFallback (Fallback);
 			}
-			Backfall = backfall;
+			Fallback = fallback;
 		}
 
 		public void RemoveAllCommands () {
@@ -134,7 +134,7 @@ namespace Coflnet
 		/// <param name="command">Command.</param>
 		/// <param name="data">Data.</param>
 		/// <param name="target">Target.</param>
-		public void ExecuteCommand (Command command, MessageData data, Referenceable target = null) {
+		public void ExecuteCommand (Command command, CommandData data, Entity target = null) {
 			// test Permissions
 			if (command.Settings.Permissions != null) {
 				ValidatePermissions(command,data,target);
@@ -144,7 +144,7 @@ namespace Coflnet
 
 		}
 
-		private void ValidatePermissions(Command command, MessageData data, Referenceable target)
+		private void ValidatePermissions(Command command, CommandData data, Entity target)
 		{
 			var settings = command.Settings;
 			foreach (var permision in settings.Permissions) {
@@ -157,27 +157,27 @@ namespace Coflnet
 					}
 
 
-					throw new PermissionNotMetException(permision.Slug,data.rId,data.sId,command.Slug,data.mId);
+					throw new PermissionNotMetException(permision.Slug,data.Recipient,data.SenderId,command.Slug,data.MessageId);
 				}
 			}
 		}
 
-		private bool TokenGrantsPermissionForCommand(Command command, MessageData data, Referenceable target, Permission permission)
+		private bool TokenGrantsPermissionForCommand(Command command, CommandData data, Entity target, Permission permission)
 		{
-			var header = data.headers;
+			var header = data.Headers;
 			if(header==null)
 			{
 				return false;
 			}
 			var token = header.Token;
 
-			if(token != null && TokenManager.Instance.IsTokenValid(token,target,data.sId)
+			if(token != null && TokenManager.Instance.IsTokenValid(token,target,data.SenderId)
 			&& (target as Core.IHasScopes).AvailableScopes
 				.IsAllowedToExecute(token.Scopes,command.Slug))
 			{
 				// the token allows us to execute this, but is the token issuer authorized?
-				var temp = new MessageData(data);
-				temp.sId = token.Issuer;
+				var temp = new CommandData(data);
+				temp.SenderId = token.Issuer;
 				return permission.CheckPermission(data,target);
 			}
 			return false;
@@ -188,12 +188,12 @@ namespace Coflnet
 		/// Executes a command.
 		/// </summary>
 		/// <param name="data">Decoded object sent from the server</param>
-		public void ExecuteCommand (MessageData data, Referenceable target = null) {
-			if(data == null || data.type == null)
+		public void ExecuteCommand (CommandData data, Entity target = null) {
+			if(data == null || data.Type == null)
 			{
 				throw new CommandUnknownException("null");
 			}
-			var command = GetCommand (data.type);
+			var command = GetCommand (data.Type);
 			ExecuteCommand (command, data, target);
 		}
 
@@ -205,8 +205,8 @@ namespace Coflnet
 		public Command GetCommand (string slug) {
 			if (!commands.ContainsKey (slug)) {
 				// was this the last command controller or can we check another?
-				if (Backfall != null) {
-					return Backfall.GetCommand (slug);
+				if (Fallback != null) {
+					return Fallback.GetCommand (slug);
 				}
 
 				throw new CommandUnknownException (slug);
@@ -221,7 +221,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="command">The command object to execute</param>
 		/// <param name="data">The data from the server which to execute the command with</param>
-		public static void ExecuteCommandInCurrentThread (Command command, MessageData data) {
+		public static void ExecuteCommandInCurrentThread (Command command, CommandData data) {
 			if (command.Settings.Encrypted)
 				EncryptionController.Instance.ReceiveEncryptedCommand (command, data);
 			else
@@ -278,7 +278,7 @@ namespace Coflnet
 		RestSharp.RestClient client = new RestSharp.RestClient ();
 		RestCommandRegisterRequest registerRequest;
 
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			RestSharp.RestRequest request;
 			request = new RestSharp.RestRequest (registerRequest.route, registerRequest.method);
 			foreach (var item in registerRequest.defaultHeaders) {
@@ -286,7 +286,7 @@ namespace Coflnet
 			}
 			var remoteResponse = client.Execute (request);
 
-			//MessageData response = new MessageData();
+			//CommandData response = new CommandData();
 			//response.m = remoteResponse.RawBytes;
 
 			// assing the result
@@ -322,7 +322,7 @@ namespace Coflnet
 	}
 
 	public class StartRecover : ServerCommand {
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 
 			throw new NotImplementedException ();
 		}
@@ -353,11 +353,11 @@ namespace Coflnet
 		protected string slug;
 		protected ServerCommandSettings settings;
 
-		public override void Execute (MessageData data) {
+		public override void Execute (CommandData data) {
 			//Dictionary<string, string> body = new Dictionary<string, string>();
 			foreach (var item in commands) {
-				string value = item.Value.Replace ("{sId}", data.sId.ToString ());
-				MessageData newData = new MessageData (data.sId, 0, value, null);
+				string value = item.Value.Replace ("{sId}", data.SenderId.ToString ());
+				CommandData newData = new CommandData (data.SenderId, 0, value, null);
 				item.Key.Execute (newData);
 			}
 

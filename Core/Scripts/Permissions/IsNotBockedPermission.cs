@@ -8,12 +8,12 @@ namespace Coflnet {
 			Instance = new IsNotBockedPermission ();
 		}
 
-		public override bool CheckPermission (MessageData data, Referenceable target) {
+		public override bool CheckPermission (CommandData data, Entity target) {
 			var user = target as CoflnetUser;
 			if (user == null) {
 				return false;
 			}
-			return !user.IsBlocked (new Reference<CoflnetUser> (data.sId));
+			return !user.IsBlocked (new Reference<CoflnetUser> (data.SenderId));
 
 		}
 

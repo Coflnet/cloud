@@ -18,7 +18,7 @@ namespace Coflnet.Client.Messaging
         public string Name {get;set; }
 
 		[IgnoreMember]
-        public SourceReference ID => partner.userId;
+        public EntityId ID => partner.userId;
 
 		[Key(2)]
         public long lastMessageIndex {get;set;}
@@ -47,7 +47,7 @@ namespace Coflnet.Client.Messaging
 		/// The id of the chat
 		/// </summary>
 		[Key(0)]
-		public SourceReference GroupId;
+		public EntityId GroupId;
 
         public GroupChat()
         {
@@ -57,7 +57,7 @@ namespace Coflnet.Client.Messaging
 		/// Generates a new instance of a <see cref="GroupChat"/>
 		/// </summary>
 		/// <param name="groupId"></param>
-		public GroupChat(SourceReference groupId)
+		public GroupChat(EntityId groupId)
         {
 			GroupId = groupId;
         }
@@ -67,15 +67,15 @@ namespace Coflnet.Client.Messaging
 		{ 
 			get
 			{
-				return ReferenceManager.Instance.GetResource<GroupChatResource>(GroupId).Name;
+				return EntityManager.Instance.GetEntity<GroupChatResource>(GroupId).Name;
 			} set{
 				// this does currently not distribute
-				ReferenceManager.Instance.GetResource<GroupChatResource>(GroupId).Name = value;
+				EntityManager.Instance.GetEntity<GroupChatResource>(GroupId).Name = value;
 			}
 		}
 
 		[IgnoreMember]
-        public SourceReference ID => GroupId;
+        public EntityId ID => GroupId;
 
 		[Key(1)]
         public long lastMessageIndex{get; set;}
@@ -97,7 +97,7 @@ namespace Coflnet.Client.Messaging
 		void SendMessage(string message);
 		string Name {get;set;}
 
-		SourceReference ID {get;}
+		EntityId ID {get;}
 
 		/// <summary>
 		/// The index of the latest received message.
@@ -114,7 +114,7 @@ namespace Coflnet.Client.Messaging
 	}
 
 
-	public class GroupChatResource : Referenceable {
+	public class GroupChatResource : Entity {
 
 		private static CommandController chatCommands;
 
@@ -129,13 +129,13 @@ namespace Coflnet.Client.Messaging
             return chatCommands;
         }
 
-		public override void ExecuteCommand(MessageData data, Command command)
+		public override void ExecuteCommand(CommandData data, Command command)
 		{
 			// TODO distribute
 			foreach (var member in Members)
 			{
-				var newData = new MessageData(data);
-				newData.rId = member.userId;
+				var newData = new CommandData(data);
+				newData.Recipient = member.userId;
 				CoflnetCore.Instance.SendCommand(newData);
 			}
 		}
@@ -145,7 +145,7 @@ namespace Coflnet.Client.Messaging
     {
         public override string Slug => "createGroupChat";
 
-        public override Referenceable CreateResource(MessageData data)
+        public override Entity CreateResource(CommandData data)
         {
             var chat = new GroupChatResource();
 			var options = data.GetAs<Params>();
@@ -171,14 +171,14 @@ namespace Coflnet.Client.Messaging
 			[Key(2)]
 			public string Name;
 			[Key(3)]
-			public List<SourceReference> Members;
+			public List<EntityId> Members;
 
 			/// <summary>
 			/// Creates a new instance of the command Params
 			/// </summary>
 			/// <param name="members">The members to add to the group</param>
 			/// <param name="name">The name the group will have</param>
-            public Params(List<SourceReference> members, string name)
+            public Params(List<EntityId> members, string name)
             {
 				this.Members = members;
 				this.Name = name;
@@ -190,12 +190,12 @@ namespace Coflnet.Client.Messaging
     {
         public override string Slug => "msg";
 
-        public override void Execute(MessageData data)
+        public override void Execute(CommandData data)
         {
 			// distribute the message
             foreach (var item in data.GetTargetAs<GroupChatResource>().Members)
 			{
-				data.CoreInstance.SendCommand<GroupChatMessageIn,byte[]>(item.userId,data.message,0,data.rId);
+				data.CoreInstance.SendCommand<GroupChatMessageIn,byte[]>(item.userId,data.message,0,data.Recipient);
 			}
         }
 
@@ -211,8 +211,8 @@ namespace Coflnet.Client.Messaging
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute(MessageData data)
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute(CommandData data)
 		{
 			
 		}
@@ -246,7 +246,7 @@ namespace Coflnet.Client.Messaging
 	public class ChatMember
 	{
 		[Key(0)]
-		public SourceReference userId;
+		public EntityId userId;
 		[Key(1)]
 		public byte[] receiveKey;
 		/// <summary>
@@ -258,10 +258,10 @@ namespace Coflnet.Client.Messaging
 		[Key(3)]
 		public ChatRole Role;
 
-		public ChatMember(SourceReference userId) : this(userId,new byte[0])
+		public ChatMember(EntityId userId) : this(userId,new byte[0])
 		{
 		}
-		public ChatMember(SourceReference userId,byte[] receiveKey)
+		public ChatMember(EntityId userId,byte[] receiveKey)
 		{
 			this.userId = userId;
 			this.receiveKey = receiveKey;

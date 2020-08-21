@@ -34,9 +34,9 @@ namespace Coflent.Client
 		/// <summary>
 		/// Generates a new Installation
 		/// </summary>
-		public void Setup(SourceReference DeviceId)
+		public void Setup(EntityId DeviceId)
 		{
-			ConfigController.InstallationId = clientCoreInstance.CreateResource<RegisterInstallation>(DeviceId).Id;
+			ConfigController.InstallationId = clientCoreInstance.CreateEntity<RegisterInstallation>(DeviceId).Id;
 			// assign id
 			clientCoreInstance.Id = ConfigController.InstallationId;
 		}
@@ -45,18 +45,18 @@ namespace Coflent.Client
 		/// The Id of the current active software installation
 		/// </summary>
 		/// <value>Device Id</value>
-		public SourceReference CurrentInstallId
+		public EntityId CurrentInstallId
 		{
 			get
 			{
-				if(ConfigController.InstallationId == default(SourceReference))
+				if(ConfigController.InstallationId == default(EntityId))
 				{
 					Setup(ConfigController.DeviceId);
 				} else if(ConfigController.InstallationId.IsLocal)
 				{
 					// update the device id to the server generated one
-					ConfigController.InstallationId = clientCoreInstance.ReferenceManager.
-													GetResource<Installation>(ConfigController.DeviceId).Id;
+					ConfigController.InstallationId = clientCoreInstance.EntityManager.
+													GetEntity<Installation>(ConfigController.DeviceId).Id;
 				}
 				return ConfigController.InstallationId;
 			}

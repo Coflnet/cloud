@@ -213,7 +213,7 @@ namespace Coflnet
 		/// <param name="publicId">Public identifier of this server.</param>
 		public CoflnetServer(long publicId)
 		{
-			this.Id = new SourceReference(publicId,0);
+			this.Id = new EntityId(publicId,0);
 			this.pingTimeMS = long.MaxValue;
 			// TODO: try to load the server info from the master
 		}

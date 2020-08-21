@@ -25,11 +25,11 @@ namespace Coflnet.Server
     {
         public override string Slug => "sibUpdate";
 
-        public override MessageData ExecuteWithReturn(MessageData data)
+        public override CommandData ExecuteWithReturn(CommandData data)
         {
-            data.CoreInstance.ReferenceManager.ExecuteForReference(data.GetAs<MessageData>(),data.sId);
+            data.CoreInstance.EntityManager.ExecuteForReference(data.GetAs<CommandData>(),data.SenderId);
 
-			var hash = data.CoreInstance.ReferenceManager.GetResource<Referenceable>(data.GetAs<MessageData>().rId).GetHashCode();
+			var hash = data.CoreInstance.EntityManager.GetEntity<Entity>(data.GetAs<CommandData>().Recipient).GetHashCode();
 			// success :)
 			data.SerializeAndSet(hash);
 			return data;

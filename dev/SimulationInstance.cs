@@ -21,14 +21,14 @@ namespace Coflnet.Dev
 		/// <summary>
 		/// Will be invoked on new message, return value determines if messages will be forwarded as usual
 		/// </summary>
-		public Func<MessageData,bool> OnMessage;
+		public Func<CommandData,bool> OnMessage;
 
 		/// <summary>
 		/// Will be invoked after the command was processed successfully
 		/// </summary>
-		public Action<MessageData> AfterMessage;
+		public Action<CommandData> AfterMessage;
 
-		public void ReceiveCommand(DevMessageData data, SourceReference sender = default(SourceReference))
+		public void ReceiveCommand(DevCommandData data, EntityId sender = default(EntityId))
 		{
 			if(!IsConnected)
 			{

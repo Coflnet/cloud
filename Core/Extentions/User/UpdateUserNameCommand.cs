@@ -8,8 +8,8 @@ namespace Coflnet.Core.User
 		/// <summary>
 		/// Execute the command logic with specified data.
 		/// </summary>
-		/// <param name="data"><see cref="MessageData"/> passed over the network .</param>
-		public override void Execute(MessageData data)
+		/// <param name="data"><see cref="CommandData"/> passed over the network .</param>
+		public override void Execute(CommandData data)
 		{
 			data.GetTargetAs<CoflnetUser>().UserName.Set( data.GetAs<string>());
 		}

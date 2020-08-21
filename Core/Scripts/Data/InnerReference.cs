@@ -7,12 +7,12 @@ namespace Coflnet
 	/// Inner reference used for serializing the reference object with additional data
 	/// </summary>
 	[MessagePackObject]
-	public class InnerReference<T> where T : Referenceable
+	public class InnerReference<T> where T : Entity
 	{
 		/// <summary>
 		/// Gets or sets the inner resource.
 		/// This is a workaround because it is easier to serialize <see cref="object"/> 
-		/// than derived classes of <see cref="Referenceable"/> 
+		/// than derived classes of <see cref="Entity"/> 
 		/// </summary>
 		/// <value>The inner resource.</value>
 		[Key(0)]
@@ -33,9 +33,9 @@ namespace Coflnet
 
 		public InnerReference() { }
 
-		public InnerReference(T referenceable)
+		public InnerReference(T entity)
 		{
-			Resource = referenceable;
+			Resource = entity;
 		}
 
 
@@ -44,12 +44,12 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data">Command data to send</param>
 		/// <param name="changingCommand">Wherever or not this command is changing</param>
-		public virtual void ExecuteForResource(MessageData data, bool changingCommand = true)
+		public virtual void ExecuteForEntity(CommandData data, bool changingCommand = true)
 		{
 			CoflnetCore.Instance.SendCommand(data, Resource.Id.ServerId);
 		}
 
-		public virtual bool IsAllowedToAccess(SourceReference requestingReference, AccessMode mode = AccessMode.READ)
+		public virtual bool IsAllowedToAccess(EntityId requestingReference, AccessMode mode = AccessMode.READ)
 		{
 			return Resource.IsAllowedAccess(requestingReference, mode);
 		}
@@ -61,7 +61,7 @@ namespace Coflnet
 	/// Includes siblings (failover) nodes.
 	/// </summary>
 	[MessagePackObject]
-	public class RedundantInnerReference<T> : InnerReference<T> where T : Referenceable
+	public class RedundantInnerReference<T> : InnerReference<T> where T : Entity
 	{
 		/// TODO add list of local subscribed <see cref="ReceiveableResource"/>
 	// <summary>
@@ -73,9 +73,9 @@ namespace Coflnet
 
 		public RedundantInnerReference() { }
 
-		public RedundantInnerReference(T referenceable)
+		public RedundantInnerReference(T entity)
 		{
-			Resource = referenceable;
+			Resource = entity;
 		}
 
 
@@ -84,7 +84,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data">Command data to send</param>
 		/// <param name="changingCommand">Wherever or not this command is changing</param>
-		public override void ExecuteForResource(MessageData data, bool changingCommand = true)
+		public override void ExecuteForEntity(CommandData data, bool changingCommand = true)
 		{
 			// read commands are different from write commands
 			if (changingCommand)
@@ -102,7 +102,7 @@ namespace Coflnet
 		}
 
 
-		public override bool IsAllowedToAccess(SourceReference requestingReference, AccessMode mode = AccessMode.READ)
+		public override bool IsAllowedToAccess(EntityId requestingReference, AccessMode mode = AccessMode.READ)
 		{
 			foreach (var nodeId in SiblingNodes)
 			{
@@ -116,21 +116,21 @@ namespace Coflnet
 	}
 
 	[MessagePackObject]
-	public class RedirectReference<T> : InnerReference<T> where T:Referenceable
+	public class RedirectReference<T> : InnerReference<T> where T:Entity
 	{
 		[Key(1)]
-		public SourceReference newId;
+		public EntityId newId;
 
         
     }
 
-	public class RedirectReferenceable : Referenceable
+	public class RedirectEntity : Entity
         {
-			public SourceReference newId;
+			public EntityId newId;
 
             public override CommandController GetCommandController()
             {
-                return ReferenceManager.Instance.GetResource<Referenceable>(newId).GetCommandController();
+                return EntityManager.Instance.GetEntity<Entity>(newId).GetCommandController();
             }
         }
 }

@@ -21,7 +21,7 @@ namespace Coflnet.Core.Extention
 			Instance = new StatService();
 		}
 
-		public void Executed(SourceReference target, string type, SourceReference sender)
+		public void Executed(EntityId target, string type, EntityId sender)
 		{
 			var logEntry = new LogItem(
 							sender,
@@ -81,15 +81,15 @@ namespace Coflnet.Core.Extention
 	public class LogItem
 	{
 		[Key(0)]
-		public SourceReference sender;
+		public EntityId sender;
 		[Key(1)]
-		public SourceReference target;
+		public EntityId target;
 		[Key(2)]
 		public long TimeStamp;
 		[Key(3)]
 		public string type;
 
-        public LogItem(SourceReference sender, SourceReference target, long timeStamp, string type)
+        public LogItem(EntityId sender, EntityId target, long timeStamp, string type)
         {
             this.sender = sender;
             this.target = target;
@@ -102,7 +102,7 @@ namespace Coflnet.Core.Extention
 	public class StatItem
 	{
 		[Key(0)]
-		public SourceReference targetId;
+		public EntityId targetId;
 
 		[Key(1)]
 		public int count;
@@ -111,13 +111,13 @@ namespace Coflnet.Core.Extention
 		public string type;
 		
 		[Key(3)]
-		public SourceReference serverId;		
+		public EntityId serverId;		
 		[Key(4)]
 		public long startTime;
 		[Key(5)]
 		public long endTime;
 
-        public StatItem(SourceReference targetId, int count, string type, SourceReference serverId, long startTime, long endTime)
+        public StatItem(EntityId targetId, int count, string type, EntityId serverId, long startTime, long endTime)
         {
             this.targetId = targetId;
             this.count = count;
@@ -131,14 +131,14 @@ namespace Coflnet.Core.Extention
         {
             var item = obj as StatItem;
             return item != null &&
-                   EqualityComparer<SourceReference>.Default.Equals(targetId, item.targetId) &&
+                   EqualityComparer<EntityId>.Default.Equals(targetId, item.targetId) &&
                    type == item.type;
         }
 
         public override int GetHashCode()
         {
             var hashCode = -836728082;
-            hashCode = hashCode * -1521134295 + EqualityComparer<SourceReference>.Default.GetHashCode(targetId);
+            hashCode = hashCode * -1521134295 + EqualityComparer<EntityId>.Default.GetHashCode(targetId);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(type);
             return hashCode;
         }

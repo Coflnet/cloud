@@ -4,11 +4,11 @@ using System.Runtime.Serialization;
 namespace Coflnet
 {
 	/// <summary>
-	/// Strong type for remote objects based on <see cref="SoureReference"/> as <see cref="ReferenceId"/>
+	/// Strong type for remote objects based on <see cref="SoureReference"/> as <see cref="EntityId"/>
 	/// </summary>
 	/// <typeparam name="T">The type this Reference represents</typeparam>
     [DataContract (Name = "ref", Namespace = "")]
-	public class Reference<T> where T : Referenceable {
+	public class Reference<T> where T : Entity {
 		/// <summary>
 		/// Internal reference used for storing referenced object 
 		/// if present in memory on the current server
@@ -21,8 +21,8 @@ namespace Coflnet
 		/// Executes a command on the server containing the resource referenced by this object
 		/// </summary>
 		/// <param name="data">Command data to send</param>
-		public virtual void ExecuteForResource (MessageData data) {
-			ReferenceManager.Instance.ExecuteForReference (data);
+		public virtual void ExecuteForEntity (CommandData data) {
+			EntityManager.Instance.ExecuteForReference (data);
 		}
 
 		/// <summary>
@@ -44,8 +44,8 @@ namespace Coflnet
 		/// Initializes a new instance of the <see cref="T:Coflnet.Server.Reference`1"/> class without actually knowing the data.
 		/// </summary>
 		/// <param name="referenceId">Reference identifier.</param>
-		public Reference (SourceReference referenceId) {
-			this.ReferenceId = referenceId;
+		public Reference (EntityId referenceId) {
+			this.EntityId = referenceId;
 		}
 
 		public Reference () {
@@ -56,7 +56,7 @@ namespace Coflnet
 		public T Resource {
 			get {
 				if (InnerReference == null) {
-					InnerReference = ReferenceManager.Instance.GetNewReference<T> (this.ReferenceId);
+					InnerReference = EntityManager.Instance.GetNewReference<T> (this.EntityId);
 				}
 				return InnerReference.Resource;
 			}
@@ -66,7 +66,7 @@ namespace Coflnet
 		}
 
 		[DataMember (Name = "id")]
-		public SourceReference ReferenceId {
+		public EntityId EntityId {
 			get;
 			set;
 		}
@@ -93,13 +93,13 @@ namespace Coflnet
         {
             var reference = obj as Reference<T>;
             return reference != null &&
-                   EqualityComparer<SourceReference>.Default.Equals(ReferenceId, reference.ReferenceId);
+                   EqualityComparer<EntityId>.Default.Equals(EntityId, reference.EntityId);
         }
 
         public override int GetHashCode()
         {
             var hashCode = -1388343608;
-            hashCode = hashCode * -1521134295 + EqualityComparer<SourceReference>.Default.GetHashCode(ReferenceId);
+            hashCode = hashCode * -1521134295 + EqualityComparer<EntityId>.Default.GetHashCode(EntityId);
             return hashCode;
         }
     }
@@ -124,21 +124,21 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <typeparam name="TCommand"></typeparam>
-        public virtual void ExecuteForResource<TCommand>(SourceReference sender = default(SourceReference)) where TCommand:Command
+        public virtual void ExecuteForEntity<TCommand>(EntityId sender = default(EntityId)) where TCommand:Command
         {
 			Token token;
 			if(KeyPair.secretKey == null)
 			{
-				token = TokenManager.Instance.GetToken(ReferenceId);
+				token = TokenManager.Instance.GetToken(EntityId);
 			} else 
 			{
 				// we can generate a new token
-				token = TokenManager.Instance.GenerateNewToken(ReferenceId, sender, KeyPair);
+				token = TokenManager.Instance.GenerateNewToken(EntityId, sender, KeyPair);
 			}
 
 
 			CoflnetCore.Instance.SendCommand<TCommand,Token>(
-                ReferenceId,
+                EntityId,
                 token,
                 0,
                 sender);

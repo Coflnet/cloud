@@ -7,7 +7,7 @@ namespace Coflnet
     /// Redundant reference Data exists on one or more servers (recomended)
     /// </summary>
     [DataContract]
-	public class RedundantReference<T> : Reference<T> where T : Referenceable {
+	public class RedundantReference<T> : Reference<T> where T : Entity {
 		[DataMember]
 		protected List<long> failoverServers = new List<long> ();
 
@@ -42,8 +42,8 @@ namespace Coflnet
 		/// Executes a command on the server containing the resource referenced by this object
 		/// </summary>
 		/// <param name="data">Command data to send</param>
-		public new void ExecuteForResource (MessageData data) {
-			CoflnetCore.Instance.SendCommand (data, ReferenceId.ServerId);
+		public new void ExecuteForEntity (CommandData data) {
+			CoflnetCore.Instance.SendCommand (data, EntityId.ServerId);
 			// also send it to the failover servers
 			foreach (var item in failoverServers) {
 				CoflnetCore.Instance.SendCommand (data, item);
@@ -51,14 +51,14 @@ namespace Coflnet
 		}
 
 		/// <summary>
-		/// Gets a value indicating whether this <see cref="T:Coflnet.Server.RedundantReference`1"/> s Resource is lokally available.
+		/// Gets a value indicating whether this <see cref="T:Coflnet.Server.RedundantReference`1"/> s Entity is lokally available.
 		/// </summary>
 		/// <value><c>true</c> if is lokal; otherwise, <c>false</c>.</value>
 		[IgnoreDataMember]
 		public bool IsLokal {
 			get {
 
-				return ReferenceManager.Instance.Exists (this.ReferenceId);
+				return EntityManager.Instance.Exists (this.EntityId);
 			}
 		}
 
@@ -69,7 +69,7 @@ namespace Coflnet
 		[IgnoreDataMember]
 		public CoflnetServer NearestServer {
 			get {
-				CoflnetServer closest = ServerController.Instance.GetOrCreate (ReferenceId.ServerId);
+				CoflnetServer closest = ServerController.Instance.GetOrCreate (EntityId.ServerId);
 				foreach (var item in failoverServers) {
 					var server = ServerController.Instance.GetOrCreate (item);
 					// if another server that is closer or as fast as the managing server use it instead

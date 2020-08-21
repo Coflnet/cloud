@@ -9,7 +9,7 @@ public class FirstStartupTest {
 
     [Test]
     public void FirstStartupTestSimplePasses () {
-        DevCore.Init (new SourceReference (1, 1, 1, 123456));
+        DevCore.Init (new EntityId (1, 1, 1, 123456));
     }
 
     private class AcceptAllScreen : IPrivacyScreen {
@@ -23,7 +23,7 @@ public class FirstStartupTest {
     public void DeviceAndInstallRegister()
     {
         FirstStartSetupController.Instance.RedoSetup (true);
-        var serverId = new SourceReference (1, 1, 1, 0);
+        var serverId = new EntityId (1, 1, 1, 0);
         // start
         DevCore.Init (serverId, false,true);
         // servercore won't receive commands
@@ -35,8 +35,8 @@ public class FirstStartupTest {
         ClientCore.Init();
 
         // Device and Installation should now exist
-        Assert.AreNotEqual(default(SourceReference),ConfigController.DeviceId);
-        Assert.AreNotEqual(default(SourceReference),ConfigController.InstallationId);
+        Assert.AreNotEqual(default(EntityId),ConfigController.DeviceId);
+        Assert.AreNotEqual(default(EntityId),ConfigController.InstallationId);
 
         // enable network
         DevCore.DevInstance.simulationInstances[serverId].IsConnected = true;
@@ -52,7 +52,7 @@ public class FirstStartupTest {
     [Test]
     public void FirstStartupRegisterLoginTest () {
         PrivacyService.Instance.privacyScreen = new AcceptAllScreen ();
-        var serverId = new SourceReference (1, 1, 1, 0);
+        var serverId = new EntityId (1, 1, 1, 0);
         DevCore.Init (serverId, true);
 
 
@@ -67,8 +67,8 @@ public class FirstStartupTest {
         // ActiveUserId should change on first register
         DevCore.DevInstance
             .simulationInstances[serverId]
-            .core.ReferenceManager
-            .TryGetResource<CoflnetUser> (ConfigController.ActiveUserId, out user);
+            .core.EntityManager
+            .TryGetEntity<CoflnetUser> (ConfigController.ActiveUserId, out user);
         
         Assert.NotNull (user);
 
@@ -78,8 +78,8 @@ public class FirstStartupTest {
         // ActiveUserId should change on first register
         DevCore.DevInstance
             .simulationInstances[serverId]
-            .core.ReferenceManager
-            .TryGetResource<CoflnetUser> (ConfigController.ActiveUserId, out userOnClient);
+            .core.EntityManager
+            .TryGetEntity<CoflnetUser> (ConfigController.ActiveUserId, out userOnClient);
         
         Assert.NotNull (userOnClient);
 
@@ -91,7 +91,7 @@ public class FirstStartupTest {
     public void FirstStartupStoreValue () {
         FirstStartSetupController.Instance.RedoSetup (true);
         PrivacyService.Instance.privacyScreen = new AcceptAllScreen ();
-        var serverId = new SourceReference (1, 1, 1, 0);
+        var serverId = new EntityId (1, 1, 1, 0);
         DevCore.Init (serverId, true);
 
         Logger.Log (ConfigController.UserSettings.userId);
@@ -101,10 +101,10 @@ public class FirstStartupTest {
         // sometimes it comes to errors when the test is run alone and the static constructor 
         // of CoflnetUser didn't register the SetUserKeyValue Command
 
-        var data =  MessageData.CreateMessageData<SetUserKeyValue,KeyValuePair<string, string>> (
+        var data =  CommandData.CreateCommandData<SetUserKeyValue,KeyValuePair<string, string>> (
                 ConfigController.ActiveUserId,
                 new KeyValuePair<string, string> ("mykey", valueToStore));
-                data.sId = ConfigController.ActiveUserId;
+                data.SenderId = ConfigController.ActiveUserId;
         CoflnetCore.Instance
             .SendCommand(data);
 
