@@ -521,11 +521,6 @@ namespace Coflnet
 		/// <value>The signed_public_temp_key.(48 bytes)</value>
 		public byte[] sptk { get; set; }
 		/// <summary>
-		/// Gets or sets the singed_public_server_key.
-		/// </summary>
-		/// <value>The singed_public_server_key.</value>
-		public CoflnetCertificate certificate { get; set; }
-		/// <summary>
 		/// Gets or sets the supported_ciphers.
 		/// </summary>
 		/// <value>The supported_ciphers.</value>

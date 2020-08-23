@@ -80,6 +80,7 @@ namespace Coflnet
 			}
 			catch (System.Exception ex)
 			{
+				Logger.Error(ex.Message);
 			}
 
 

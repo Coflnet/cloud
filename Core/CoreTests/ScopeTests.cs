@@ -144,6 +144,6 @@ public class ScopeTests {
             Commands.Add("setText");
         }
 
-        public string Slug => "textWrite";
+        public override string Slug => "textWrite";
     }
 }

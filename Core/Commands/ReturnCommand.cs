@@ -92,7 +92,7 @@ namespace Coflnet
 			try 
 			{
 				oldId = data.GetAs<CreationParamsBase>().options.OldId;
-			}catch(Exception e)
+			}catch(Exception)
 			{
 				throw new CoflnetException("invalid_payload","The payload of the command isn't of type CreationParamsBase nor derived from it");
 			}

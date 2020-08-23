@@ -67,6 +67,7 @@ namespace Coflnet
 				Load();
 			} catch(Exception e)
 			{
+				Logger.Error($"Failed to load config. Error message: '{e.Message}'");
 			}
 
 			

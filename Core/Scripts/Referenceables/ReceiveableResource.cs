@@ -39,7 +39,7 @@ namespace Coflnet {
 					CoflnetCore.Instance.SendCommand (data);
 				}
 				return command;
-			} catch (CommandUnknownException e) {
+			} catch (CommandUnknownException) {
 				
 				// this command is unkown to the us, if we are not the target persist it and send it later
 				if(data.Recipient != data.CoreInstance.Id)
