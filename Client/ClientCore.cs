@@ -56,8 +56,8 @@ namespace Coflnet.Client {
 
 
 		public static void Init () {
-						ClientInstance.SetCommandsLive ();
-			ClientInstance.socket.Reconnect ();
+			ClientInstance.SetCommandsLive ();
+            System.Threading.Tasks.Task.Run(ClientInstance.socket.Reconnect);
 			I18nController.Instance.LoadCompleted ();
 
 			if (ClientInstance != null)
@@ -182,12 +182,8 @@ namespace Coflnet.Client {
 			}
 		}
 
-		public override void SendCommand<C, T> (EntityId receipient, T data, long id = 0,EntityId sender = default(EntityId)) {
+		public override void SendCommand<C, T> (EntityId receipient, T data,EntityId sender = default(EntityId), long id = 0) {
 			ServerController.Instance.SendCommand<C, T> (receipient, data,sender);
-		}
-
-		public override void SendCommand<C> (EntityId receipient, byte[] data) {
-			ServerController.Instance.SendCommand<C> (receipient, data);
 		}
 
 		/// <summary>
@@ -261,7 +257,7 @@ namespace Coflnet.Client {
 			options.options.OldId = data.createdId;
 			
 			// create it on the server
-			SendCommand<C,T>(ownerId,options,0,sender);
+			SendCommand<C,T>(ownerId,options,sender);
 
 			return EntityManager.GetEntity<Entity>(data.createdId);
 		}
@@ -270,7 +266,7 @@ namespace Coflnet.Client {
 		{
 			public EntityId createdId;
 
-			public override void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId))
+			public override void SendCommand<C, T>(EntityId receipient, T data, EntityId sender = default(EntityId), long id = 0)
 			{
 				// this only exists as a "callback" 
 				createdId = ((KeyValuePair<EntityId,EntityId>)((object)data)).Value;
@@ -346,7 +342,7 @@ namespace Coflnet.Client {
 			EntityManager.AddReference(new SubscribeProxy(id));
 
 			// this is different on server sides
-			SendCommand<Sub2Command,EntityId>(ConfigController.ManagingServer,id,0,this.Id);
+			SendCommand<Sub2Command,EntityId>(ConfigController.ManagingServer,id,this.Id);
 			
 			// now clone it
 			FinishSubscribing(id,afterClone);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Coflnet;
 
 namespace Core.Extentions.KeyValue
@@ -8,6 +9,14 @@ namespace Core.Extentions.KeyValue
     /// </summary>
     public class KVService
     {
+        private CoflnetCore coreInstance;
+
+        public KVService(CoflnetCore coreInstance)
+        {
+            this.coreInstance = coreInstance;
+        }
+
+
         /// <summary>
         /// Adds a new Key and Value to a KeyValueStore
         /// </summary>
@@ -16,7 +25,8 @@ namespace Core.Extentions.KeyValue
         /// <param name="kvId">(optional) different KeyValueStore from the default one</param>
         public void Add(string key, EntityId id, EntityId kvId = default(EntityId))
         {
-
+            var pair = new KeyValuePair<string,EntityId>(key,id);
+            coreInstance.SendCommand<AddValueToStoreCommand,KeyValuePair<string,EntityId>>(kvId,pair);
         }
 
         /// <summary>

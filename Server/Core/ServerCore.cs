@@ -51,7 +51,7 @@ namespace Coflnet.Server
 
 		/// <summary>
 		/// Initializes this instance.
-		/// Should be called on startup of the application will reset the server if called twice
+		/// Should be called on startup of the application, resets the server if called again
 		/// </summary>
 		public static void Init()
 		{
@@ -119,7 +119,7 @@ namespace Coflnet.Server
 			MessagePersistence.ServerInstance.SaveMessage(data);
 		}
 
-		public override void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId))
+		public override void SendCommand<C, T>(EntityId receipient, T data, EntityId sender = default(EntityId), long id = 0)
 		{
 			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
 
@@ -137,20 +137,5 @@ namespace Coflnet.Server
 
 			SendCommand(commandData);
 		}
-
-		public override void SendCommand<C>(EntityId receipient, byte[] data)
-		{
-			var commandInstance = ((C)Activator.CreateInstance(typeof(C)));
-			var commandData = new CommandData(receipient, data, commandInstance.Slug);
-
-			SendCommand(commandData);
-		}
-
-
-
 	}
-
-
-
-
 }

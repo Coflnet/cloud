@@ -120,8 +120,7 @@ namespace Coflnet
 		/// <param name="sender">Optional sender, if not sent the core will attempt to replace with active <see cref="Entity"/> eg CoflnetUser.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public abstract void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId)) where C : Command;
-		public abstract void SendCommand<C>(EntityId receipient, byte[] data) where C : Command;
+		public abstract void SendCommand<C, T>(EntityId receipient, T data, EntityId sender = default(EntityId), long id = 0) where C : Command;
 
 
 		/// <summary>
@@ -133,7 +132,7 @@ namespace Coflnet
 		/// <typeparam name="C">Command class to send</typeparam>
 		public void SendCommand<C>(EntityId receipient,long id = 0, EntityId sender = default(EntityId)) where C:Command
 		{
-			SendCommand<C,short>(receipient,0,id,sender);
+			SendCommand<C,short>(receipient,0,sender,id);
 		}
 
 
@@ -170,7 +169,7 @@ namespace Coflnet
 				sender = this.Id;
 			}
 
-			SendCommand<C, T>(receipient, data, id,sender);
+			SendCommand<C, T>(receipient, data,sender, id);
 		}
 
 

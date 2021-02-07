@@ -140,7 +140,6 @@ namespace Coflnet
 			CoflnetCore.Instance.SendCommand<TCommand,Token>(
                 EntityId,
                 token,
-                0,
                 sender);
         }
     }

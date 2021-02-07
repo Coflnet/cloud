@@ -346,6 +346,11 @@ namespace Coflnet
             AfterSend?.Invoke(this);
         }
 
+        public virtual void SendCommandTo<TCom,TDat>(EntityId target,TDat data) where TCom : Command
+        {
+            CoreInstance.SendCommand<TCom,TDat>(target,data,this.Recipient);
+        }
+
         public CommandData(EntityId sId, EntityId rId, long mId, string t, byte[] message) : this(rId, mId, message, t)
         {
             this.SenderId = sId;

@@ -32,10 +32,10 @@ namespace Coflnet.Dev
 			DevCore.DevInstance.SendCommand(data,serverId);
 		}
 
-		public override void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId))
+		public override void SendCommand<C, T>(EntityId receipient, T data, EntityId sender = default(EntityId), long id = 0)
 		{
 			
-			DevCore.DevInstance.SendCommand<C,T>(receipient,data,id,sender);
+			DevCore.DevInstance.SendCommand<C,T>(receipient,data,sender,id);
 		}
     }
 

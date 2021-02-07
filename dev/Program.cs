@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using Core.Extentions.KeyValue;
 /// <summary>
 /// Example
 /// </summary>
 namespace Coflnet.Dev
 {
-    /*
+    
     class Program
     {
         static void Main(string[] args)
         {
             SetupForConsole();
             Console.WriteLine("This is the development project for the Coflnet cloud system");
-            //DevCore.Init(new SourceReference(1,0));
+            DevCore.Init(new EntityId(1,0));
+
             Logger.Log(new List<string>(){"hi"});
             Console.ReadKey();
         }
@@ -23,5 +25,5 @@ namespace Coflnet.Dev
             Logger.OnError += Console.Error.WriteLine;
         }
     }
-    */
+    
 }

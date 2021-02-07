@@ -30,7 +30,7 @@ namespace Coflnet
 		/// try to stay under 16 characters
 		/// </summary>
 		/// <returns>The slug.</returns>
-		public abstract string Slug { get; }
+		public virtual string Slug => this.GetType().Name;
 		/// <summary>
 		/// Gets the command settings for this command.
 		/// Will generate a new Settings Object. 

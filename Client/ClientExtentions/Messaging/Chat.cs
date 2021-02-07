@@ -195,7 +195,7 @@ namespace Coflnet.Client.Messaging
 			// distribute the message
             foreach (var item in data.GetTargetAs<GroupChatResource>().Members)
 			{
-				data.CoreInstance.SendCommand<GroupChatMessageIn,byte[]>(item.userId,data.message,0,data.Recipient);
+				data.CoreInstance.SendCommand<GroupChatMessageIn,byte[]>(item.userId,data.message,data.Recipient);
 			}
         }
 

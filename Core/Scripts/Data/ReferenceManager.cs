@@ -466,7 +466,7 @@ namespace Coflnet
 					return;
 				}
 				// we are the main managing server but this resource doesn't exist
-				throw new ObjectNotFound (data.Recipient);
+				throw new ObjectNotFound (data.Recipient,this.coreInstance.Id);
 			}
 
 			//var amIAManagingNode = IsManagingNodeFor(this.coreInstance.Id,data.rId);
@@ -503,7 +503,7 @@ namespace Coflnet
 					if(!command.Settings.DisableExecuteConfirm)
 					{
 						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
+							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),data.Recipient);
 					}
 
 					// done
@@ -517,7 +517,7 @@ namespace Coflnet
 					if(!command.Settings.DisableExecuteConfirm)
 					{
 						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
+							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),data.Recipient);
 					}
 					
 					// the response should be returned now
@@ -765,7 +765,8 @@ namespace Coflnet
 		}
 
 		public class ObjectNotFound : CoflnetException {
-			public ObjectNotFound (EntityId id) : base ("object_not_found", $"The resource {id} wasn't found on this server", null, 404) { }
+			public ObjectNotFound (EntityId id, EntityId coreId = default(EntityId)) 
+			: base ("object_not_found", $"The resource {id} wasn't found on this server {coreId}", null, 404) { }
 		}
 
 		/// <summary>

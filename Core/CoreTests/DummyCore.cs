@@ -38,14 +38,9 @@ using System;
             EntityManager.ExecuteForReference(data);
         }
 
-        public override void SendCommand<C, T>(EntityId receipient, T data, long id = 0, EntityId sender = default(EntityId))
+        public override void SendCommand<C, T>(EntityId receipient, T data, EntityId sender = default(EntityId), long id = 0)
         {
            return;
-        }
-
-        public override void SendCommand<C>(EntityId receipient, byte[] data)
-        {
-            throw new System.NotImplementedException();
         }
     }
 

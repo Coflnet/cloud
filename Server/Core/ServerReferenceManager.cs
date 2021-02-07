@@ -60,7 +60,7 @@ namespace Coflnet.Server
 						var redRef = reference  as RedundantInnerReference<Entity>;
 						SibblingUpdate(redRef,data,resource.GetHashCode(),()=>{
 							coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
+							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),data.Recipient);
 						});
 					}
 
@@ -68,7 +68,7 @@ namespace Coflnet.Server
 					if(ReceiveConfirm.CommandSlug != command.Slug)
 					{
 						coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
+							data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),data.Recipient);
 					}
 					// done
 					return;
@@ -80,7 +80,7 @@ namespace Coflnet.Server
 
 					// THOUGHT: confirming may not be necessary since nonchanging commands return values otherwhise
 					coreInstance.SendCommand<ReceiveConfirm,ReceiveConfirmParams>(
-						data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),0,data.Recipient);
+						data.SenderId,new ReceiveConfirmParams(data.SenderId,data.MessageId),data.Recipient);
 				
 					// the response should be returned now
 					return;
