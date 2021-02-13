@@ -229,6 +229,8 @@ namespace Coflnet.Client {
 			{
 				ownerId = ConfigController.ManagingServer;
 			}
+			if(sender == default(EntityId))
+				sender = this.Id;
 
 			// create it locally
 			// first craft CommandData

@@ -289,6 +289,7 @@ namespace Coflnet.Dev
             }
             else
             {
+                Logger.Error(Newtonsoft.Json.JsonConvert.SerializeObject(data));
                 throw new Exception($"the target {data.Recipient} is not registered in the development enviroment {data.Type}");
             }
 

@@ -25,7 +25,7 @@ namespace Coflnet
 		static ClientSocket()
 		{
 			Instance = NewInstance();
-			Instance.webSocket.Log.Level = LogLevel.Trace;
+			Instance.webSocket.Log.Level = LogLevel.Error;
 			Instance.webSocket.Log.Output += (arg1, arg2) =>
 			{
 				Logger.Log(arg1);

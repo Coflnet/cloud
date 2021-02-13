@@ -10,6 +10,13 @@ namespace Core.Extentions.KeyValue
     {
         public ConcurrentDictionary<string,EntityId> Values {get;set;}
 
+        public static CommandController Commands = new CommandController();
+
+        static KeyValueBucket()
+        {
+            Commands.RegisterCommand<AddValueToBucketCommand>();
+        }
+
         public KeyValueBucket()
         {
             Values = new ConcurrentDictionary<string, EntityId>();
@@ -17,9 +24,7 @@ namespace Core.Extentions.KeyValue
 
         public override CommandController GetCommandController()
         {
-            throw new System.NotImplementedException();
+            return Commands;
         }
     }
-
-
 }

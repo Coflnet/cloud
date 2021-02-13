@@ -40,6 +40,7 @@ namespace Core.Extentions.KeyValue
             var index = Lookup.BinarySearch(bucketLookup);
             if(index < 0)
                 index = ~index;
+            Logger.Log(index);
             var bucketId = Buckets.Values[index];
             return bucketId.Bucket;
         }
@@ -67,32 +68,21 @@ namespace Core.Extentions.KeyValue
 
         public class Entry
         {
-            public short Min { get; set; }
-            public short Max { get; set; }
+            public ushort Min { get; set; }
+            public ushort Max { get; set; }
             public EntityId Bucket { get; set; }
         }
 
-    }
-
-    public class AddValueToStoreCommand : Command
-    {
-        public override void Execute(CommandData data)
+        public void AddBucket(KeyValueBucket keyValueBucket)
         {
-            var store = data.GetTargetAs<KeyValueStore>();
-            var args = data.GetAs<KeyValuePair<string,EntityId>>();
-            var bucketId = store.GetBucketId(args.Key);
-            data.SendCommandTo<AddValueToBucketCommand,KeyValuePair<string,EntityId>>(bucketId,args);
-        }
-
-    }
-
-    public class AddValueToBucketCommand : Command
-    {
-        public override void Execute(CommandData data)
-        {
-            var bucket= data.GetTargetAs<KeyValueBucket>();
-            var pair = data.GetAs<KeyValuePair<string,EntityId>>();
-            bucket.Values.AddOrUpdate(pair.Key,pair.Value,(key,value)=>value);
+            var entry = new Entry()
+            {
+                Bucket = keyValueBucket.Id,
+                Max = ushort.MaxValue,
+                Min = ushort.MinValue
+            };
+            Buckets.Add(ushort.MaxValue,entry);
+            Lookup.Add(ushort.MaxValue);
         }
     }
 

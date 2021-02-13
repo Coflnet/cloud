@@ -14,6 +14,8 @@ namespace Coflnet.Dev
             SetupForConsole();
             Console.WriteLine("This is the development project for the Coflnet cloud system");
             DevCore.Init(new EntityId(1,0));
+            var test = new KeyValueStoreTests();
+            test.DistribedAddTest();
 
             Logger.Log(new List<string>(){"hi"});
             Console.ReadKey();

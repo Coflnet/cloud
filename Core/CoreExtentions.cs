@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using Coflnet.Core.User;
+using Core.Extentions.KeyValue;
 
 namespace Coflnet.Core{
 
@@ -10,7 +11,8 @@ namespace Coflnet.Core{
 		public static List<Coflnet.IRegisterCommands> Commands = new List<IRegisterCommands>()
 		{
 			new CoreCommands(),
-			new UserCoreExtention()
+			new UserCoreExtention(),
+			new KeyValueExtension()
 		};
 	}
 
