@@ -10,7 +10,8 @@ public class KeyValueStoreTests
     [Test]
     public void DistribedAddTest()
     {
-        DevCore.Init(new EntityId(1,1));
+        var deviceId = new EntityId(1,1);
+        DevCore.Init(deviceId,testSetup:true);
         var serverId = new EntityId(1,0);
         Logger.OnLog += Console.WriteLine;
         Logger.OnError += Console.WriteLine;
@@ -29,7 +30,8 @@ public class KeyValueStoreTests
         var bucket = new KeyValueBucket();
         bucket.AssignId(manager);
         store.AddBucket(bucket);*/
-        DevCore.Instance.Id = new EntityId(55, 23);
+       
+        //DevCore.Instance.Id = new EntityId(55, 23);
 
         service.Add(key, value, store.Id);
         Assert.AreEqual(value,service.Resolve(key,store.Id));

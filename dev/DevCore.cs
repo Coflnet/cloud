@@ -13,9 +13,6 @@ namespace Coflnet.Dev
     /// </summary>
     public class DevCore : CoflnetCore
     {
-        private ClientCore clientCore;
-        private ServerCore serverCore;
-
         /// <summary>
         /// This is the user and the serverid simulated
         /// </summary>
@@ -71,7 +68,8 @@ namespace Coflnet.Dev
         /// <param name="id">Application/Server Id to use</param>
         /// <param name="preventDefaultScreens"><c>true</c> when default settings (dummys) should NOT be set such as <see cref="DummyPrivacyScreen"/></param>
         /// <param name="preventInit"><c>true</c> when The Inits of Client and Server-Cores should not be invoked and client should be prepared like a fresh install</param>
-        public static void Init(EntityId id, bool preventDefaultScreens = false, bool preventInit = false)
+        /// <param name="testSetup"><c>true</c> when initialization should be skipped. (preconfigure testing enviroment)</param>
+        public static void Init(EntityId id, bool preventDefaultScreens = false, bool preventInit = false, bool testSetup = false)
         {
 
             //[Deprecated]
@@ -104,7 +102,10 @@ namespace Coflnet.Dev
             DevInstance.AddServerCore(id.FullServerId);
             if (!id.IsServer)
             {
-                DevInstance.AddClientCore(id);
+                DevInstance.AddClientCore(id, testSetup);
+                // we are the client
+                if (testSetup)
+                    DevInstance.Id = id;
             }
             else
             {
@@ -116,8 +117,8 @@ namespace Coflnet.Dev
                 ServerCore.Init();
                 ClientCore.Init();
             }
-			
-			Instance = DevInstance;
+
+            Instance = DevInstance;
         }
 
         /// <summary>

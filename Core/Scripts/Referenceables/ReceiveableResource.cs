@@ -6,7 +6,10 @@ using System.Runtime.Serialization;
 namespace Coflnet {
 	/// <summary>
 	/// Receiveable resource.
-	/// Represents a <see cref="Entity"/> that is capeable of receiving/sending commands on its own
+	/// Represents a <see cref="Entity"/> that is capeable of receiving/sending commands on its own.
+	/// eg. a <see cref="Device"/>
+	/// Incomming commands are stored for as long as they aren't confirmed to be received by the target.
+	/// 
 	/// </summary>
 	[MessagePackObject]
 	[DataContract]
