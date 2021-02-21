@@ -35,14 +35,8 @@ namespace Coflnet
 			else
 			{
 				// log that there wasn't a command found
-				
+				Logger.Error($"received response command {data.Type} from {data.SenderId} but didn't have a callback");
 			}
 		}
-		/*
-		public async Task<CommandData> Execute(long id)
-		{
-			var socket = new WebSocketSharp.WebSocket();
-			await socket.
-		}*/
 	}
 }

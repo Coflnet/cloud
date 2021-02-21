@@ -38,7 +38,7 @@ namespace Coflnet {
     {
         public override string Slug => "createuser";
 
-        public override Entity CreateResource(CommandData data)
+        public override Entity CreateEntity(CommandData data)
         {
 			CreateUserRequest request = data.GetAs<CreateUserRequest> ();
 			var user = new CoflnetUser(data.SenderId);

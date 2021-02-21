@@ -3,6 +3,7 @@ using MessagePack;
 using System;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Coflnet
 {
@@ -84,14 +85,14 @@ namespace Coflnet
         /// </summary>
         /// <value>The data as UTF8 string.</value>
         [IgnoreMember]
-		[IgnoreDataMember]
+        [IgnoreDataMember]
         public virtual string Data
         {
             get
             {
                 return Encoding.UTF8.GetString(message);
             }
-            set 
+            set
             {
                 message = Encoding.UTF8.GetBytes(value);
             }
@@ -102,7 +103,7 @@ namespace Coflnet
         /// </summary>
         /// <value>The deserialized.</value>
         [IgnoreMember]
-		[IgnoreDataMember]
+        [IgnoreDataMember]
         public dynamic DeSerialized
         {
             get
@@ -120,7 +121,7 @@ namespace Coflnet
         /// </summary>
         /// <value>The core wich should be used.</value>
         [IgnoreMember]
-		[IgnoreDataMember]
+        [IgnoreDataMember]
         public CoflnetCore CoreInstance
         {
             get
@@ -236,7 +237,7 @@ namespace Coflnet
         /// <param name="type">The identifier of the command</param>
         /// <param name="data">The data to be passed</param>
         /// <returns></returns>
-        public CommandData(string type, string data = "") : this(type,Encoding.UTF8.GetBytes(data))
+        public CommandData(string type, string data = "") : this(type, Encoding.UTF8.GetBytes(data))
         {
 
         }
@@ -346,9 +347,18 @@ namespace Coflnet
             AfterSend?.Invoke(this);
         }
 
-        public virtual void SendCommandTo<TCom,TDat>(EntityId target,TDat data) where TCom : Command
+        public virtual void SendCommandTo<TCom, TDat>(EntityId target, TDat data) where TCom : Command
         {
-            CoreInstance.SendCommand<TCom,TDat>(target,data,this.Recipient);
+            CoreInstance.SendCommand<TCom, TDat>(target, data, this.Recipient);
+        }
+
+        public virtual Task<TRes> SendGetCommand<TCom, TDat, TRes>(EntityId target, TDat data) where TCom : ReturnCommand
+        {
+            var source = new TaskCompletionSource<TRes>();
+            CoreInstance.SendGetCommand<TCom, TDat>(target, data, this.Recipient, response=>{
+                source.SetResult(response.GetAs<TRes>());
+            });
+            return source.Task;
         }
 
         public CommandData(EntityId sId, EntityId rId, long mId, string t, byte[] message) : this(rId, mId, message, t)

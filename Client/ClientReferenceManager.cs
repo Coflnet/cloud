@@ -38,9 +38,11 @@ namespace Coflnet.Client {
 						.GetCommand (data.Type);
 
 			// execute the command if it is localPropagation or comming from the managing node
-			if(command.Settings.LocalPropagation || IsManagingNodeFor(data.SenderId,data.Recipient))
+			if(command.Settings.LocalPropagation || IsManagingNodeFor(data.SenderId,data.Recipient) || command.Slug == "response")
 			{
 				command.Execute(data);
+			} else {
+				Logger.Error($"Received `{data.Type}` command from {data.SenderId} but thats not the manager ");
 			}
 		}
 

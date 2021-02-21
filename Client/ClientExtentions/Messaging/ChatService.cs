@@ -435,6 +435,23 @@ namespace Coflnet.Client.Messaging
 		{
 			return $"Message {id}({LocalMessageChatIndex}) '{content}' type {type}";
 		}
-	}
+
+        public override int GetHashCode()
+        {
+            int hashCode = -223655859;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(content);
+            hashCode = hashCode * -1521134295 + timetamp.GetHashCode();
+            hashCode = hashCode * -1521134295 + refs.GetHashCode();
+            hashCode = hashCode * -1521134295 + id.GetHashCode();
+            hashCode = hashCode * -1521134295 + type.GetHashCode();
+            hashCode = hashCode * -1521134295 + sender.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<Dictionary<EntityId, Status>>.Default.GetHashCode(States);
+            hashCode = hashCode * -1521134295 + Sent.GetHashCode();
+            hashCode = hashCode * -1521134295 + chatId.GetHashCode();
+            hashCode = hashCode * -1521134295 + LocalMessageChatIndex.GetHashCode();
+            return hashCode;
+        }
+    }
 }
 

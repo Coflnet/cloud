@@ -145,7 +145,7 @@ namespace Coflnet.Client.Messaging
     {
         public override string Slug => "createGroupChat";
 
-        public override Entity CreateResource(CommandData data)
+        public override Entity CreateEntity(CommandData data)
         {
             var chat = new GroupChatResource();
 			var options = data.GetAs<Params>();

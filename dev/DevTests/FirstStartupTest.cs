@@ -113,7 +113,7 @@ public class FirstStartupTest {
             Logger.Log ($"having {item}");
         }
 
-        CoflnetCore.Instance.SendCommand<GetUserKeyValue, string> (ConfigController.ActiveUserId, "mykey",ConfigController.ActiveUserId, (d) => {
+        CoflnetCore.Instance.SendGetCommand<GetUserKeyValue, string> (ConfigController.ActiveUserId, "mykey",ConfigController.ActiveUserId, (d) => {
             Assert.AreEqual(valueToStore,d.GetAs<string>());
                     });
     }

@@ -115,7 +115,7 @@ namespace Coflnet.Server
 
 			foreach(var item in reference.SiblingNodes)
 			{
-				ServerCore.Instance.SendCommand<SibblingUpdate,CommandData>(new EntityId(item,0),data,ServerCore.Instance.Id,d=>
+				ServerCore.Instance.SendGetCommand<SibblingUpdate,CommandData>(new EntityId(item,0),data,ServerCore.Instance.Id,d=>
 				{
 					if(d.GetAs<int>() != hash)
 					{

@@ -44,6 +44,11 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="fallback">Controller to add</param>
 		public void AddFallback (CommandController fallback) {
+			if(Fallback == fallback)
+			{
+				// already added
+				return;
+			}
 			if (Fallback != null) {
 				fallback.AddFallback (Fallback);
 			}
@@ -203,11 +208,18 @@ namespace Coflnet
 		/// <returns>The command mapped to the slug.</returns>
 		/// <param name="slug">The Slug to search for.</param>
 		public Command GetCommand (string slug) {
+			return GetCommand(slug,0);
+		}
+
+		protected Command GetCommand(string slug, int iteration)
+		{
 			if (!commands.ContainsKey (slug)) {
 				// was this the last command controller or can we check another?
-				if (Fallback != null) {
-					return Fallback.GetCommand (slug);
+				if (Fallback != null && iteration < 100) {
+					return Fallback.GetCommand (slug,iteration += 1);
 				}
+				if(iteration >= 100)
+					Logger.Error("You have a loop dependency in your CommandController");
 
 				throw new CommandUnknownException (slug);
 			}

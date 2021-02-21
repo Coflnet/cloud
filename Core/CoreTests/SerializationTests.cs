@@ -120,8 +120,6 @@ public class SerializationTests {
 		yield return 4;
 	}
 
-	long referenceId = 0;
-
 	/// <summary>
 	/// Consumes ~50MB RAM for generated ids
 	/// </summary>

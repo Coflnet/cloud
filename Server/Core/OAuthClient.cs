@@ -23,7 +23,7 @@ namespace Coflnet.Extentions.Oauth2 {
         public override CommandController GetCommandController () {
             return commandController;
         }
-
+/*
         [DataMember]
         private int id;
         /// <summary>
@@ -48,6 +48,7 @@ namespace Coflnet.Extentions.Oauth2 {
         private bool passwordClient;
         [DataMember]
         private string iconUrl;
+        */
         [DataMember]
         public OAuthClientSettings settings;
         /// <summary>

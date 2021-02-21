@@ -12,7 +12,6 @@ namespace Core.Extentions.KeyValue
             var bucketId = store.GetBucketId(args.Key);
             data.SendCommandTo<AddValueToBucketCommand,KeyValuePair<string,EntityId>>(bucketId,args);
         }
-
     }
 
 

@@ -22,7 +22,7 @@ namespace Coflnet
 			if(!TryGetEntity<Entity>(owner,out ownerRes))
 			{
 				// doesn't exist try to get it
-				coreInstance.SendCommand<GetPublicInfoCommand,short>(owner,0,response=>{
+				coreInstance.SendGetCommand<GetPublicInfoCommand,short>(owner,0,response=>{
 					var placeHolder = response.GetAs<HasPublicInfoPlaceholder>();
 					AddReference(response.GetAs<HasPublicInfoPlaceholder>());
 

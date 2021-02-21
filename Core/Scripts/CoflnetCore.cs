@@ -144,9 +144,9 @@ namespace Coflnet
 		/// <param name="callback">Callback to be executed when the response is received.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public void SendCommand<C, T>(EntityId receipient, T data, Command.CommandMethod callback) where C : ReturnCommand
+		public void SendGetCommand<C, T>(EntityId receipient, T data, Command.CommandMethod callback) where C : ReturnCommand
 		{
-			SendCommand<C,T>(receipient,data,default(EntityId),callback);
+			SendGetCommand<C,T>(receipient,data,default(EntityId),callback);
 		}
 
 
@@ -159,7 +159,7 @@ namespace Coflnet
 		/// <param name="callback">Callback to be executed when the response is received.</param>
 		/// <typeparam name="C"><see cref="Command"/> to send.</typeparam>
 		/// <typeparam name="T">Type of <paramref name="data"/> needed for seralization.</typeparam>
-		public void SendCommand<C, T>(EntityId receipient, T data, EntityId sender, Command.CommandMethod callback) where C : ReturnCommand
+		public void SendGetCommand<C, T>(EntityId receipient, T data, EntityId sender, Command.CommandMethod callback) where C : ReturnCommand
 		{
 			long id = ThreadSaveIdGenerator.NextId;
 			ReturnCommandService.Instance.AddCallback(id, callback);
@@ -197,6 +197,7 @@ namespace Coflnet
 
 			SendCommand(data);
 		}
+
 
 
 		/// <summary>
@@ -252,7 +253,7 @@ namespace Coflnet
 
 		protected void FinishSubscribing(EntityId resourceId, Action<Entity> afterClone)
 		{
-			SendCommand<GetResourceCommand,short>(resourceId,0,o =>{
+			SendGetCommand<GetResourceCommand,short>(resourceId,0,o =>{
 				var resource = MessagePack.MessagePackSerializer.Typeless.Deserialize(o.message) as Entity;
 
 				// detach the old proxy

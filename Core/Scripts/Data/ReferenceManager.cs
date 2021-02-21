@@ -190,7 +190,7 @@ namespace Coflnet
 			}
 
 
-			coreInstance.SendCommand<GetResourceCommand,short>(id,0,o =>{
+			coreInstance.SendGetCommand<GetResourceCommand,short>(id,0,o =>{
 				var resource = MessagePack.MessagePackSerializer.Typeless.Deserialize(o.message) as Entity;
 				this.AddReference(resource);
 				afterReceive?.Invoke(resource);

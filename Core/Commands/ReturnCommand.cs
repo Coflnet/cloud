@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Coflnet;
 using System;
 using MessagePack;
+using System.Threading.Tasks;
 
 namespace Coflnet
 {
@@ -11,9 +12,9 @@ namespace Coflnet
 	/// </summary>
 	public abstract class ReturnCommand : Command
 	{
-		public override void Execute(CommandData data)
+		public async override void Execute(CommandData data)
 		{
-			var returnData = ExecuteWithReturn(data);
+			var returnData = await ExecuteWithReturnAsync(data);
 			// set headers
 			returnData.Type = "response";
 			returnData.Recipient = data.SenderId;
@@ -25,8 +26,21 @@ namespace Coflnet
 			//SendTo(data.sId, user.PublicId, "createdUser");
 		}
 
+		/// <summary>
+		/// The return value of this command will be sent back 
+		/// </summary>
+		/// <param name="data">The incoming <see cref="CommandData"/></param>
+		/// <returns>The response</returns>
+		public virtual Task<CommandData> ExecuteWithReturnAsync(CommandData data)
+		{
+			return Task.FromResult(ExecuteWithReturn(data));
+		}
 
-		public abstract CommandData ExecuteWithReturn(CommandData data);
+
+		public virtual CommandData ExecuteWithReturn(CommandData data)
+		{
+			throw new NotImplementedException("Overwrite ExecuteWithReturn or ExecuteWithReturnAsync");
+		}
 
 		protected override CommandSettings GetSettings()
 		{
@@ -35,11 +49,40 @@ namespace Coflnet
 
 	}
 
-	/// <summary>
-	/// Special command for tunneling a response based flow (like http)
-	/// <see cref="ReturnCommand"/> isn't persisted nor distributed.
-	/// </summary>
-	public class ReturnResponseCommand : Command
+    public abstract class GetCommand<T> : ReturnCommand
+    {
+        public async override Task<CommandData> ExecuteWithReturnAsync(CommandData data)
+        {
+			var response = await GetObjectAsync(data);
+            return CommandData.CreateCommandData<ReturnResponseCommand,T>(data.SenderId,response);
+        }
+
+		/// <summary>
+		/// Get the response object asyncronosly
+		/// </summary>
+		/// <param name="data"></param>
+		/// <returns></returns>
+		public virtual Task<T> GetObjectAsync(CommandData data)
+		{
+			return Task.FromResult(GetObject(data));
+		}
+
+		/// <summary>
+		/// Get the response object
+		/// </summary>
+		/// <param name="data"></param>
+		/// <returns></returns>
+		public virtual T GetObject(CommandData data)
+		{
+			return default(T);
+		}
+    }
+
+    /// <summary>
+    /// Special command for tunneling a response based flow (like http)
+    /// <see cref="ReturnCommand"/> isn't persisted nor distributed.
+    /// </summary>
+    public class ReturnResponseCommand : Command
 	{
 		/// <summary>
 		/// Execute the command logic with specified data.
@@ -84,7 +127,7 @@ namespace Coflnet
 		/// </summary>
 		/// <param name="data"></param>
 		/// <returns></returns>
-		public abstract Entity CreateResource(CommandData data);
+		public abstract Entity CreateEntity(CommandData data);
 
 		public override void Execute(CommandData data)
 		{
@@ -96,12 +139,13 @@ namespace Coflnet
 			{
 				throw new CoflnetException("invalid_payload","The payload of the command isn't of type CreationParamsBase nor derived from it");
 			}
-			var resource = CreateResource(data);
+			var entity = CreateEntity(data);
 
-			resource.AssignId(data.CoreInstance.EntityManager);
+			entity.AssignId(data.CoreInstance.EntityManager);
 
 			// make sure the owner is set
-			resource.GetAccess().Owner = data.Recipient;
+			entity.GetAccess().Owner = data.Recipient;
+			AfterIdAssigned(data,entity);
 
 			// add the size to any data cap limit (tracking module)
 			// TODO 
@@ -110,7 +154,17 @@ namespace Coflnet
 			// it is possible that the return will not be received by the target in case it gets offline
 
 			data.SendBack(CommandData.CreateCommandData<CreationResponseCommand,KeyValuePair<EntityId,EntityId>>
-				(data.SenderId,new KeyValuePair<EntityId,EntityId>(oldId,resource.Id)));
+				(data.SenderId,new KeyValuePair<EntityId,EntityId>(oldId,entity.Id)));
+		}
+
+		/// <summary>
+		/// Called with the created <see cref="Entity"/> after it received its id
+		/// </summary>
+		/// <param name="data">The original <see cref="CommandData"/></param>
+		/// <param name="entity">The created <see cref="Entity"/></param>
+		protected virtual void AfterIdAssigned(CommandData data, Entity entity)
+		{
+
 		}
 
 		
@@ -161,7 +215,7 @@ namespace Coflnet
     public abstract class ReceivableCreationCommand : CreationCommand
     {
 
-        public override Entity CreateResource(CommandData data)
+        public override Entity CreateEntity(CommandData data)
         {
             var res = CreateReceivable(data);
 			res.publicKey = data.GetAs<Params>().KeyPair.publicKey;

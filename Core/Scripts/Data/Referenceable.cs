@@ -53,6 +53,7 @@ namespace Coflnet
 			globalCommands.RegisterCommand<GetResourceCommand>();
 			globalCommands.RegisterCommand<CreationResponseCommand>();
 			globalCommands.RegisterCommand<SubscribeCommand>();
+			globalCommands.RegisterCommand<ReceiveConfirm>();
 		}
 
 		/// <summary>

@@ -16,11 +16,13 @@ namespace Core.Extentions.KeyValue
         //public RangeTree<int,EntityId> Buckets {get;set;}
         public SortedList<ushort, Entry> Buckets { get; set; }
         private List<ushort> Lookup = new List<ushort>();
-        private static CommandController Commands = new CommandController();
+        private static CommandController Commands;
 
         static KeyValueStore()
         {
+            Commands = new CommandController(globalCommands);
             Commands.RegisterCommand<AddValueToStoreCommand>();
+            Commands.RegisterCommand<GetValueFromStoreCommand>();
         }
 
         public KeyValueStore()

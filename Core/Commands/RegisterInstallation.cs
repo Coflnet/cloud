@@ -9,7 +9,7 @@ namespace Coflnet
 			return new CommandSettings ();
 		}
 
-        public override Entity CreateResource(CommandData data)
+        public override Entity CreateEntity(CommandData data)
         {
 			var install = new Installation ();
 			install.Device = new Reference<Device>(data.Recipient);

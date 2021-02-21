@@ -10,11 +10,13 @@ namespace Core.Extentions.KeyValue
     {
         public ConcurrentDictionary<string,EntityId> Values {get;set;}
 
-        public static CommandController Commands = new CommandController();
+        public static CommandController Commands;
 
         static KeyValueBucket()
         {
+            Commands = new CommandController(globalCommands);
             Commands.RegisterCommand<AddValueToBucketCommand>();
+            Commands.RegisterCommand<GetValueFromBucketCommand>();
         }
 
         public KeyValueBucket()

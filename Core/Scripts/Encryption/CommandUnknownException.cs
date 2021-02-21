@@ -6,5 +6,4 @@ namespace Coflnet
 		public CommandUnknownException (string slug, Entity target, long msgId = -1) 
 		: base ("unknown_command", $"The command `{slug}` wasn't found on the Resource {target.Id} ({target.GetType().Name}).", null, 404, null, msgId) { }
 	}
-
 }

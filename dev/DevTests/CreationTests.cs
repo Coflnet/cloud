@@ -76,7 +76,7 @@ public class CreationTests {
     {
         public override string Slug => "createtestb";
 
-        public override Entity CreateResource(CommandData data)
+        public override Entity CreateEntity(CommandData data)
         {
             return new TestResource();
         }
@@ -91,7 +91,7 @@ public class CreationTests {
     {
         public override string Slug => "createtestp";
 
-        public override Entity CreateResource(CommandData data)
+        public override Entity CreateEntity(CommandData data)
         {
 			var options =data.GetAs<Options>();
             return new TestResource(){value=options.Value};
