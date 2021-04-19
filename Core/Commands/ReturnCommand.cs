@@ -12,9 +12,11 @@ namespace Coflnet
 	/// </summary>
 	public abstract class ReturnCommand : Command
 	{
-		public async override void Execute(CommandData data)
+		public override void Execute(CommandData data)
 		{
-			var returnData = await ExecuteWithReturnAsync(data);
+			var returnTask = ExecuteWithReturnAsync(data);
+			returnTask.Wait();
+			var returnData = returnTask.Result;
 			// set headers
 			returnData.Type = "response";
 			returnData.Recipient = data.SenderId;

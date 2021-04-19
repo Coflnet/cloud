@@ -129,7 +129,7 @@ namespace Coflnet.Client.Messaging
             return chatCommands;
         }
 
-		public override void ExecuteCommand(CommandData data, Command command)
+		public override Command ExecuteCommand(CommandData data, Command command = null)
 		{
 			// TODO distribute
 			foreach (var member in Members)
@@ -138,6 +138,7 @@ namespace Coflnet.Client.Messaging
 				newData.Recipient = member.userId;
 				CoflnetCore.Instance.SendCommand(newData);
 			}
+			return command;
 		}
 	}
 

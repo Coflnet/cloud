@@ -34,18 +34,18 @@ namespace Coflnet {
 			persistenceCommands.RegisterCommand<ReceiveConfirm>();
 		}
 
-		public override Command ExecuteCommand (CommandData data) {
+		public override Command ExecuteCommand (CommandData data,Command passedCommand = null) {
 			// each incoming command will be forwarded to the resource
 			try {
-				var command = base.ExecuteCommand (data);
+				var command = base.ExecuteCommand (data,passedCommand);
 				if (command.Settings.Distribute) {
 					CoflnetCore.Instance.SendCommand (data);
 				}
 				return command;
 			} catch (CommandUnknownException) {
-				
-				// this command is unkown to the us, if we are not the target persist it and send it later
-				if(data.Recipient != data.CoreInstance.Id)
+                var sent =data.CoreInstance.Services.Get<ICommandTransmit>().SendCommand(data);
+                // this command is unkown to the us, if we are not the target persist it and send it later
+                if(data.Recipient != data.CoreInstance.Id)
 					CommandDataPersistence.Instance.SaveMessage(data);
 
 			}

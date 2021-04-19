@@ -167,13 +167,13 @@ namespace Coflnet
         /// <returns>The message data.</returns>
         /// <param name="data">Data.</param>
         /// <param name="target">Target.</param>
-        /// <param name="m_id">M identifier.</param>
+        /// <param name="mId">M identifier.</param>
         /// <param name="sender">Sender of the message.</param>
-        /// <typeparam name="C">The 1st type parameter.</typeparam>
-        /// <typeparam name="T">The 2nd type parameter.</typeparam>
-        public static CommandData CreateCommandData<C, T>(EntityId target, T data, long m_id = 0, EntityId sender = default(EntityId)) where C : Command
+        /// <typeparam name="TCom">The 1st type parameter.</typeparam>
+        /// <typeparam name="TData">The 2nd type parameter.</typeparam>
+        public static CommandData CreateCommandData<TCom, TData>(EntityId target, TData data, long mId = 0, EntityId sender = default(EntityId)) where TCom : Command
         {
-            return new CommandData(sender, target, m_id, System.Activator.CreateInstance<C>().Slug, MessagePackSerializer.Serialize<T>(data));
+            return new CommandData(sender, target, mId, System.Activator.CreateInstance<TCom>().Slug, MessagePackSerializer.Serialize<TData>(data));
         }
 
 
@@ -347,9 +347,17 @@ namespace Coflnet
             AfterSend?.Invoke(this);
         }
 
-        public virtual void SendCommandTo<TCom, TDat>(EntityId target, TDat data) where TCom : Command
+        /// <summary>
+        /// Sends a Command to some other <see cref="Entity"/>
+        /// </summary>
+        /// <param name="targetId">The Id of the target entity</param>
+        /// <param name="data">CommandData to send with the command</param>
+        /// <typeparam name="TCom">The Type of the Command to send</typeparam>
+        /// <typeparam name="TDat">Type of data to send</typeparam>
+        /// <returns></returns>
+        public virtual void SendCommandTo<TCom, TDat>(EntityId targetId, TDat data) where TCom : Command
         {
-            CoreInstance.SendCommand<TCom, TDat>(target, data, this.Recipient);
+            CoreInstance.SendCommand<TCom, TDat>(targetId, data, this.Recipient);
         }
 
         public virtual Task<TRes> SendGetCommand<TCom, TDat, TRes>(EntityId target, TDat data) where TCom : ReturnCommand
@@ -403,7 +411,7 @@ namespace Coflnet
 
 
         [IgnoreMember]
-        public byte[] SignableContent
+        private byte[] SignableContent
         {
             get
             {

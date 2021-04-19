@@ -46,6 +46,8 @@ namespace Coflnet.Server
 		{
 			this.EntityManager = referenceManager;
 			this.EntityManager.coreInstance = this;
+
+            this.Services.AddOrOverride<ICommandTransmit>(CoflnetSocket.Instance);
 		}
 
 

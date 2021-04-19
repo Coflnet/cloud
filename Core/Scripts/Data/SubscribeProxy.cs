@@ -24,7 +24,7 @@ namespace Coflnet.Core
             return new CommandController();
         }
 
-        public override Command ExecuteCommand(CommandData data)
+        public override Command ExecuteCommand(CommandData data,Command passedCommand = null)
         {
             buffer.Add(data);
 

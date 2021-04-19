@@ -476,20 +476,20 @@ namespace Coflnet
 			var resource = reference.Resource;
 
 			if (resource != null) {
-				Command command = null;
-				try{
-					command = resource.GetCommandController ()
-										.GetCommand (data.Type);
-				} catch(CommandUnknownException)
+				if(!resource.GetCommandController ().TryGetCommand(data.Type,out Command command))
 				{
-					throw new CommandUnknownException(data.Type,resource,data.MessageId);
+					if(!(resource is ReceiveableResource))
+						throw new CommandUnknownException(data.Type,resource,data.MessageId);
 				}
 				if(IAmTheManager)
 				{
 					// I can do everything
 					resource.ExecuteCommand(data,command);
-					
-					if(command.Settings.Distribute)
+
+					if(command == null)
+                        return;
+
+                    if(command.Settings.Distribute)
 					{
 						// update
 						UpdateSubscribers(resource,data);
@@ -766,7 +766,7 @@ namespace Coflnet
 
 		public class ObjectNotFound : CoflnetException {
 			public ObjectNotFound (EntityId id, EntityId coreId = default(EntityId)) 
-			: base ("object_not_found", $"The resource {id} wasn't found on this server {coreId}", null, 404) { }
+			: base ("object_not_found", $"The resource {id} wasn't found on this server ({coreId})", null, 404) { }
 		}
 
 		/// <summary>

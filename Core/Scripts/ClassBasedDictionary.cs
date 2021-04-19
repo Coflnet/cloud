@@ -39,6 +39,7 @@ namespace Coflnet
 			Items.Add(instance.Slug,instance);
 		}
 
+
 		public TVal this[TKey key]
 		{
 			get { return Items[key]; }

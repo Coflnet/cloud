@@ -5,18 +5,25 @@ using Coflnet;
 
 namespace Core.Extentions.KeyValue
 {
+    public static class KVServiceExtention
+    {
+        /// <summary>
+        /// Typesafe extention method to provide Intelisense and return <see cref="KVService"/>
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static KVService KVService(this CoflnetServices services)
+        {
+            return services.Get<KVService>();
+        }
+    }
+
     /// <summary>
     /// abstraction for Key-Value-Resolution
     /// </summary>
-    public class KVService
+    public class KVService : CoflnetServiceBase
     {
-        private CoflnetCore coreInstance;
-
-        public KVService(CoflnetCore coreInstance)
-        {
-            this.coreInstance = coreInstance;
-        }
-
+        private CoflnetCore coreInstance => Services.Core;
 
         /// <summary>
         /// Adds a new Key and Value to a KeyValueStore

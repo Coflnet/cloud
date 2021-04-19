@@ -22,7 +22,9 @@ namespace Coflnet
 
 		private EntityId ConnectedServerId = ConfigController.ApplicationSettings.id;
 
-		static ClientSocket()
+        public CoflnetServices Services { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+
+        static ClientSocket()
 		{
 			Instance = NewInstance();
 			Instance.webSocket.Log.Level = LogLevel.Error;
@@ -161,7 +163,7 @@ namespace Coflnet
 	/// <summary>
 	/// Can transmit commands.
 	/// </summary>
-	public interface ICommandTransmit
+	public interface ICommandTransmit : IService
 	{
 		bool SendCommand(CommandData data);
 

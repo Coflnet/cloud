@@ -101,7 +101,7 @@ namespace Coflnet
 			/// </summary>
 			public bool ThreadSave {
 				get;
-				private set;
+				protected set;
 			}
 
 			/// <summary>
@@ -118,7 +118,7 @@ namespace Coflnet
 			/// </summary>
 			public bool Encrypted {
 				get;
-				private set;
+				protected set;
 			}
 
 			/// <summary>
@@ -150,7 +150,7 @@ namespace Coflnet
 			/// <value>The permissions which need to execute as true for this command to be executed.</value>
 			public Permission[] Permissions {
 				get;
-				private set;
+				protected set;
 			}
 
 			/// <summary>

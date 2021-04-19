@@ -202,7 +202,6 @@ namespace Coflnet.Dev
 
         private static int executionCount = 0;
 
-        private EntityId lastExecutor;
 
         /// <summary>
         /// Will execute commands on the simulated cores

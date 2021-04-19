@@ -43,7 +43,7 @@ namespace Coflnet
 		/// SourceReferences which want to be notified if this resource changes
 		/// </summary>
 		/// <value>The subscribers.</value>
-		[DataMember]
+		[DataMember(Name="subs")]
 		public List<EntityId> Subscribers { get; set; }
 
 		public Access (EntityId owner) {

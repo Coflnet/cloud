@@ -81,28 +81,24 @@ namespace Coflnet
 				requestingReference == this.Id;
 		}
 
+
+
 		/// <summary>
-		/// Executes the command found in the <see cref="CommandData.Type"/>
-		/// Returns the <see cref="Command"/> when done
+		/// Executes the command given or tries to find one in the <see cref="GetCommandController"/> via <see cref="CommandData.Type"/>
+		/// Returns the executed <see cref="Command"/> when done
 		/// </summary>
-		/// <returns>The command.</returns>
-		/// <param name="data">Data.</param>
-		public virtual Command ExecuteCommand (CommandData data) {
+		/// <param name="data">Data to pass on to the <see cref="Command"/>.</param>
+		/// <param name="command">Command to execute.</param>
+		public virtual Command ExecuteCommand (CommandData data, Command command = null) {
 			var controller = GetCommandController ();
-			var command = controller.GetCommand (data.Type);
+			if(command == null)
+			{
+				command = controller.GetCommand (data.Type);
+			}
 
 			controller.ExecuteCommand (command, data, this);
 
 			return command;
-		}
-
-		/// <summary>
-		/// Executes the command with given data
-		/// </summary>
-		/// <param name="data">Data to pass on to the <see cref="Command"/>.</param>
-		/// <param name="command">Command to execute.</param>
-		public virtual void ExecuteCommand (CommandData data, Command command) {
-			GetCommandController ().ExecuteCommand (command, data, this);
 		}
 
 		public abstract CommandController GetCommandController ();

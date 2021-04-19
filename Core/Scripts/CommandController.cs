@@ -49,7 +49,7 @@ namespace Coflnet
 				// already added
 				return;
 			}
-			if (Fallback != null) {
+			if (Fallback == null) {
 				fallback.AddFallback (Fallback);
 			}
 			Fallback = fallback;
@@ -225,6 +225,25 @@ namespace Coflnet
 			}
 
 			return commands[slug];
+		}
+
+		/// <summary>
+		/// Attempts to get the command. Also searches <see cref="Fallback"/>
+		/// </summary>
+		/// <param name="slug">The <see cref="Command.Slug"/> to search for</param>
+		/// <param name="command"></param>
+		/// <returns><c>true</c> if found <c>false</c> otherwise</returns>
+		public bool TryGetCommand(string slug, out Command command)
+		{
+			if(Items.TryGetValue(slug, out command))
+			{
+				return true;
+			}
+			if(Fallback != null)
+			{
+				return Fallback.TryGetCommand(slug,out command);
+			}
+			return false;
 		}
 
 		/// <summary>

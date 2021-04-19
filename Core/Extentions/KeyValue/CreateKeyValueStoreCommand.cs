@@ -22,5 +22,16 @@ namespace Core.Extentions.KeyValue
     }
 
 
-
+    public class AddBucketToStoreCommand : Command
+    {
+        public override void Execute(CommandData data)
+        {
+            // lock write to old bucket
+            // create new bucket
+            // tell old bucket to send key range to new bucket
+            // wait for new bucket to confirm receival
+            // adopt store index and release lock on old bucket
+            // any write attempts to locked buckets are queued 
+        }
+    }
 }

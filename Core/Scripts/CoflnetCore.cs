@@ -4,12 +4,12 @@ using Coflnet.Core.Commands;
 
 namespace Coflnet
 {
-	/// <summary>
-	/// Provides core functionallity for the coflnet ServerSystem
-	/// Allows to reuse code server and client side.
-	/// Instance is set to the correct server or client version of the core.
-	/// </summary>
-	public abstract class CoflnetCore : Entity
+    /// <summary>
+    /// Provides core functionallity for the coflnet ServerSystem
+    /// Allows to reuse code server and client side.
+    /// Instance is set to the correct server or client version of the core.
+    /// </summary>
+    public abstract class CoflnetCore : Entity
 	{
 		private static CoflnetCore _instance;
 		private static CommandController _coreCommands= new CommandController(Entity.globalCommands);
@@ -38,6 +38,23 @@ namespace Coflnet
 		/// </summary>
 		/// <value></value>
 		public EntityManager EntityManager{get;set;}
+
+		/// <summary>
+		/// Collection of services tied to this <see cref="CoflnetCore"/> instance
+		/// </summary>
+		/// <value></value>
+		public virtual CoflnetServices Services {get;set;}
+
+		/// <summary>
+		/// Instantiates a new <see cref="CoflnetCore"/> 
+		/// </summary>
+		/// <param name="services">Services to use on this core</param>
+		public CoflnetCore(CoflnetServices services = null)
+		{
+			if(services == null)
+				services = new CoflnetServices(this);
+			this.Services = services;
+		}
 
 
 		/// <summary>
@@ -68,6 +85,16 @@ namespace Coflnet
 			{
 				_instance = value;
 			}
+		}
+
+		/// <summary>
+		/// Get a specific Servie that is bound to this <see cref="CoflnetCore"/> instance
+		/// </summary>
+		/// <typeparam name="T">The Service to get</typeparam>
+		/// <returns>An instance of <see cref="T"/> that is bound to this instance of <see cref="CoflnetCore"/></returns>
+		public T GetService<T>() where T:CoflnetServiceBase,new()
+		{
+			return Services.Get<T>();
 		}
 
 
@@ -101,9 +128,6 @@ namespace Coflnet
 					throw new CoflnetException("invalid_signature",$"The signature of the message `{data.SenderId}:{data.MessageId}` could not be vertified");
 				}
 			}
-
-
-			
 
 			this.EntityManager.ExecuteForReference(data,sender);
 			//SendCommand<ReceiveConfirm,ReceiveConfirmParams>(data.sId,new ReceiveConfirmParams(data.sId,data.mId),0,data.rId);

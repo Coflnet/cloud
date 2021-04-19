@@ -18,10 +18,18 @@ namespace Core.Extentions.KeyValue.Tests
 
     public class KVServiceTest
     {
-        KVService kv = new KVService(new DummyCore());
+        KVService kv;
         EntityId id = new EntityId(12,3456789);
         EntityId kvId = new EntityId(12,9874552);
         string key = "key";
+
+        [SetUp]
+        public void SetUp()
+        {
+
+            var core = new DummyCore();
+            kv = core.GetService<KVService>();
+        }
 
         [Test]
         public void Add()

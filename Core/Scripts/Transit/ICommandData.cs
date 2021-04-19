@@ -6,7 +6,6 @@ namespace Coflnet
         string Data { get; }
         dynamic DeSerialized { get; set; }
         CoflnetCore CoreInstance { get; set; }
-        byte[] SignableContent { get; }
 
         void Deserialize<T>();
         bool Equals(object obj);
