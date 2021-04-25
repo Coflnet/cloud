@@ -91,12 +91,11 @@ namespace Coflnet
 		/// <param name="command">Command to execute.</param>
 		public virtual Command ExecuteCommand (CommandData data, Command command = null) {
 			var controller = GetCommandController ();
-			if(command == null)
-			{
-				command = controller.GetCommand (data.Type);
-			}
+			if(command == null 
+				&& !controller.TryGetCommand (data.Type, out command))
+                throw new CommandUnknownException(data.Type, this);
 
-			controller.ExecuteCommand (command, data, this);
+            controller.ExecuteCommand (command, data, this);
 
 			return command;
 		}

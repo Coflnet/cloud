@@ -43,7 +43,10 @@ namespace Coflnet {
 				}
 				return command;
 			} catch (CommandUnknownException) {
+				if(data.SenderId == data.Recipient)
+                    throw;
                 var sent =data.CoreInstance.Services.Get<ICommandTransmit>().SendCommand(data);
+                Logger.Log($"command {data.Type} not found on {this.Id}, sent {sent}");
                 // this command is unkown to the us, if we are not the target persist it and send it later
                 if(data.Recipient != data.CoreInstance.Id)
 					CommandDataPersistence.Instance.SaveMessage(data);

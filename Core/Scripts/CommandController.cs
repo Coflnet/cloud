@@ -219,6 +219,7 @@ namespace Coflnet
 					return Fallback.GetCommand (slug,iteration += 1);
 				}
 				if(iteration >= 100)
+					// should be checked once when the Fallback is added
 					Logger.Error("You have a loop dependency in your CommandController");
 
 				throw new CommandUnknownException (slug);
@@ -233,13 +234,13 @@ namespace Coflnet
 		/// <param name="slug">The <see cref="Command.Slug"/> to search for</param>
 		/// <param name="command"></param>
 		/// <returns><c>true</c> if found <c>false</c> otherwise</returns>
-		public bool TryGetCommand(string slug, out Command command)
+		public bool TryGetCommand(string slug, out Command command, bool useFallback = true)
 		{
 			if(Items.TryGetValue(slug, out command))
 			{
 				return true;
 			}
-			if(Fallback != null)
+			if(useFallback && Fallback != null)
 			{
 				return Fallback.TryGetCommand(slug,out command);
 			}

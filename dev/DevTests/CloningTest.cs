@@ -136,8 +136,6 @@ public class CloningTest {
 
     public class SimpleTestCommand : Command
     {
-        public override string Slug => "stcabc";
-
         public override void Execute(CommandData data)
         {
             var res = data.GetTargetAs<Entity>();

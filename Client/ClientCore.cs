@@ -171,8 +171,9 @@ namespace Coflnet.Client
             if(deviceCommands == null || 
 				!deviceCommands.TryGetCommand(data.Type, out Command command))
 				// device doesn't have the command
-            	command = controller.GetCommand(data.Type);
-			
+            	if(!controller.TryGetCommand(data.Type,out command))
+                    throw new CommandUnknownException(data.Type, this);
+
 
             controller.ExecuteCommand(command, data, this);
 
@@ -259,17 +260,22 @@ namespace Coflnet.Client
         {
             options.options.OldId = EntityId.NextLocalId;
 
-            var ownerId = this.Id;
-            if (ownerId == default(EntityId))
+            var target = this.Id;
+            if (target == default(EntityId))
             {
-                ownerId = ConfigController.ManagingServer;
+                target = ConfigController.ManagingServer;
             }
             if (sender == default(EntityId))
                 sender = this.Id;
 
             // create it locally
             // first craft CommandData
-            var normaldata = CommandData.CreateCommandData<C, T>(ownerId, options, 0, this.Id);
+            var normaldata = CommandData.CreateCommandData<C, T>(target, options, 0, sender);
+            if (IsCoreCommand(normaldata))
+            {
+                target = normaldata.Recipient = this.Services.Get<ConfigService>().ManagingServer;
+            }
+
 
             // wrap it in a special message data that captures the id
             var data = new CreationCommandData(normaldata);
@@ -295,10 +301,15 @@ namespace Coflnet.Client
             options.options.OldId = data.createdId;
 
             // create it on the server
-            SendCommand<C, T>(ownerId, options, sender);
+            SendCommand<C, T>(target, options, sender);
 
             // Return the crated Proxy-Entity until the server responds
             return EntityManager.GetEntity<Entity>(data.createdId);
+
+            bool IsCoreCommand(CommandData commandData)
+            {
+                return this.CommandController.TryGetCommand(commandData.Type, out Command command, useFallback: false);
+            }
         }
 
         private class CreationCore : ClientCore

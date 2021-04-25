@@ -19,16 +19,17 @@ public class MessageDeliveryTests
         DevCore.Init(alice);
 
 
-        DevCore.DevInstance.AddClientCore(bob,true).OnMessage = m =>
+        var bobCore = DevCore.DevInstance.AddClientCore(bob,true).OnMessage = m =>
         {
             // received data is of type msg
             Assert.AreEqual("msg", m.Type);
-            throw new System.Exception("received");
             return false;
         };
 
+        var aliceCore = DevCore.DevInstance.simulationInstances[alice];
 
-        CoflnetCore.Instance.SendCommand(
+
+        aliceCore.core.SendCommand(
             CommandData.CreateCommandData<ChatMessageCommand, ChatMessage>(
                 bob, new ChatMessage("hi"), 0, alice));
     }

@@ -287,6 +287,9 @@ namespace Coflnet.Dev
                 // no idea what id this is supposed to go but the container has a sender
                 (data as DevCommandData).sender.core.EntityManager.ExecuteForReference(data);
             }
+            else if(data.SenderId.ServerId != 0 && data.Recipient.IsLocal 
+                && simulationInstances.TryGetValue(data.SenderId.FullServerId, out SimulationInstance sim))
+                sim.ReceiveCommand(devData);
             else
             {
                 Logger.Error(Newtonsoft.Json.JsonConvert.SerializeObject(data));

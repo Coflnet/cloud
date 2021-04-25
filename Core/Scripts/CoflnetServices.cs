@@ -19,7 +19,7 @@ namespace Coflnet
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns>An instance of the service</returns>
-        internal T Get<T>() where T : IService
+        public T Get<T>() where T : IService
         {
             var type = typeof(T);
             if (!Services.TryGetValue(type, out IService value))

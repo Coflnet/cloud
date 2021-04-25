@@ -145,8 +145,8 @@ namespace Coflnet
 
 			entity.AssignId(data.CoreInstance.EntityManager);
 
-			// make sure the owner is set
-			entity.GetAccess().Owner = data.Recipient;
+			// make sure the owner is set to the one executing this command
+			entity.GetAccess().Owner = data.SenderId;
 			AfterIdAssigned(data,entity);
 
 			// add the size to any data cap limit (tracking module)
@@ -154,7 +154,6 @@ namespace Coflnet
 			
 
 			// it is possible that the return will not be received by the target in case it gets offline
-
 			data.SendBack(CommandData.CreateCommandData<CreationResponseCommand,KeyValuePair<EntityId,EntityId>>
 				(data.SenderId,new KeyValuePair<EntityId,EntityId>(oldId,entity.Id)));
 		}

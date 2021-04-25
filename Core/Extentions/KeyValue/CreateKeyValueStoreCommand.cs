@@ -19,6 +19,13 @@ namespace Core.Extentions.KeyValue
             store.AddBucket(firstBucket);
             firstBucket.GetAccess().Owner = entity.Id;
         }
+
+        protected override CommandSettings GetSettings()
+        {
+            // everybody can create a keyvalue store 
+            // this will be limited by ratelimiting in the stats module
+            return new CommandSettings();
+        }
     }
 
 

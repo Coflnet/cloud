@@ -31,7 +31,7 @@ namespace Coflnet
 		{
 			get
 			{
-				return applicationSettings.id;
+				return ApplicationSettings.id;
 			}
 		}
 
@@ -197,5 +197,16 @@ namespace Coflnet
 		public EntityId id;
 
 		public long serverId;
+	}
+
+
+	public class ConfigService : CoflnetServiceBase
+	{
+		public EntityId ManagingServer {
+			get 
+			{
+                return ConfigController.ManagingServer;
+            }
+		}
 	}
 }

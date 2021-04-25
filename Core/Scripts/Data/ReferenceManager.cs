@@ -460,13 +460,13 @@ namespace Coflnet
 
 			if (reference == null) {
 				// is the current server the managing server?
-				if (!IAmTheManager) {
+				if (!IAmTheManager && !data.Recipient.IsLocal) {
 					// we are not the main managing server, pass it on to it
 					CoflnetCore.Instance.SendCommand (data);
 					return;
 				}
 				// we are the main managing server but this resource doesn't exist
-				throw new ObjectNotFound (data.Recipient,this.coreInstance.Id);
+				throw new ObjectNotFound (data.Recipient,this.coreInstance);
 			}
 
 			//var amIAManagingNode = IsManagingNodeFor(this.coreInstance.Id,data.rId);
@@ -748,8 +748,6 @@ namespace Coflnet
 				}
 			}
 
-
-
 			return false;
 		}
 
@@ -765,8 +763,8 @@ namespace Coflnet
 		}
 
 		public class ObjectNotFound : CoflnetException {
-			public ObjectNotFound (EntityId id, EntityId coreId = default(EntityId)) 
-			: base ("object_not_found", $"The resource {id} wasn't found on this server ({coreId})", null, 404) { }
+			public ObjectNotFound (EntityId id, CoflnetCore core = default(CoflnetCore)) 
+			: base ("object_not_found", $"The resource {id} wasn't found on this server ({core?.Id},{core.GetType().Name})", null, 404) { }
 		}
 
 		/// <summary>
