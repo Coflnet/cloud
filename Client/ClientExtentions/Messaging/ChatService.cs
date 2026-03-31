@@ -369,7 +369,7 @@ namespace Coflnet.Client.Messaging
 	/// Local chat message contains additional iformation like received and watched noticements
 	/// </summary>
 	[MessagePackObject]
-	public class LocalChatMessage : ChatMessage
+	public partial class LocalChatMessage : ChatMessage
 	{
 		public enum Status
 		{

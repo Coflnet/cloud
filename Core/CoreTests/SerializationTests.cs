@@ -109,7 +109,7 @@ public class SerializationTests {
 	public void MultipleObjectWriteTest () {
 		FileController.WriteLinesAs<int> ("ok", TestInts ());
 		var read = FileController.ReadLinesAs<int> ("ok");
-		CollectionAssert.AreEqual(TestInts(),read);
+		Assert.That(read, Is.EqualTo(TestInts()));
 	}
 
 	private IEnumerable<int> TestInts () {

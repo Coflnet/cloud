@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Coflnet;
 using Coflnet.Server;
 using MessagePack;
+using RestSharp;
 
 namespace Coflnet
 {
@@ -275,7 +276,7 @@ namespace Coflnet
 	/// Represents a command that invokes a external rest api
 	/// </summary>
 	public class RestCommand : ServerCommand {
-		RestSharp.RestClient client = new RestSharp.RestClient ();
+		RestSharp.RestClient client;
 		RestCommandRegisterRequest registerRequest;
 
 		public override void Execute (CommandData data) {
@@ -310,7 +311,7 @@ namespace Coflnet
 
 		public RestCommand (RestCommandRegisterRequest request) {
 			registerRequest = request;
-			client.BaseHost = request.BaseUrl;
+			client = new RestSharp.RestClient (request.BaseUrl);
 		}
 	}
 

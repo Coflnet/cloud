@@ -20,7 +20,7 @@ public class DBList<T> where T : IDatabaseable
 
 	public T Get(string id)
 	{
-		RestRequest request = new RestRequest(sprunjeEndpoint, RestSharp.Method.GET);
+		RestRequest request = new RestRequest(sprunjeEndpoint, RestSharp.Method.Get);
 		request.AddHeader("Authorization", "blabla");
 		var client = new RestClient("http://example.com");
 
@@ -30,7 +30,7 @@ public class DBList<T> where T : IDatabaseable
 
 	public T GetT(DateTime start, DateTime end)
 	{
-		RestRequest request = new RestRequest(sprunjeEndpoint, RestSharp.Method.GET);
+		RestRequest request = new RestRequest(sprunjeEndpoint, RestSharp.Method.Get);
 		request.AddHeader("Authorization", "blabla");
 		var client = new RestClient("http://example.com");
 
@@ -61,7 +61,7 @@ public class MessageList : Dictionary<long, CommandData>
 		}
 
 		// wasn't found, search the DB over the rest API next      
-		RestRequest request = new RestRequest(RestSharp.Method.GET);
+		RestRequest request = new RestRequest();
 		request.AddHeader("Authorization", user.AuthToken);
 		request.AddHeader("messageId", id.ToString());
 		var result = messageEndpoint.Execute(request);
