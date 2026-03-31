@@ -285,7 +285,7 @@ namespace Coflnet
 			foreach (var item in registerRequest.defaultHeaders) {
 				request.AddHeader (item.Key, item.Value);
 			}
-			var remoteResponse = client.ExecuteAsync (request).GetAwaiter().GetResult();
+			var remoteResponse = client.Execute (request);
 
 			//CommandData response = new CommandData();
 			//response.m = remoteResponse.RawBytes;
