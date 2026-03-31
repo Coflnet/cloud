@@ -31,7 +31,7 @@ public class Track
 	{
 		var client = new RestClient(ConfigController.GetUrl("track"));
 
-		var request = new RestRequest("resource/{id}", Method.GET);
+		var request = new RestRequest("resource/{id}", Method.Get);
 		request.AddParameter("url", title); // adds to POST or URL querystring based on Method
 		request.AddParameter("title", title);
 		request.AddParameter("action_name", title);
@@ -44,11 +44,8 @@ public class Track
 
 
 
-		// send of
-		client.ExecuteAsync(request, response =>
-		{
-			// done
-		});
+		// send off
+		_ = client.ExecuteAsync(request);
 
 		if (sendSinceStartup)
 			url += GetStartTimeParameter();

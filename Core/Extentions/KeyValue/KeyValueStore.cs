@@ -1,5 +1,5 @@
 using Coflnet;
-using RangeTree;
+using IntervalTree;
 
 namespace Core.Extentions.KeyValue
 {
@@ -9,11 +9,11 @@ namespace Core.Extentions.KeyValue
     /// </summary>
     public class KeyValueStore : Entity
     {
-        public RangeTree<int,EntityId> Buckets {get;set;}
+        public IntervalTree<int,EntityId> Buckets {get;set;}
 
         public KeyValueStore()
         {
-            Buckets = new RangeTree<int, EntityId>();
+            Buckets = new IntervalTree<int, EntityId>();
         }
 
 

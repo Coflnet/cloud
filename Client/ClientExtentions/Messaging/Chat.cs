@@ -183,6 +183,10 @@ namespace Coflnet.Client.Messaging
 				this.Members = members;
 				this.Name = name;
             }
+
+			public Params()
+			{
+			}
         }
     }
 
